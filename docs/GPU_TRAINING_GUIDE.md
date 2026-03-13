@@ -27,7 +27,7 @@ apptainer exec --nv landmarkdiff.sif python -c "import diffusers; import torch; 
 ## 2. Download Training Data
 
 ```bash
-# On compute node (not login — uses bandwidth)
+# On compute node (not login - uses bandwidth)
 srun --partition=gpu --gres=gpu:0 --mem=16G --time=2:00:00 --pty bash
 
 # Download 5000 FFHQ images (512x512 for SD1.5 native resolution)

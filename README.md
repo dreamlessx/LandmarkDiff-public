@@ -175,6 +175,26 @@ MIT License. See [LICENSE](LICENSE) for details.
 }
 ```
 
+## Contributors
+
+We track all contributions and contributors will be acknowledged in the MICCAI 2026 paper. Significant contributions earn co-authorship.
+
+| Contribution Level | Recognition |
+|---|---|
+| Bug fix / typo | Acknowledged in README |
+| New procedure preset | Acknowledged in paper + README |
+| Feature module (e.g., new loss, metric) | Co-author on paper |
+| Clinical validation data | Co-author on paper |
+| Sustained multi-feature contributions | Co-author on paper |
+
+### Current Contributors
+
+| GitHub Handle | Contribution |
+|---|---|
+| [@dreamlessx](https://github.com/dreamlessx) | Core architecture, training pipeline, paper |
+
+To join this list, open a PR or contribute to an issue. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
 ## Contributing
 
 Contributions welcome. Please open an issue or pull request.

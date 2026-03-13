@@ -22,15 +22,15 @@ Thanks for your interest in contributing. This project is actively developed and
 ## What We Need Help With
 
 ### High Priority
-- **New procedure presets** — define anatomical displacement vectors for additional surgical procedures (e.g., mentoplasty, otoplasty, brow lift)
-- **Clinical validation** — if you have access to pre/post-operative photo datasets, we'd love to collaborate
-- **Multi-view consistency** — improving prediction quality across different face angles
-- **3D extension** — incorporating FLAME or other 3D morphable models
+- **New procedure presets** - define anatomical displacement vectors for additional surgical procedures (e.g., mentoplasty, otoplasty, brow lift)
+- **Clinical validation** - if you have access to pre/post-operative photo datasets, we'd love to collaborate
+- **Multi-view consistency** - improving prediction quality across different face angles
+- **3D extension** - incorporating FLAME or other 3D morphable models
 
 ### Medium Priority
-- **Additional evaluation metrics** — domain-specific metrics for surgical outcome quality
-- **Data augmentation** — new clinical photography degradation types
-- **Documentation** — tutorials, examples, API docs
+- **Additional evaluation metrics** - domain-specific metrics for surgical outcome quality
+- **Data augmentation** - new clinical photography degradation types
+- **Documentation** - tutorials, examples, API docs
 
 ### Always Welcome
 - Bug fixes
@@ -65,11 +65,11 @@ Thanks for your interest in contributing. This project is actively developed and
 
 ## Code Structure
 
-- `landmarkdiff/` — core library (landmarks, deformation, conditioning, inference)
-- `landmarkdiff/synthetic/` — training data generation (TPS warps, augmentation)
-- `scripts/` — CLI tools, training scripts, Gradio demo
-- `tests/` — unit tests
-- `paper/` — MICCAI manuscript source
+- `landmarkdiff/` - core library (landmarks, deformation, conditioning, inference)
+- `landmarkdiff/synthetic/` - training data generation (TPS warps, augmentation)
+- `scripts/` - CLI tools, training scripts, Gradio demo
+- `tests/` - unit tests
+- `paper/` - MICCAI manuscript source
 
 ## Adding a New Procedure
 

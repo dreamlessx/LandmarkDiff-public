@@ -19,7 +19,7 @@ export WANDB_MODE=offline
 trap 'echo "Caught USR1 — saving checkpoint..."; kill -INT $TRAIN_PID; wait $TRAIN_PID; scontrol requeue $SLURM_JOB_ID' USR1
 
 # === Paths ===
-WORK_DIR="/data/p_csb_meiler/agarwm5/landmarkdiff_work/LandmarkDiff"
+WORK_DIR="/path/to/LandmarkDiff"
 DATA_DIR="${WORK_DIR}/data/synthetic_pairs"
 CKPT_DIR="${WORK_DIR}/checkpoints"
 WANDB_DIR="${WORK_DIR}/wandb"
@@ -29,7 +29,7 @@ mkdir -p "$CKPT_DIR" "$WANDB_DIR"
 cd "$WORK_DIR"
 
 # Activate conda environment
-source /home/agarwm5/miniconda3/etc/profile.d/conda.sh
+source $HOME/miniconda3/etc/profile.d/conda.sh
 conda activate landmarkdiff
 
 python scripts/train_controlnet.py \

@@ -1,17 +1,17 @@
 #!/bin/bash
 #SBATCH --job-name=tesla_mega
 #SBATCH --partition=batch
-#SBATCH --account=p_csb_meiler
+#SBATCH --account=YOUR_GROUP
 #SBATCH --mem=32G
 #SBATCH --cpus-per-task=8
 #SBATCH --time=48:00:00
 #SBATCH --output=slurm-mega-%A_%a.out
 #SBATCH --array=0-3
 
-WORK_DIR="/data/p_csb_meiler/agarwm5/landmarkdiff_work/LandmarkDiff"
+WORK_DIR="/path/to/LandmarkDiff"
 cd "$WORK_DIR"
 
-source /home/agarwm5/miniconda3/etc/profile.d/conda.sh
+source $HOME/miniconda3/etc/profile.d/conda.sh
 conda activate landmarkdiff
 
 # Map array index to procedure

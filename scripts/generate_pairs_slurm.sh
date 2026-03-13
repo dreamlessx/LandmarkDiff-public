@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=surgery_gen_pairs
 #SBATCH --partition=batch
-#SBATCH --account=p_csb_meiler
+#SBATCH --account=YOUR_GROUP
 #SBATCH --mem=32G
 #SBATCH --cpus-per-task=4
 #SBATCH --time=12:00:00
@@ -9,10 +9,10 @@
 
 # Generate synthetic training pairs (CPU only, no GPU needed)
 
-WORK_DIR="/data/p_csb_meiler/agarwm5/landmarkdiff_work/LandmarkDiff"
+WORK_DIR="/path/to/LandmarkDiff"
 cd "$WORK_DIR"
 
-source /home/agarwm5/miniconda3/etc/profile.d/conda.sh
+source $HOME/miniconda3/etc/profile.d/conda.sh
 conda activate landmarkdiff
 
 echo "Starting pair generation at $(date)"
