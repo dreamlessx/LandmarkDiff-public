@@ -25,16 +25,12 @@ These are third-party models that LandmarkDiff uses. They are downloaded automat
 
 | Checkpoint | Dataset | Steps | FID | LPIPS | Status |
 |-----------|---------|-------|-----|-------|--------|
-| `phase_a_10k` | 10K synthetic pairs | 10K | ~120 | ~0.25 | Available (demos/) |
 | `phase_a_50k` | 50K synthetic pairs | 50K | TBD | TBD | Training |
 | `phase_b_clinical` | Clinical + synthetic | TBD | TBD | TBD | Planned |
 
 ### Downloading checkpoints
 
 ```bash
-# Phase A (10K steps) - for testing/development
-# Included in demos/ as sample outputs
-
 # Phase A (50K steps) - coming soon
 # Will be available via Hugging Face Hub
 ```
