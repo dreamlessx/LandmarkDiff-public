@@ -48,6 +48,11 @@ PROCEDURE_LANDMARKS: dict[str, list[int]] = {
         208, 211, 212, 214, 269, 270, 291, 311, 312, 317, 321, 324, 325,
         375, 396, 405, 407, 415,
     ],
+    "brow_lift": [
+        70, 63, 105, 66, 107,  # left brow
+        300, 293, 334, 296, 336,  # right brow
+        9, 8, 10, 109, 67, 103, 338, 297, 332, # forehead/upper face
+    ],
 }
 
 # Default influence radii per procedure (in pixels at 512x512)
@@ -56,6 +61,7 @@ PROCEDURE_RADIUS: dict[str, float] = {
     "blepharoplasty": 15.0,
     "rhytidectomy": 40.0,
     "orthognathic": 35.0,
+    "brow_lift": 25.0,
 }
 
 
@@ -305,6 +311,40 @@ def _get_procedure_handles(
                     landmark_index=idx,
                     displacement=np.array([-1.5 * scale, -1.0 * scale]),
                     influence_radius=radius * 0.8,
+                ))
+
+    elif procedure == "brow_lift":
+        # --- Brow elevation ---
+        brow_left = [70, 63, 105, 66, 107]
+        brow_right = [300, 293, 334, 296, 336]
+
+        # Lateral brow often lifted more than medial
+        left_weights = [0.7, 0.8, 0.9, 1.0, 1.1]
+        for i, idx in enumerate(brow_left):
+            if idx in indices:
+                handles.append(DeformationHandle(
+                    landmark_index=idx,
+                    displacement=np.array([0.0, -4.0 * left_weights[i] * scale]),
+                    influence_radius=radius,
+                ))
+
+        right_weights = [0.7, 0.8, 0.9, 1.0, 1.1]
+        for i, idx in enumerate(brow_right):
+            if idx in indices:
+                handles.append(DeformationHandle(
+                    landmark_index=idx,
+                    displacement=np.array([0.0, -4.0 * right_weights[i] * scale]),
+                    influence_radius=radius,
+                ))
+
+        # --- Forehead smoothing / subtle lift ---
+        forehead = [9, 8, 10, 109, 67, 103, 338, 297, 332]
+        for idx in forehead:
+            if idx in indices:
+                handles.append(DeformationHandle(
+                    landmark_index=idx,
+                    displacement=np.array([0.0, -1.5 * scale]),
+                    influence_radius=radius * 1.2,
                 ))
 
     return handles
