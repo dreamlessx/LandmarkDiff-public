@@ -1,13 +1,4 @@
-"""Download face images from multiple free online datasets.
-
-Sources (no auth required):
-1. CelebA-HQ 256x256 (korexyz/celeba-hq-256x256) - 30K high-quality aligned faces
-2. FFHQ 256x256 (merkol/ffhq-256) - 70K NVIDIA FFHQ faces
-3. FairFace (HuggingFaceM4/FairFace) - 108K diverse demographics
-4. LFW (bitmind/lfw) - 13K labeled faces in the wild
-
-All resized to 512x512 for ControlNet training.
-"""
+"""Download faces from CelebA-HQ, FFHQ, FairFace, LFW via HuggingFace."""
 
 from __future__ import annotations
 
@@ -63,10 +54,7 @@ def download_dataset(
     resolution: int = 512,
     start_idx: int = 0,
 ) -> int:
-    """Download images from a HuggingFace dataset.
-
-    Returns number of images successfully downloaded.
-    """
+    """Pull images from one HF dataset, return count downloaded."""
     from datasets import load_dataset
 
     config = DATASETS[dataset_name]

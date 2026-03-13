@@ -1,23 +1,5 @@
 #!/usr/bin/env python3
-"""Automated evaluation harness for LandmarkDiff.
-
-Loads a trained ControlNet checkpoint, runs inference on a test set,
-computes all metrics (FID, LPIPS, NME, SSIM, ArcFace identity sim),
-stratifies by Fitzpatrick type and procedure, generates a JSON report.
-
-Usage:
-    python scripts/evaluate.py \
-        --test-dir data/test_pairs/ \
-        --checkpoint checkpoints_v2/best/ \
-        --output eval_results/ \
-        --mode controlnet \
-        --num-samples 100
-
-SLURM:
-    sbatch --job-name=curie_eval --partition=batch_gpu --account=csb_gpu_acc \
-        --gres=gpu:1 --mem=32G --time=02:00:00 \
-        --wrap="python scripts/evaluate.py --test-dir data/test_pairs/ --output eval_results/"
-"""
+"""Eval harness - run inference on test set, compute all metrics, dump JSON report."""
 
 from __future__ import annotations
 
@@ -50,20 +32,7 @@ def load_test_pairs(
     test_dir: Path,
     max_samples: int = 0,
 ) -> list[dict]:
-    """Load test image pairs from directory.
-
-    Expected structure:
-        test_dir/
-            NNNNNN_input.png
-            NNNNNN_target.png
-            NNNNNN_conditioning.png  (optional)
-            metadata.json  (optional, with procedure info)
-
-    Or:
-        test_dir/
-            inputs/  (input images)
-            targets/ (target images)
-    """
+    """Load test pairs. Supports both NNNNNN_input/target format and inputs/targets subdirs."""
     pairs = []
 
     # Format 1: Paired files with prefix

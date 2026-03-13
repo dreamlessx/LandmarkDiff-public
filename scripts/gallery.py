@@ -1,11 +1,4 @@
-"""Generate visual result galleries from pipeline outputs.
-
-Creates grid composites showing the full pipeline for each procedure
-and for synthetic training pairs.
-
-Usage:
-    python scripts/gallery.py
-"""
+"""Generate visual result galleries (grid composites per procedure)."""
 
 from __future__ import annotations
 

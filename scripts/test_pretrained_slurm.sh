@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=tesla_test
 #SBATCH --partition=batch_gpu
-#SBATCH --account=csb_gpu_acc
+#SBATCH --account=your_gpu_acc
 #SBATCH --gres=gpu:nvidia_rtx_a6000:1
 #SBATCH --mem=32G
 #SBATCH --cpus-per-task=4

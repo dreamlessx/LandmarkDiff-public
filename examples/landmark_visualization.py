@@ -39,8 +39,8 @@ def main():
         vis[:, :, 0] = mesh_original  # original in blue
         vis[:, :, 2] = mesh_deformed  # deformed in red
 
-        original_px = landmarks.pixel_coords()[:, :2] * np.array([512 / landmarks.image_width, 512 / landmarks.image_height])
-        deformed_px = deformed.pixel_coords()[:, :2] * np.array([512 / deformed.image_width, 512 / deformed.image_height])
+        original_px = landmarks.pixel_coords[:, :2] * np.array([512 / landmarks.image_width, 512 / landmarks.image_height])
+        deformed_px = deformed.pixel_coords[:, :2] * np.array([512 / deformed.image_width, 512 / deformed.image_height])
 
         # Draw displacement arrows for moved landmarks
         for i in range(len(original_px)):

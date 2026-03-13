@@ -1,12 +1,4 @@
-"""Generate synthetic training pairs from FFHQ images.
-
-Usage:
-    # Generate 1000 pairs from downloaded FFHQ
-    python scripts/generate_synthetic_data.py --input data/ffhq --num 1000
-
-    # Generate with specific procedure focus
-    python scripts/generate_synthetic_data.py --input data/ffhq --num 500 --procedure rhinoplasty
-"""
+"""Generate synthetic training pairs from FFHQ images."""
 
 from __future__ import annotations
 

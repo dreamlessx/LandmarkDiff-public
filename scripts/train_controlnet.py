@@ -1,15 +1,6 @@
-"""ControlNet fine-tuning training loop.
+"""ControlNet fine-tuning. Phase A = diffusion loss, Phase B = full 4-term loss.
 
-Phase A: Diffusion loss only (synthetic TPS data).
-Phase B: Full 4-term loss (FEM/clinical data).
-
-Implements all spec safeguards:
-- BF16 only (never FP16)
-- VAE frozen
-- EMA decay 0.9999
-- GroupNorm (not BatchNorm)
-- Resume from checkpoint
-- WandB logging (offline mode for HPC)
+BF16 only, VAE frozen, EMA 0.9999, GroupNorm, WandB offline for HPC.
 """
 
 from __future__ import annotations

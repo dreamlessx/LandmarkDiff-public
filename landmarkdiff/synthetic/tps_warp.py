@@ -103,10 +103,7 @@ def _compute_tps_map(
     width: int,
     height: int,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Compute pixel displacement maps from TPS control points.
-
-    Uses RBF interpolation of control point displacements.
-    """
+    """Build remap arrays from TPS control points via RBF interpolation."""
     # Displacement at control points
     dx = dst[:, 0] - src[:, 0]
     dy = dst[:, 1] - src[:, 1]
@@ -154,11 +151,7 @@ def _solve_tps_weights(
     control_pts: np.ndarray,
     values: np.ndarray,
 ) -> np.ndarray:
-    """Solve for TPS weights given control points and target values.
-
-    Returns weight vector [w1..wn, a0, a1, a2] for n control points
-    plus affine terms.
-    """
+    """Solve TPS system -> weight vector [w1..wn, a0, a1, a2]."""
     n = len(control_pts)
 
     # Build kernel matrix K (vectorized)

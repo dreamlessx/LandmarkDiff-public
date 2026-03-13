@@ -233,11 +233,7 @@ def compute_identity_similarity(
     pred: np.ndarray,
     target: np.ndarray,
 ) -> float:
-    """Compute ArcFace identity cosine similarity between two face images.
-
-    Returns cosine similarity [0, 1] where 1 = identical identity.
-    Falls back to SSIM-based proxy if InsightFace unavailable.
-    """
+    """ArcFace cosine sim [0,1]. Falls back to SSIM if no InsightFace."""
     try:
         from insightface.app import FaceAnalysis
         app = FaceAnalysis(

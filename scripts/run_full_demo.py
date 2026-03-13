@@ -1,8 +1,4 @@
-"""Full demo: run inference on multiple faces with visible results.
-
-Generates before/after comparisons at higher strength for visible changes,
-then builds a master results grid.
-"""
+"""Full demo - run inference on multiple faces, build a results grid."""
 
 from __future__ import annotations
 

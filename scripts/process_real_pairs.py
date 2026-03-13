@@ -1,15 +1,4 @@
-"""Process scraped before/after images into training-ready pairs.
-
-Clinical images often have multiple views in a single image (grid format).
-This script:
-1. Detects sub-images in multi-panel clinical photos
-2. Pairs before/after views
-3. Extracts landmarks from each
-4. Saves as training-ready format
-
-Usage:
-    python scripts/process_real_pairs.py
-"""
+"""Split multi-panel clinical photos into before/after pairs for training."""
 
 from __future__ import annotations
 
@@ -26,10 +15,7 @@ from landmarkdiff.conditioning import generate_conditioning
 
 
 def split_grid_image(image: np.ndarray, min_panel_size: int = 100) -> list[np.ndarray]:
-    """Split a clinical grid image (2x1, 2x2, etc.) into individual panels.
-
-    Uses edge detection to find grid lines.
-    """
+    """Split grid image (2x1, 2x2, etc.) into panels using edge-based divider detection."""
     h, w = image.shape[:2]
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 

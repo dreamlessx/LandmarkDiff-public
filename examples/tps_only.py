@@ -31,8 +31,8 @@ def main():
     deformed = apply_procedure_preset(landmarks, args.procedure, intensity=args.intensity)
 
     # Apply TPS warp
-    src_pts = landmarks.pixel_coords()[:, :2]
-    dst_pts = deformed.pixel_coords()[:, :2]
+    src_pts = landmarks.pixel_coords[:, :2]
+    dst_pts = deformed.pixel_coords[:, :2]
 
     # Scale to 512x512
     src_pts[:, 0] *= 512 / landmarks.image_width

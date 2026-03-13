@@ -1,18 +1,4 @@
-"""Interactive Gradio UI for LandmarkDiff surgical outcome prediction.
-
-Features:
-- Single procedure with real-time preview
-- Multi-procedure comparison
-- Intensity sweep gallery
-- Side-by-side before/after comparison
-- Clinical flags (vitiligo, Bell's palsy, keloid)
-- Skin tone classification display
-- Face view angle indicator
-- Multi-view support
-
-Usage:
-    python scripts/app.py [--port 7860] [--share]
-"""
+"""Gradio UI for LandmarkDiff - single procedure, comparison, intensity sweep."""
 
 from __future__ import annotations
 

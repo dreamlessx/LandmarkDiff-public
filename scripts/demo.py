@@ -1,10 +1,4 @@
-"""Demo: Full pipeline visualization on a face image.
-
-Usage:
-    python scripts/demo.py <image_path> [--procedure rhinoplasty] [--intensity 50]
-
-Outputs saved to scripts/demo_output/
-"""
+"""Demo - full pipeline visualization on a single face image."""
 
 from __future__ import annotations
 

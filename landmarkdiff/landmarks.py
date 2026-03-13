@@ -207,11 +207,7 @@ def render_landmark_image(
     height: Optional[int] = None,
     radius: int = 2,
 ) -> np.ndarray:
-    """Render the 2556-edge tessellation mesh on a black canvas.
-
-    The ControlNet expects dense triangulated wireframes, not sparse dots.
-    Falls back to colored dots if tessellation connections aren't available.
-    """
+    """Render tessellation mesh on black canvas. Falls back to dots if no connections."""
     w = width or face.image_width
     h = height or face.image_height
     canvas = np.zeros((h, w, 3), dtype=np.uint8)

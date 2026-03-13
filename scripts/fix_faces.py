@@ -1,18 +1,4 @@
-"""CLI for face verification, distortion detection, and neural restoration.
-
-Single image:
-    python scripts/fix_faces.py image.jpg --output fixed.jpg
-
-Batch directory:
-    python scripts/fix_faces.py data/scraped/ --batch --output data/verified/
-
-Analyze only (no restoration):
-    python scripts/fix_faces.py image.jpg --analyze-only
-
-SLURM:
-    sbatch --partition=batch_gpu --gres=gpu:1 --mem=32G --time=4:00:00 \
-           --wrap="python scripts/fix_faces.py data/scraped/ --batch --output data/verified/"
-"""
+"""CLI for face distortion detection and neural restoration (single or batch)."""
 
 from __future__ import annotations
 

@@ -2,7 +2,7 @@ Bootstrap: docker
 From: nvcr.io/nvidia/pytorch:24.01-py3
 
 %labels
-    Author Ary
+    Author dreamlessx
     Version 0.1.0
 
 %post

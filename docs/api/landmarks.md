@@ -14,7 +14,7 @@ Dataclass holding 478-point facial landmark data.
 - `image_height` (int): Source image height
 
 **Methods:**
-- `pixel_coords() -> np.ndarray`: Convert normalized coords to pixel coordinates
+- `pixel_coords -> np.ndarray`: Convert normalized coords to pixel coordinates (property)
 - `get_region(name: str) -> np.ndarray`: Get landmark indices for a named region
 
 ### Region names

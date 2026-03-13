@@ -21,14 +21,14 @@ RUN ln -sf /usr/bin/python3.11 /usr/bin/python3 && \
 
 WORKDIR /app
 
-# Install Python dependencies
+# Copy source code first (needed for editable install)
 COPY pyproject.toml .
-RUN pip install --no-cache-dir -e ".[app]"
-
-# Copy source code
 COPY landmarkdiff/ landmarkdiff/
 COPY scripts/ scripts/
 COPY configs/ configs/
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -e ".[app]"
 
 # Pre-download MediaPipe model on build
 RUN python -c "import mediapipe" 2>/dev/null || true

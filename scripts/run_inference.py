@@ -1,12 +1,4 @@
-"""Run ControlNet inference on MPS (Apple Silicon) and produce before/after results.
-
-Downloads model weights on first run (~4GB), then generates surgical outcome
-predictions for all 4 procedures on sample images.
-
-Usage:
-    python scripts/run_inference.py
-    python scripts/run_inference.py --image data/ffhq_samples/000002.png --procedure rhinoplasty
-"""
+"""Run ControlNet inference and produce before/after results."""
 
 from __future__ import annotations
 

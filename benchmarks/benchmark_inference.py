@@ -17,17 +17,18 @@ def main():
 
     try:
         from landmarkdiff.inference import LandmarkDiffPipeline
-        pipeline = LandmarkDiffPipeline.from_pretrained("checkpoints/latest", device=args.device)
+        pipeline = LandmarkDiffPipeline(mode=args.mode, device=args.device)
+        pipeline.load()
     except Exception as e:
         print(f"Could not load pipeline: {e}")
-        print("Make sure you have a checkpoint at checkpoints/latest")
+        print("Make sure you have the required model weights cached")
         return
 
     # Warm-up
     print("Warming up...")
     dummy = np.random.randint(0, 255, (512, 512, 3), dtype=np.uint8)
     try:
-        pipeline.generate(dummy, procedure="rhinoplasty", intensity=0.5, mode=args.mode)
+        pipeline.generate(dummy, procedure="rhinoplasty", intensity=0.5)
     except Exception:
         pass
 
@@ -38,7 +39,7 @@ def main():
 
         start = time.perf_counter()
         try:
-            pipeline.generate(img, procedure="rhinoplasty", intensity=0.5, mode=args.mode)
+            pipeline.generate(img, procedure="rhinoplasty", intensity=0.5)
             elapsed = time.perf_counter() - start
             times.append(elapsed)
             print(f"  [{i+1}/{args.num_images}] {elapsed:.2f}s")

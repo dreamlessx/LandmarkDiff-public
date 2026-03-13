@@ -1,14 +1,6 @@
-"""Augment real before/after surgery pairs to scale up training data.
+"""Augment real before/after pairs (flip, jitter, rotate, crop, noise).
 
-Given N validated before/after pairs, generates augmented versions via:
-1. Horizontal flip (doubles data)
-2. Color jitter (brightness, contrast, saturation)
-3. Slight rotation (+/- 5 degrees)
-4. Random crop + resize
-5. Gaussian noise
-
-Each original pair can produce ~20-50 augmented pairs while preserving
-the landmark correspondence (same transform applied to both images).
+Same spatial transform to both images so landmark correspondence is preserved.
 """
 
 import argparse
@@ -26,11 +18,7 @@ def augment_pair(
     augmentations_per_pair: int = 30,
     target_size: int = 512,
 ) -> list[tuple[np.ndarray, np.ndarray, str]]:
-    """Generate augmented versions of a before/after pair.
-
-    Same spatial transform applied to both images to preserve correspondence.
-    Returns list of (before_aug, after_aug, augmentation_name).
-    """
+    """Generate augmented (before, after, aug_name) tuples from one pair."""
     results = []
 
     # 1. Horizontal flip

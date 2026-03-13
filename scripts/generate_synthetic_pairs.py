@@ -1,18 +1,4 @@
-"""Generate massive synthetic before/after surgery training pairs.
-
-Uses CelebA/FFHQ face images + our anatomically-calibrated RBF manipulation
-to create synthetic before/after pairs at scale.
-
-For each face image:
-1. Extract MediaPipe landmarks
-2. Apply procedure-specific RBF deformation (with random intensity variation)
-3. Render both original and manipulated meshes
-4. Apply TPS warp to create the "after" face
-5. Save as training pair
-
-This is the fastest path to 50K+ pairs per procedure since we already
-have 30K+ CelebA images and 70K FFHQ images available.
-"""
+"""Generate synthetic before/after pairs at scale from CelebA/FFHQ faces."""
 
 import argparse
 import json

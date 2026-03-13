@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Apptainer container definition
 - MICCAI 2026 paper source (Springer LNCS format)
 - Comprehensive test suite (9 test modules)
-- GPU training guide for ACCRE and Hyak clusters
+- GPU training guide for SLURM clusters
 
 [Unreleased]: https://github.com/dreamlessx/LandmarkDiff-public/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/dreamlessx/LandmarkDiff-public/releases/tag/v0.1.0

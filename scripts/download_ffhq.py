@@ -1,19 +1,4 @@
-"""Download FFHQ dataset (thumbnails 128x128 or full 1024x1024) from HuggingFace.
-
-FFHQ (Flickr-Faces-HQ) - 70,000 high-quality face images.
-License: CC BY-NC-SA 4.0 (research use).
-Source: NVIDIA, Karras et al. 2019.
-
-Usage:
-    # Download 1000 images (thumbnails, fast)
-    python scripts/download_ffhq.py --num 1000 --resolution 128
-
-    # Download full resolution (slow, ~90GB for all 70K)
-    python scripts/download_ffhq.py --num 5000 --resolution 1024
-
-    # Download to custom directory
-    python scripts/download_ffhq.py --num 1000 --output data/ffhq
-"""
+"""Download FFHQ faces from HuggingFace (128 or 1024 res)."""
 
 from __future__ import annotations
 
@@ -89,11 +74,7 @@ def download_with_wget(
     num_images: int = 1000,
     output_dir: str = "data/ffhq",
 ) -> None:
-    """Alternative: download FFHQ thumbnails directly via HTTP.
-
-    Falls back to this if HuggingFace datasets is unavailable.
-    Uses the FFHQ Google Drive thumbnails mirror.
-    """
+    """Wget fallback if HuggingFace datasets isn't installed."""
     import urllib.request
 
     out = Path(output_dir)

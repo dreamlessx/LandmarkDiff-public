@@ -74,7 +74,7 @@ def main():
         import numpy as np
 
         img = np.array(Image.open(args.image).resize((512, 512)))
-        warped = tps_warp(img, landmarks.pixel_coords()[:, :2], deformed.pixel_coords()[:, :2])
+        warped = tps_warp(img, landmarks.pixel_coords[:, :2], deformed.pixel_coords[:, :2])
         Image.fromarray(warped).save(str(output_dir / "prediction_tps.png"))
         print(f"  Saved TPS prediction to {output_dir}/prediction_tps.png")
 

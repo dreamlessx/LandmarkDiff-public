@@ -1,16 +1,4 @@
-"""PI Demo: Comprehensive results for LandmarkDiff presentation.
-
-Generates presentation-ready figures showing:
-1. Pipeline architecture visualization
-2. All 4 procedures on multiple faces (TPS + diffusion)
-3. Intensity parameter sweeps
-4. Training data samples
-5. Before/after comparison grids
-
-Usage:
-    python scripts/pi_demo.py                    # TPS mode (instant, no GPU)
-    python scripts/pi_demo.py --mode img2img     # SD1.5 refinement (~10s/image)
-"""
+"""PI demo - presentation-ready figures for all procedures and intensity sweeps."""
 
 from __future__ import annotations
 

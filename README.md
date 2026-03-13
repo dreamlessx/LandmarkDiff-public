@@ -182,19 +182,13 @@ Six-step refinement:
 
 ## Demo Outputs
 
-Sample outputs are in the [demos/](demos/) directory. These show the TPS (thin-plate spline) geometric warping mode, which preserves the input photo's texture pixel-for-pixel. ControlNet-generated photorealistic samples will be added after model training completes.
-
-**Procedure comparison grids** (`demo_0.png`, `demo_2.png`, `demo_3.png`):
-
-Each shows the original photo alongside all four procedures at 60% intensity, side by side.
+Sample outputs are in the [demos/](demos/) directory.
 
 **Pipeline visualizations** (`demo_pipeline_0.png`, `demo_pipeline_1.png`):
 
-Step-by-step view of Input, Original Mesh, Manipulated Mesh, Surgical Mask, and Result.
+Step-by-step view of the full pipeline: Input -> Original Mesh -> Manipulated Mesh -> Surgical Mask -> Result.
 
-**Individual results** (`tps_{subject}_{procedure}_60.png`):
-
-Per-subject, per-procedure outputs showing Original, Mesh Conditioning, and Predicted Outcome across 6 FFHQ subjects and all 4 procedures.
+ControlNet-generated photorealistic samples will be added after model training completes.
 
 ---
 

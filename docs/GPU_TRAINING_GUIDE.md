@@ -1,6 +1,6 @@
 # GPU Training Guide
 
-Complete setup for training LandmarkDiff on HPC clusters (Vanderbilt ACCRE, UW Hyak, or any SLURM+A100 system).
+Complete setup for training LandmarkDiff on SLURM-based HPC clusters with A100/A6000 GPUs.
 
 ## Prerequisites
 
@@ -84,46 +84,39 @@ squeue -u $USER
 tail -f slurm-*.out
 ```
 
-## 5. Vanderbilt ACCRE Specifics
+## 5. Cluster-Specific Notes
+
+Adapt these settings for your cluster:
 
 ```bash
-# Partition
-#SBATCH --partition=pascal         # or volta, ampere if available
-#SBATCH --account=csb_gpu_acc     # your account
+# Example SLURM config - adjust for your cluster
+#SBATCH --partition=gpu            # your GPU partition
+#SBATCH --account=your_gpu_acc    # your account
 
 # Modules (if not using container)
 module load GCC/12.3.0
 module load CUDA/12.1.1
 module load Python/3.11.3
 
-# Storage
+# Storage - use fast scratch storage
 DATA_DIR="/scratch/$USER/landmarkdiff/data"
 CKPT_DIR="/scratch/$USER/landmarkdiff/checkpoints"
 ```
 
-### ACCRE GPU partitions
-| Partition | GPU | VRAM | Max Time |
-|-----------|-----|------|----------|
-| pascal | P100 | 16GB | 14 days |
-| volta | V100 | 32GB | 3 days |
-| ampere (if available) | A100 | 40/80GB | varies |
+### GPU recommendations
+| GPU | VRAM | Notes |
+|-----|------|-------|
+| P100 | 16GB | Batch size 2, gradient accumulation 8 |
+| V100 | 32GB | Batch size 4, gradient accumulation 4 |
+| A6000 | 48GB | Batch size 4-8 |
+| A100 | 40/80GB | Recommended, full batch size |
 
-**Note:** If only P100/V100 available, reduce batch size to 2 and increase gradient accumulation to 8.
-
-## 6. UW Hyak Specifics
-
+If your cluster uses Lustre, set striping for large datasets:
 ```bash
-#SBATCH --partition=gpu-a100
-#SBATCH --account=your_group
-
-DATA_DIR="/gscratch/your_group/landmarkdiff/data"
-CKPT_DIR="/gscratch/your_group/landmarkdiff/checkpoints"
-
-# Lustre striping for large datasets
 lfs setstripe -c -1 $DATA_DIR
 ```
 
-## 7. Critical Safeguards
+## 6. Critical Safeguards
 
 These are non-negotiable. Training will produce garbage without them:
 
@@ -138,7 +131,7 @@ These are non-negotiable. Training will produce garbage without them:
 | Phase A: L_diffusion only | Perceptual loss against TPS warps penalizes realism |
 | Pre-computed TPS warps | On-the-fly TPS CPU-bottlenecks GPU |
 
-## 8. Expected Training Metrics
+## 7. Expected Training Metrics
 
 **Phase A (10K steps, ~6-8 hours on A100):**
 - Loss should decrease monotonically
@@ -151,20 +144,20 @@ These are non-negotiable. Training will produce garbage without them:
 - Identity sim target: >0.85
 - SSIM target: >0.80
 
-## 9. Sync WandB (Offline Mode)
+## 8. Sync WandB (Offline Mode)
 
 After training completes:
 ```bash
 wandb sync $WANDB_DIR/wandb/latest-run/
 ```
 
-## 10. Mac M3 Pro (Local Development)
+## 9. Local Development (Apple Silicon)
 
 For inference and small experiments (not training):
 ```bash
-cd ~/Projects/Surgery_Landmark
+cd /path/to/LandmarkDiff
 source .venv/bin/activate
-python landmarkdiff/inference.py /path/to/face.jpg --procedure rhinoplasty
+python -m landmarkdiff infer /path/to/face.jpg --procedure rhinoplasty
 ```
 
 - SD1.5 inference: ~30-60 sec per image on MPS

@@ -1,12 +1,4 @@
-"""Generate synthetic training pairs at scale from multiple image sources.
-
-Scans all face image directories, generates pairs with all 4 procedures,
-varied intensities, and saves to data/synthetic_pairs_v2/.
-
-Usage:
-    python scripts/generate_pairs_scaled.py --num 10000
-    python scripts/generate_pairs_scaled.py --num 10000 --workers 8
-"""
+"""Generate synthetic pairs at scale - all procedures, varied intensities."""
 
 from __future__ import annotations
 

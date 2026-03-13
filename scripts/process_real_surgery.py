@@ -1,13 +1,4 @@
-"""Process scraped before/after surgery images into training pairs.
-
-Pipeline:
-1. Load raw comparison images from data/real_surgery_pairs/raw/{procedure}/
-2. Split into before/after halves (auto-detect layout)
-3. Validate faces detected in both halves (MediaPipe)
-4. Extract landmarks from both, compute displacement vectors
-5. Save as training pairs (before_mesh -> after_face) for ControlNet
-6. Build displacement statistics per procedure
-"""
+"""Split scraped comparison images into before/after pairs for ControlNet training."""
 
 import argparse
 import json
@@ -20,10 +11,7 @@ from landmarkdiff.landmarks import extract_landmarks, render_landmark_image, Fac
 
 
 def split_comparison_image(img: np.ndarray) -> list[tuple[np.ndarray, np.ndarray]]:
-    """Split a before/after comparison image into candidate (before, after) pairs.
-
-    Tries multiple splitting strategies and returns all candidates.
-    """
+    """Try horizontal and vertical splits, return all valid (before, after) candidates."""
     h, w = img.shape[:2]
     candidates = []
 
@@ -96,10 +84,7 @@ def compute_displacement(
     before: FaceLandmarks,
     after: FaceLandmarks,
 ) -> np.ndarray:
-    """Compute per-landmark displacement vectors between pre and post surgery.
-
-    Returns (478, 2) array of (dx, dy) in normalized coordinates.
-    """
+    """Per-landmark (dx, dy) in normalized coords, shape (478, 2)."""
     before_pts = before.landmarks[:, :2]
     after_pts = after.landmarks[:, :2]
     return after_pts - before_pts
