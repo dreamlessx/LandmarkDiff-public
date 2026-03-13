@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  landmarkdiff:
+    build: .
+    ports:
+      - "7860:7860"
+    volumes:
+      - ./data:/app/data
+      - ./checkpoints:/app/checkpoints
+      - model-cache:/root/.cache
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+
+  # Training service (optional, use with: docker compose run train)
+  train:
+    build: .
+    volumes:
+      - ./data:/app/data
+      - ./checkpoints:/app/checkpoints
+      - model-cache:/root/.cache
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    command: >
+      python scripts/train_controlnet.py
+        --data_dir /app/data/synthetic_pairs
+        --output_dir /app/checkpoints
+        --num_train_steps 10000
+    profiles:
+      - training
+
+volumes:
+  model-cache:

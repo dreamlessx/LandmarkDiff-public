@@ -1,0 +1,15 @@
+# Default owners for everything
+* @dreamlessx
+
+# Core pipeline
+/landmarkdiff/ @dreamlessx
+
+# Paper
+/paper/ @dreamlessx
+
+# Training infrastructure
+/scripts/train_* @dreamlessx
+/configs/ @dreamlessx
+
+# Gradio demo
+/scripts/app.py @dreamlessx
