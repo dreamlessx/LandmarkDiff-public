@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "landmarkdiff"
+version = "0.1.0"
+description = "Anatomically-conditioned latent diffusion for facial surgery outcome prediction from standard clinical photography"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "dreamlessx", email = "dreamlessx@users.noreply.github.com"}]
+
+dependencies = [
+    "torch>=2.1.0",
+    "diffusers>=0.27.0",
+    "transformers>=4.38.0",
+    "accelerate>=0.27.0",
+    "safetensors>=0.4.0",
+    "mediapipe>=0.10.9",
+    "opencv-python>=4.9.0",
+    "numpy>=1.26.0",
+    "Pillow>=10.0.0",
+]
+
+[project.optional-dependencies]
+train = [
+    "wandb>=0.16.0",
+    "webdataset>=0.2.0",
+    "deepspeed>=0.13.0",
+    "lpips>=0.1.4",
+    "insightface>=0.7.3",
+    "onnxruntime-gpu>=1.17.0",
+]
+eval = [
+    "torch-fidelity>=0.3.0",
+    "lpips>=0.1.4",
+    "scikit-image>=0.22.0",
+]
+app = [
+    "gradio>=4.15.0",
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.2.0",
+    "mypy>=1.8.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["landmarkdiff*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

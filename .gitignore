@@ -1,0 +1,64 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ML artifacts
+*.safetensors
+*.ckpt
+*.bin
+*.pt
+*.pth
+wandb/
+outputs/
+checkpoints/
+
+# Data
+data/raw/
+data/processed/
+*.tar
+*.tar.gz
+*.webdataset
+
+# Environment
+.env
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+slurm-*.out
+
+# LaTeX build artifacts
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.log
+paper/*.out
+paper/*.synctex.gz
+paper/*.fls
+paper/*.fdb_latexmk
+
+# Generated outputs
+scripts/demo_output/
+scripts/final_output/
+scripts/inference_output/
+
+# Generated data (too large for git)
+data/ffhq_samples/
+data/synthetic_pairs/
+data/real_pairs/
+data/real_processed/
+data/demo_pairs/

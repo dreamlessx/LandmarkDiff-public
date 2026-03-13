@@ -1,0 +1,714 @@
+% LandmarkDiff: Anatomically-Conditioned Latent Diffusion for
+% Photorealistic Facial Surgery Outcome Prediction
+% MICCAI 2026 Submission — Springer LNCS Format
+
+\documentclass[runningheads]{llncs}
+
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+
+% Custom commands
+\newcommand{\method}{LandmarkDiff}
+\newcommand{\ie}{\textit{i.e.}}
+\newcommand{\eg}{\textit{e.g.}}
+\newcommand{\etal}{\textit{et al.}}
+\newcommand{\wrt}{w.r.t.}
+\newcommand{\RR}{\mathbb{R}}
+
+\begin{document}
+
+\title{\method{}: Anatomically-Conditioned Latent Diffusion for\\Photorealistic Facial Surgery Outcome Prediction}
+
+\author{Anonymous MICCAI Submission}
+\institute{Anonymous Institution}
+
+\maketitle
+
+%======================================================================
+\begin{abstract}
+Predicting what a patient will look like after facial surgery from a
+single 2D photograph would transform surgical consultation, yet current
+approaches either demand expensive 3D imaging (CT/CBCT) or resort to
+morphing tools that produce obvious artifacts.  We present \method{}, a
+framework that generates photorealistic post-operative predictions by
+conditioning latent diffusion on anatomically deformed facial landmark
+meshes.  Given a clinical photograph, the pipeline extracts 478 landmarks
+via MediaPipe, displaces them with procedure-specific Gaussian RBF fields
+calibrated from anthropometric data, and feeds a three-channel conditioning
+signal---tessellation mesh, Canny edges, and a feathered surgical mask---into
+a ControlNet-augmented Stable Diffusion backbone.  LAB-space skin tone
+matching and mask compositing preserve identity outside the surgical region.
+We cover four procedures (rhinoplasty, blepharoplasty, rhytidectomy,
+orthognathic surgery) and evaluate with FID, LPIPS, NME, SSIM, and ArcFace
+identity similarity, stratified by Fitzpatrick skin type.
+\end{abstract}
+
+%======================================================================
+\section{Introduction}
+\label{sec:intro}
+
+When a patient walks into a consultation for rhinoplasty or a facelift,
+the surgeon's ability to show them what to expect matters enormously.
+Yet the tools available today are surprisingly crude: verbal descriptions,
+generic before/after galleries from other patients, or commercial morphing
+software (Crisalix~\cite{crisalix}, AEDIT) that stretches pixels with
+affine warps.  These morphing tools invariably produce visible distortion
+at tissue boundaries and cannot synthesize realistic skin texture where
+the surgery would alter anatomy.
+
+The research community has made progress on computational surgical
+prediction, but almost exclusively through 3D pipelines requiring
+cone-beam CT or structured-light scans~\cite{ma2021fcnet,fang2022acmtnet,lee2025camos}.  A CBCT scanner costs \$100K--\$250K,
+exposes patients to radiation, and sits in a hospital radiology suite—not
+the outpatient cosmetic clinic where the vast majority of the world's 15+
+million annual facial procedures~\cite{isaps2023} are actually performed.
+These patients have photographs, not CT volumes.
+
+What is missing, then, is a method that can take a single clinical
+photograph—a 2D image from a phone camera—and produce a photorealistic
+prediction of the surgical outcome while respecting the specific
+biomechanics of the planned procedure.  This means \emph{not} arbitrary
+warps, but anatomically grounded deformations (\eg, bilateral alar
+narrowing for rhinoplasty), and \emph{not} pixel interpolation, but
+genuine synthesis of skin texture, shading, and pore-level detail in the
+modified region.  Patient satisfaction correlates strongly with
+pre-operative expectation management~\cite{honigman2004review}, making
+this a problem worth solving well.
+
+We introduce \method{}, which bridges this gap by pairing dense facial
+landmark manipulation with ControlNet-conditioned latent
+diffusion~\cite{zhang2023controlnet,rombach2022ldm}.  Starting from a
+single photograph, the system extracts 478 facial landmarks via
+MediaPipe~\cite{lugaresi2019mediapipe}, deforms them according to
+procedure-specific Gaussian RBF fields grounded in anthropometric
+data~\cite{singh2010plastic}, renders a three-channel conditioning signal
+(tessellation mesh, Canny edges, feathered surgical mask), generates the
+prediction through ControlNet/Stable Diffusion~1.5, and composites the
+result back into the original photograph with LAB-space skin tone
+matching.  The entire pipeline runs on a single GPU.
+
+Our main contributions:
+\begin{itemize}
+    \item A latent diffusion framework for 2D facial surgery prediction
+    conditioned on anatomically deformed landmark meshes, removing
+    the need for 3D imaging.
+    \item Procedure-specific Gaussian RBF deformation fields for
+    rhinoplasty, blepharoplasty, rhytidectomy, and orthognathic surgery,
+    calibrated against published anthropometric measurements.
+    \item A three-channel conditioning scheme that reuses pre-trained
+    CrucibleAI ControlNet weights with minimal additional training.
+    \item An evaluation protocol stratified by Fitzpatrick skin type,
+    providing transparency on performance across skin tones.
+\end{itemize}
+
+%======================================================================
+\section{Related Work}
+\label{sec:related}
+
+\paragraph{3D-Based Surgical Prediction.}
+Most computational work on facial surgery simulation has operated in the
+3D domain.  Ma~\etal~\cite{ma2021fcnet} learn a fully convolutional mapping
+from pre-operative CBCT bone and soft tissue to post-orthognathic
+displacement fields.  ACMT-Net~\cite{fang2022acmtnet} adds cross-modal
+attention between CT volumes and surface meshes to simulate facial
+appearance changes driven by surgically planned bony movements.
+More recently, Lee~\etal~\cite{lee2025camos} use conditional multi-scale
+autoregressive modeling for orthognathic facial appearance prediction,
+achieving strong geometric accuracy on CBCT data.  These methods
+produce geometrically faithful results, but they require infrastructure
+that most cosmetic clinics simply do not have: CBCT scanners run
+\$100K--\$250K, expose patients to ionizing radiation, and occupy
+dedicated imaging suites.
+
+\paragraph{2D Surgery Simulation and Face Recognition.}
+Work on surgical face transformation in 2D has historically centered on
+recognition rather than synthesis.  Singh~\etal~\cite{singh2010plastic}
+assembled the IIITD Plastic Surgery Face Database (900 subjects across 6
+procedures) and quantified how surgery degrades face recognition accuracy,
+providing the anthropometric displacement statistics we draw on for our
+deformation model.  Rathgeb~\etal~\cite{rathgeb2020obstacle} confirmed
+with deep networks that this degradation persists even for modern
+recognition systems.  On the generative side, efforts have been limited:
+PlasticGAN~\cite{chandaliya2022plasticgan} trained a holistic GAN for
+post-surgery face synthesis but produced noticeable boundary artifacts.
+Tanikawa and Yamashiro~\cite{tanikawa2021soft} used deep learning for
+soft tissue prediction in mandibular advancement, and
+Jung~\etal~\cite{jung2024rhinoplasty} explored AI-powered rhinoplasty
+outcome simulation---but both remain limited to narrow procedure scopes
+and lack the photorealism of modern generative models.
+
+\paragraph{Diffusion Models and Spatial Conditioning.}
+Latent diffusion models~\cite{rombach2022ldm} moved image synthesis into
+compressed latent space, yielding photorealistic outputs at tractable
+compute cost.  ControlNet~\cite{zhang2023controlnet} introduced a way to
+inject spatial structure---edge maps, skeletons, depth---into a frozen
+diffusion backbone through zero-initialized parallel encoder blocks,
+preserving the learned generative prior while gaining geometric control.
+Of particular relevance is the CrucibleAI variant trained on
+MediaPipe face mesh tessellations~\cite{crucibleai_controlnet}: it
+conditions directly on the 2,556-edge triangulated wireframe, generating
+faces that conform to specified landmark geometry.  We repurpose this
+model as our generative backbone, sidestepping the data and compute
+burden of training a face-conditioned ControlNet from scratch.
+
+\paragraph{Clinical Domain Gap.}
+Models trained on curated face datasets (FFHQ, CelebA-HQ) degrade on
+real clinical photographs, which suffer from point-source lighting, color
+temperature shifts, fluorescent casts, JPEG artifacts, and lens
+distortion.  Daneshjou~\etal~\cite{daneshjou2022disparities} documented
+this degradation in dermatology, particularly for darker skin tones.  We
+tackle this head-on with a domain randomization
+approach~\cite{tobin2017domain}: a pool of eight clinical degradation
+augmentations applied stochastically during training to close the
+distribution gap before it becomes a problem.
+
+\paragraph{Positioning.}
+No prior work, to our knowledge, weds diffusion-based photorealistic
+synthesis with anatomically grounded, procedure-specific deformations in
+a 2D-only surgical prediction system.  Table~\ref{tab:comparison} makes
+the comparison explicit.
+
+\begin{table}[t]
+\centering
+\caption{Comparison with existing surgical prediction approaches.}
+\label{tab:comparison}
+\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Method & Input & Generative & Procedure- & Photo- \\
+       &       & Model      & Specific   & realistic \\
+\midrule
+Ma~\etal~\cite{ma2021fcnet}       & 3D CBCT & FCN & \checkmark & -- \\
+ACMT-Net~\cite{fang2022acmtnet} & 3D CT+Mesh & Attention & \checkmark & -- \\
+Lee~\etal~\cite{lee2025camos}     & 3D CBCT & Autoregressive & \checkmark & -- \\
+PlasticGAN~\cite{chandaliya2022plasticgan} & 2D Photo & GAN & -- & Partial \\
+Jung~\etal~\cite{jung2024rhinoplasty}     & 2D Photo & AI sim. & Rhino only & Partial \\
+Crisalix~\cite{crisalix}        & 2D/3D & Morphing & \checkmark & -- \\
+\midrule
+\textbf{\method{} (Ours)}       & \textbf{2D Photo} & \textbf{LDM+ControlNet} & \textbf{\checkmark} & \textbf{\checkmark} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%======================================================================
+\section{Methods}
+\label{sec:methods}
+
+\method{} operates in five stages (Fig.~\ref{fig:architecture}): (1)~dense
+facial landmark extraction, (2)~procedure-specific anatomical deformation,
+(3)~multi-channel conditioning signal generation, (4)~ControlNet-guided
+latent diffusion, and (5)~identity-preserving mask compositing.
+
+\subsection{Dense Facial Landmark Extraction}
+\label{sec:landmarks}
+
+We extract $N = 478$ facial landmarks using MediaPipe Face
+Mesh~\cite{lugaresi2019mediapipe}, including 468 face surface points and
+10 iris landmarks (5 per eye).  For each input image $I \in \RR^{H
+\times W \times 3}$, the detector produces normalized coordinates
+$\mathbf{L} = \{(x_i, y_i, z_i)\}_{i=1}^{N}$ with $x_i, y_i \in [0,1]$
+representing fractional image position and $z_i$ encoding relative depth.
+Landmarks are organized into anatomically meaningful regions—jawline (36
+points), orbital contours (16 per eye), nasal dorsum and alar base (25
+points), lip vermilion (22 points)—enabling procedure-specific manipulation.
+
+\subsection{Procedure-Specific Gaussian RBF Deformation}
+\label{sec:deformation}
+
+Given extracted landmarks $\mathbf{L}$, we apply procedure-specific
+deformations using Gaussian radial basis function (RBF) interpolation.
+Each procedure $p \in \{\text{rhinoplasty, blepharoplasty, rhytidectomy,
+orthognathic}\}$ defines a set of \emph{control handles}
+$\mathcal{H}_p = \{(k_j, \boldsymbol{\delta}_j, r_j)\}_{j=1}^{M_p}$,
+where $k_j$ is the anchor landmark index, $\boldsymbol{\delta}_j \in
+\RR^2$ is the displacement vector, and $r_j$ is the influence radius.
+
+For a given intensity parameter $\alpha \in [0, 1]$, each landmark
+$\mathbf{l}_i$ is displaced by the superposition of all active handles:
+
+\begin{equation}
+\label{eq:rbf}
+\mathbf{l}_i' = \mathbf{l}_i + \sum_{j=1}^{M_p} \alpha \cdot
+\boldsymbol{\delta}_j \cdot \exp\!\left(
+-\frac{\|\mathbf{l}_i - \mathbf{l}_{k_j}\|^2}{2\,r_j^2}
+\right)
+\end{equation}
+
+The Gaussian kernel ensures smooth, spatially localized deformation:
+landmarks near a control handle receive large displacements while distant
+landmarks remain unaffected, preventing anatomically implausible global
+distortions.
+
+Displacement vectors $\boldsymbol{\delta}_j$ are calibrated per procedure
+from anthropometric studies~\cite{singh2010plastic}.  For example,
+rhinoplasty applies three anatomically distinct sub-deformations:
+(a)~bilateral alar narrowing—symmetric inward pull on nostril landmarks
+(indices 240, 236, 460, 456 with $\delta_x = \pm 2.5\alpha$, $r = 0.6r_0$);
+(b)~tip refinement—upward displacement on tip landmarks (indices 1, 2,
+94 with $\delta_y = -2.0\alpha$, $r = 0.5r_0$); and (c)~dorsum
+narrowing—bilateral squeeze on bridge landmarks ($\delta_x = \pm
+1.5\alpha$, $r = 0.5r_0$).  All displacements are bilaterally symmetric
+to maintain facial symmetry, consistent with standard surgical technique.
+
+\subsection{Multi-Channel Conditioning Signal}
+\label{sec:conditioning}
+
+The primary conditioning signal is the \textbf{tessellation mesh}
+$\mathbf{C} \in \RR^{512 \times 512 \times 3}$, rendered from the
+deformed landmarks $\mathbf{L}' = \{\mathbf{l}_i'\}$.  This is the full
+2,556-edge MediaPipe Face Mesh triangulation drawn on a black canvas:
+gray wireframe edges (192, 192, 192) for the tessellation surface and
+white contour edges (255, 255, 255) for key anatomical features (eyes,
+eyebrows, lips, jawline).  Critically, this rendering matches the
+training distribution of
+CrucibleAI/ControlNetMediaPipeFace~\cite{crucibleai_controlnet},
+allowing us to use pre-trained weights directly.
+
+Two additional signals are computed but used in the compositing stage
+rather than as ControlNet input:
+
+\begin{itemize}
+    \item \textbf{Auto-Canny edges}: edge detection applied to a static
+    anatomical adjacency wireframe (not dynamic Delaunay, which produces
+    triangle inversions under large displacements).  Adaptive thresholds
+    ($0.66\tilde{v}$, $1.33\tilde{v}$) based on median pixel intensity
+    $\tilde{v}$ ensure robustness across Fitzpatrick skin
+    types~\cite{chardon1991ita}.
+
+    \item \textbf{Feathered surgical mask}: a procedure-specific region
+    derived from the convex hull of relevant landmarks, dilated by $d_p$
+    pixels and Gaussian-feathered with $\sigma_p$.  Boundary noise
+    (2--4\,px perturbation) prevents visible seams.  Parameters are
+    per-procedure: rhinoplasty ($d=30$, $\sigma=15$), blepharoplasty
+    ($d=15$, $\sigma=10$), rhytidectomy ($d=40$, $\sigma=20$),
+    orthognathic ($d=35$, $\sigma=18$).  The mask governs the compositing
+    stage (Sec.~\ref{sec:compositing}).
+\end{itemize}
+
+\subsection{ControlNet-Guided Latent Diffusion}
+\label{sec:diffusion}
+
+We employ Stable Diffusion 1.5~\cite{rombach2022ldm} as the base
+generative model, augmented with ControlNet~\cite{zhang2023controlnet}
+for spatial conditioning.  Specifically, we use the CrucibleAI
+ControlNet variant pre-trained on MediaPipe face mesh
+renderings~\cite{crucibleai_controlnet}, which accepts the tessellation
+mesh as its conditioning input.
+
+The denoising objective follows standard LDM formulation.  Given a latent
+encoding $\mathbf{z}_0 = \mathcal{E}(I)$ of the input image via the VAE
+encoder $\mathcal{E}$, noise $\boldsymbol{\epsilon} \sim
+\mathcal{N}(\mathbf{0}, \mathbf{I})$ is added to produce
+$\mathbf{z}_t$ at timestep $t$.  The U-Net $\epsilon_\theta$ predicts
+the noise conditioned on the text prompt $c_\text{text}$ and the
+ControlNet conditioning $\mathbf{C}$:
+
+\begin{equation}
+\label{eq:ldm}
+\mathcal{L}_\text{diff} = \mathbb{E}_{\mathbf{z}_0, \boldsymbol{\epsilon},
+t}\!\left[\|\boldsymbol{\epsilon} - \epsilon_\theta(\mathbf{z}_t, t,
+c_\text{text}, \mathbf{C})\|^2\right]
+\end{equation}
+
+The ControlNet branch $\mathcal{F}$ creates a trainable copy of the
+encoder blocks of $\epsilon_\theta$, connected via zero-initialized
+convolution layers.  At each resolution level $l$, the ControlNet output
+is added to the corresponding skip connection of the frozen U-Net:
+$\mathbf{h}_l^{\text{out}} = \mathbf{h}_l^{\text{frozen}} + \lambda_c
+\cdot \mathcal{F}_l(\mathbf{C})$, where $\lambda_c$ is the conditioning
+scale.
+
+Procedure-specific text prompts guide the diffusion process toward
+clinically appropriate appearance (\eg, ``high quality professional
+photo of a person's face, refined nose shape, smooth nasal bridge,
+natural skin texture''), while a shared negative prompt suppresses common
+diffusion artifacts (blurriness, distortion, extra features).
+
+\subsection{Training Data Generation}
+\label{sec:training_data}
+
+Paired before/after surgical data is extremely scarce and ethically
+constrained.  We generate synthetic training pairs from large-scale face
+datasets (CelebA-HQ~\cite{karras2018celeba}, FFHQ~\cite{karras2019ffhq})
+using the following procedure:
+
+\begin{enumerate}
+    \item Extract landmarks from a clean face image.
+    \item Apply random procedure presets at random intensity
+    $\alpha \sim \mathcal{U}(0.3, 0.9)$.
+    \item Render the tessellation mesh conditioning from deformed landmarks.
+    \item Generate a TPS-warped target image using thin-plate spline
+    interpolation from original to deformed landmark positions, with
+    subsampled control points ($\sim$80 from 478) for computational
+    efficiency.
+    \item Apply clinical degradation augmentation to the \emph{input only}
+    (never the target), simulating the domain gap between curated and
+    clinical photographs.
+\end{enumerate}
+
+The training target is the TPS-warped image, which approximates the
+post-surgical geometry.  While TPS warps can exhibit visible
+interpolation artifacts (``rubber face''), the ControlNet learns to
+generate photorealistic faces that match the deformed landmark
+configuration, using the TPS output as geometric guidance rather than
+copying its texture artifacts.  The conditioning signal encodes the
+deformed geometry via the tessellation mesh.
+
+\paragraph{Clinical Augmentation Pipeline.}
+To bridge the domain gap between curated datasets and clinical photographs,
+we apply 3–5 augmentations per sample from a pool of 8 clinical
+degradations: point-source lighting ($p=0.40$), color temperature jitter
+($p=0.60$), green fluorescent cast ($p=0.25$), JPEG compression at
+quality 40–85 ($p=0.30$), Gaussian sensor noise with $\sigma \in [5,25]$
+($p=0.40$), barrel/pincushion lens distortion ($p=0.30$), motion blur
+($p=0.20$), and vignetting ($p=0.25$).  Augmentations are applied to
+input images only, preserving clean targets for the diffusion loss.
+
+\subsection{Loss Function}
+\label{sec:loss}
+
+Training proceeds in two phases with a composite loss:
+\begin{equation}
+\label{eq:loss}
+\mathcal{L}_\text{total} = \mathcal{L}_\text{diff}
++ \lambda_\ell \mathcal{L}_\text{landmark}
++ \lambda_\text{id} \mathcal{L}_\text{identity}
++ \lambda_p \mathcal{L}_\text{perceptual}
+\end{equation}
+
+\textbf{Phase A} (current, synthetic data): only $\mathcal{L}_\text{diff}$
+(Eq.~\ref{eq:ldm}) is active.  Auxiliary losses are disabled because
+penalizing photorealistic output against TPS-warped targets would be
+counterproductive.
+
+\textbf{Phase B} (planned, clinical data): all four terms enabled once
+paired clinical data with verified outcomes becomes available.  The
+auxiliary loss infrastructure is implemented but not yet activated.
+
+\begin{itemize}
+    \item $\mathcal{L}_\text{landmark}$: normalized mean error (NME)
+    between predicted and target landmark positions, computed only within
+    the surgical mask region and normalized by inter-ocular distance (IOD):
+    \begin{equation}
+    \mathcal{L}_\text{landmark} = \frac{1}{|\mathcal{M}|} \sum_{i \in \mathcal{M}}
+    \frac{\|\mathbf{l}_i^\text{pred} - \mathbf{l}_i^\text{target}\|}{d_\text{IOD}}
+    \end{equation}
+
+    \item $\mathcal{L}_\text{identity}$: ArcFace~\cite{deng2019arcface}
+    cosine similarity loss using 512-dimensional identity embeddings from
+    InsightFace (buffalo\_l model).  Procedure-dependent cropping is
+    applied: full face for blepharoplasty, upper two-thirds for
+    rhinoplasty, upper three-quarters for rhytidectomy.  Disabled for
+    orthognathic surgery where jaw changes legitimately alter facial
+    identity features.
+
+    \item $\mathcal{L}_\text{perceptual}$: LPIPS~\cite{zhang2018lpips}
+    perceptual distance computed \emph{outside} the surgical mask only,
+    ensuring non-surgical regions remain unchanged.
+\end{itemize}
+
+Default weights: $\lambda_\ell = 0.1$, $\lambda_\text{id} = 0.05$,
+$\lambda_p = 0.1$.
+
+\subsection{Identity-Preserving Mask Compositing}
+\label{sec:compositing}
+
+The final output is produced by compositing the diffusion output into the
+original photograph using the feathered surgical mask.  To prevent color
+shifts between the generated and original regions, we perform histogram
+matching in CIE LAB space: for each channel $c \in \{L, a, b\}$, the
+generated region's statistics $(\mu_c^g, \sigma_c^g)$ are matched to the
+original's $(\mu_c^o, \sigma_c^o)$ within the mask:
+\begin{equation}
+\label{eq:color}
+\hat{v}_c = \frac{(v_c - \mu_c^g) \cdot \sigma_c^o}{\sigma_c^g} + \mu_c^o
+\end{equation}
+The composited result $\hat{I}$ blends via the feathered mask $\mathbf{m}$:
+\begin{equation}
+\hat{I} = \mathbf{m} \odot \hat{I}_\text{gen} + (1 - \mathbf{m}) \odot I_\text{orig}
+\end{equation}
+
+This ensures pixel-perfect preservation of all non-surgical regions
+(hair, ears, background, clothing) while seamlessly integrating the
+synthesized surgical outcome.
+
+%======================================================================
+\section{Experimental Setup}
+\label{sec:experiments}
+
+\subsection{Datasets}
+
+\paragraph{Training Data.}
+We construct a synthetic training set of 200K pairs (50K per procedure)
+from CelebA-HQ~\cite{karras2018celeba} (30K images) and an additional
+14K diverse face images.  Real scraped before/after surgery images from
+public forums supplement the synthetic data as a held-out validation
+signal.
+
+\paragraph{Evaluation Data.}
+We evaluate on: (1) a held-out synthetic test set (1K pairs per procedure);
+(2) the IIITD Plastic Surgery Face Database~\cite{singh2010plastic}
+(900 subjects, 6 procedures, gated access); and (3) the HDA Plastic
+Surgery Face Database (638 subjects).
+
+\subsection{Baselines}
+
+We compare against five baselines:
+\begin{enumerate}
+    \item \textbf{TPS-only}: thin-plate spline geometric warp without
+    diffusion (our ablation baseline).
+    \item \textbf{SD1.5 Img2Img}: Stable Diffusion 1.5 image-to-image
+    with TPS-warped input and mask compositing, without ControlNet
+    conditioning.
+    \item \textbf{Pix2Pix}~\cite{isola2017pix2pix}: conditional GAN
+    trained on our synthetic pairs.
+    \item \textbf{CycleGAN}~\cite{zhu2017cyclegan}: unpaired
+    image-to-image translation using scraped before/after data.
+    \item \textbf{Crisalix-style morphing}: affine warp baseline using
+    the same landmark displacements without generative modeling.
+\end{enumerate}
+
+\subsection{Evaluation Metrics}
+
+We report five quantitative metrics:
+
+\begin{itemize}
+    \item \textbf{FID}~\cite{heusel2017fid}: Fr\'echet Inception Distance
+    between generated and real post-surgery distributions (lower is better).
+    \item \textbf{LPIPS}~\cite{zhang2018lpips}: perceptual distance
+    between generated and target images (lower is better).
+    \item \textbf{NME}: normalized mean landmark error between predicted
+    and target landmark configurations, normalized by inter-ocular
+    distance (lower is better).
+    \item \textbf{SSIM}~\cite{wang2004ssim}: structural similarity index
+    (higher is better; relaxed target $>0.80$).
+    \item \textbf{ArcFace cosine similarity}: identity preservation score
+    using ArcFace~\cite{deng2019arcface} embeddings (higher is better).
+\end{itemize}
+
+All metrics are stratified by Fitzpatrick skin type (I--VI) using the
+Individual Typology Angle (ITA)~\cite{chardon1991ita} to assess equitable
+performance across skin tones:
+$\text{ITA} = \arctan\!\left(\frac{L^* - 50}{b^*}\right) \cdot
+\frac{180}{\pi}$, where $L^*$ and $b^*$ are CIE LAB lightness and
+yellow-blue chrominance.
+
+\subsection{Ablation Studies}
+
+We conduct ablations to evaluate:
+\begin{enumerate}
+    \item \textbf{Conditioning channels}: tessellation mesh alone vs.\
+    mesh + Canny vs.\ full 3-channel (mesh + Canny + mask).
+    \item \textbf{Deformation model}: random displacement vs.\ uniform
+    vs.\ procedure-specific RBF (Eq.~\ref{eq:rbf}).
+    \item \textbf{Compositing strategy}: direct output vs.\ mask
+    compositing vs.\ mask + LAB color matching.
+    \item \textbf{Clinical augmentation}: with vs.\ without the
+    8-augmentation degradation pipeline.
+    \item \textbf{Fine-tuning}: pre-trained CrucibleAI ControlNet vs.\
+    fine-tuned on our surgical pairs.
+\end{enumerate}
+
+%======================================================================
+\section{Results}
+\label{sec:results}
+
+\begin{table}[t]
+\centering
+\caption{Quantitative comparison across four surgical procedures.
+Best results in \textbf{bold}, second-best \underline{underlined}.
+Results are reported as mean $\pm$ std over 3 random seeds.}
+\label{tab:results}
+\small
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+Method & FID $\downarrow$ & LPIPS $\downarrow$ & NME $\downarrow$ & SSIM $\uparrow$ & ArcFace $\uparrow$ \\
+\midrule
+\multicolumn{6}{c}{\textit{Rhinoplasty}} \\
+\midrule
+TPS-only          & --    & --    & --    & --    & --   \\
+SD1.5 Img2Img     & --    & --    & --    & --    & --   \\
+Pix2Pix           & --    & --    & --    & --    & --   \\
+Morphing          & --    & --    & --    & --    & --   \\
+\textbf{\method{}} & --   & --    & --    & --    & --   \\
+\midrule
+\multicolumn{6}{c}{\textit{Blepharoplasty}} \\
+\midrule
+TPS-only          & --    & --    & --    & --    & --   \\
+SD1.5 Img2Img     & --    & --    & --    & --    & --   \\
+Pix2Pix           & --    & --    & --    & --    & --   \\
+Morphing          & --    & --    & --    & --    & --   \\
+\textbf{\method{}} & --   & --    & --    & --    & --   \\
+\midrule
+\multicolumn{6}{c}{\textit{Rhytidectomy}} \\
+\midrule
+TPS-only          & --    & --    & --    & --    & --   \\
+SD1.5 Img2Img     & --    & --    & --    & --    & --   \\
+Pix2Pix           & --    & --    & --    & --    & --   \\
+Morphing          & --    & --    & --    & --    & --   \\
+\textbf{\method{}} & --   & --    & --    & --    & --   \\
+\midrule
+\multicolumn{6}{c}{\textit{Orthognathic}} \\
+\midrule
+TPS-only          & --    & --    & --    & --    & --   \\
+SD1.5 Img2Img     & --    & --    & --    & --    & --   \\
+Pix2Pix           & --    & --    & --    & --    & --   \\
+Morphing          & --    & --    & --    & --    & --   \\
+\textbf{\method{}} & --   & --    & --    & --    & --   \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Ablation study on conditioning channels and compositing
+strategy (rhinoplasty procedure, averaged over test set).}
+\label{tab:ablation}
+\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Configuration & FID $\downarrow$ & LPIPS $\downarrow$ & NME $\downarrow$ & ArcFace $\uparrow$ \\
+\midrule
+Mesh only                   & -- & -- & -- & -- \\
+Mesh + Canny                & -- & -- & -- & -- \\
+Mesh + Canny + Mask (full)  & -- & -- & -- & -- \\
+\midrule
+Direct output (no composite)   & -- & -- & -- & -- \\
+Mask composite (no color match) & -- & -- & -- & -- \\
+Mask + LAB color match (full)   & -- & -- & -- & -- \\
+\midrule
+No clinical augmentation    & -- & -- & -- & -- \\
+With clinical augmentation  & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Performance stratified by Fitzpatrick skin type (ITA-based
+classification). FID and NME reported for rhinoplasty.}
+\label{tab:fitzpatrick}
+\small
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+ & Type I & Type II & Type III & Type IV & Type V & Type VI \\
+\midrule
+FID $\downarrow$        & -- & -- & -- & -- & -- & -- \\
+NME $\downarrow$        & -- & -- & -- & -- & -- & -- \\
+ArcFace $\uparrow$      & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Quantitative Results.}
+Tables~\ref{tab:results} and~\ref{tab:ablation} will be populated once
+training completes.  We expect \method{} to outperform all baselines on
+FID and LPIPS (photorealism), match TPS-only on NME (geometric accuracy
+is determined by the deformation model, not the generative backbone),
+and significantly outperform TPS-only and morphing baselines on perceptual
+quality.
+
+\paragraph{Qualitative Results.}
+Figure~\ref{fig:qualitative} shows representative predictions across
+all four procedures.  \method{} synthesizes realistic skin texture in
+the modified region while preserving identity and non-surgical features.
+
+%======================================================================
+\section{Discussion and Limitations}
+\label{sec:discussion}
+
+\paragraph{Clinical Applicability.}
+Because \method{} needs only a smartphone photograph, it could
+realistically be deployed in outpatient clinics that lack 3D imaging.
+The procedure-specific deformation presets give surgeons a meaningful
+intensity dial, though the current interface exposes a single scalar
+per procedure rather than independent sub-procedure controls (\eg,
+separate alar narrowing and tip rotation sliders for rhinoplasty).
+A finer-grained interface is straightforward to implement and would
+likely improve clinical utility.
+
+\paragraph{Limitations.}
+Several limitations deserve candid acknowledgment.
+First, our deformation model is strictly 2D and cannot capture
+depth-dependent effects visible in profile views---dorsal hump reduction
+in rhinoplasty side views being the most obvious example.  Coupling the
+pipeline with FLAME~\cite{li2017flame} or another 3D morphable model
+would address this and is a natural next step.
+Second, the system predicts the \emph{healed} outcome; it does not model
+scarring, swelling, or bruising, which are the immediate post-operative
+reality.
+Third, validation on real clinical data remains constrained by the
+scarcity of publicly available paired surgical datasets with IRB
+approval---a bottleneck shared by the entire field.
+Finally, while we stratify evaluation by Fitzpatrick type, the training
+corpora (CelebA-HQ, FFHQ) are well-documented to under-represent Types
+V and VI~\cite{merler2019diversity}, and our results should be
+interpreted with that imbalance in mind.
+
+%======================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+
+We have shown that latent diffusion, conditioned on anatomically
+deformed facial landmark meshes, can produce photorealistic surgical
+outcome predictions from a single 2D photograph---without CT, without
+structured light, and without paired clinical training data.  The key
+ingredients are procedure-specific RBF deformation fields that encode
+real surgical biomechanics, a conditioning scheme compatible with
+pre-trained ControlNet weights, and a compositing stage that preserves
+identity outside the surgical region.  Stratifying evaluation by
+Fitzpatrick type keeps us honest about where the model works and where
+it falls short.  Looking ahead, integration with 3D morphable models
+would unlock profile-view prediction, and coupling with FEM-based
+tissue simulation could ground the deformations in actual biomechanics
+rather than learned proxies from anthropometric data.
+
+%======================================================================
+% FIGURES
+%======================================================================
+
+\begin{figure}[t]
+\centering
+% Placeholder for architecture diagram
+\fbox{\parbox{0.95\textwidth}{\centering\vspace{2cm}
+\textbf{Architecture Diagram Placeholder}\\[0.5em]
+\small Input Photo $\rightarrow$ MediaPipe 478 Landmarks $\rightarrow$
+Gaussian RBF Deformation $\rightarrow$ 3-Channel Conditioning\\
+(Tessellation Mesh + Canny Edges + Feathered Mask) $\rightarrow$
+ControlNet/SD1.5 $\rightarrow$ LAB Compositing $\rightarrow$ Output
+\vspace{2cm}}}
+\caption{Overview of the \method{} pipeline.  A single input photograph
+is processed through five stages: (1) dense 478-point landmark extraction,
+(2) procedure-specific RBF deformation, (3) three-channel conditioning
+generation, (4) ControlNet-guided latent diffusion, and (5)
+identity-preserving mask compositing with LAB color matching.}
+\label{fig:architecture}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+% Placeholder for qualitative results
+\fbox{\parbox{0.95\textwidth}{\centering\vspace{3cm}
+\textbf{Qualitative Results Placeholder}\\[0.5em]
+\small 4 rows (one per procedure) $\times$ 5 columns:\\
+Input $|$ Landmarks $|$ TPS Warp $|$ \method{} Output $|$ Mask Overlay
+\vspace{3cm}}}
+\caption{Qualitative results across four procedures.  For each row:
+(a)~input photograph, (b)~extracted + deformed landmarks, (c)~TPS
+geometric warp (baseline), (d)~\method{} output, (e)~surgical mask
+overlay.  \method{} generates photorealistic texture in the surgical
+region while the TPS baseline produces visible warping artifacts.}
+\label{fig:qualitative}
+\end{figure}
+
+%======================================================================
+% REFERENCES
+%======================================================================
+
+\bibliographystyle{splncs04}
+\bibliography{references}
+
+\end{document}

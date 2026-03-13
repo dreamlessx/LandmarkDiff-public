@@ -1,0 +1,51 @@
+# LandmarkDiff Training Configuration
+
+# Model
+model:
+  controlnet: "CrucibleAI/ControlNetMediaPipeFace"
+  base_model: "runwayml/stable-diffusion-v1-5"
+
+# Training — Phase A (synthetic TPS data)
+training:
+  phase: "A"                      # A = diffusion only, B = all losses
+  learning_rate: 1.0e-5
+  lr_scheduler: "cosine"
+  warmup_steps: 500
+  train_batch_size: 4
+  gradient_accumulation_steps: 4  # effective batch = 16
+  num_train_steps: 10000          # Phase A validation run
+  mixed_precision: "bf16"         # NEVER fp16 — FLUX/SD activations exceed fp16 range
+  ema_decay: 0.9999               # from first run, not retrofitted
+  seed: 42
+
+# Loss weights (Phase B only)
+loss:
+  diffusion: 1.0
+  landmark: 0.1
+  identity: 0.05
+  perceptual: 0.1
+
+# Data
+data:
+  resolution: 512
+  num_workers: 16
+  pin_memory: true
+
+# Checkpointing
+checkpointing:
+  save_every: 5000
+  resume_from_checkpoint: "latest"
+
+# Logging
+logging:
+  wandb_project: "landmarkdiff"
+  log_every: 50
+  sample_every: 1000
+
+# Safeguards
+safeguards:
+  vae_frozen: true                # gradient leak corrupts latent space
+  groupnorm_not_batchnorm: true   # batch size 4 makes BatchNorm unstable
+  precompute_tps_warps: true      # CPU bottleneck prevention
+  controlnet_scale_max: 1.2       # sum > 1.2 = activation saturation
+  git_lfs: true                   # for .safetensors, .ckpt, .bin, .pt
