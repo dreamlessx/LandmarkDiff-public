@@ -53,8 +53,10 @@ PROCEDURE_LANDMARKS: dict[str, list[int]] = {
         300, 293, 334, 296, 336,  # right brow
         9, 8, 10, 109, 67, 103, 338, 297, 332, # forehead/upper face
     ],
+    "mentoplasty": [
+        148, 149, 150, 152, 171, 175, 176, 377,
+    ],
 }
-
 # Default influence radii per procedure (in pixels at 512x512)
 PROCEDURE_RADIUS: dict[str, float] = {
     "rhinoplasty": 30.0,
@@ -62,6 +64,7 @@ PROCEDURE_RADIUS: dict[str, float] = {
     "rhytidectomy": 40.0,
     "orthognathic": 35.0,
     "brow_lift": 25.0,
+    "mentoplasty": 25.0,
 }
 
 
@@ -346,5 +349,32 @@ def _get_procedure_handles(
                     displacement=np.array([0.0, -1.5 * scale]),
                     influence_radius=radius * 1.2,
                 ))
-
+    elif procedure == "mentoplasty":
+        # --- Chin tip advancement: move chin forward (upward in 2D) ---
+        chin_tip = [152, 175]
+        for idx in chin_tip:
+            if idx in indices:
+                handles.append(DeformationHandle(
+                    landmark_index=idx,
+                    displacement=np.array([0.0, -4.0 * scale]),
+                    influence_radius=radius,
+                ))
+        # --- Lower chin contour: follow tip with softer displacement ---
+        lower_contour = [148, 149, 150, 176, 377]
+        for idx in lower_contour:
+            if idx in indices:
+                handles.append(DeformationHandle(
+                    landmark_index=idx,
+                    displacement=np.array([0.0, -2.5 * scale]),
+                    influence_radius=radius * 0.8,
+                ))
+        # --- Jaw angles: minimal upward pull for natural transition ---
+        jaw_angles = [171, 396]
+        for idx in jaw_angles:
+            if idx in indices:
+                handles.append(DeformationHandle(
+                    landmark_index=idx,
+                    displacement=np.array([0.0, -1.0 * scale]),
+                    influence_radius=radius * 0.6,
+                ))
     return handles
