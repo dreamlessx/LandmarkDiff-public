@@ -101,36 +101,66 @@ sbatch scripts/train_slurm.sh
 
 See [docs/GPU_TRAINING_GUIDE.md](docs/GPU_TRAINING_GUIDE.md) for detailed HPC setup instructions.
 
+### Docker
+
+```bash
+docker build -t landmarkdiff .
+docker compose up landmarkdiff
+# Open http://localhost:7860
+```
+
+### Make targets
+
+```bash
+make help          # Show all available commands
+make install       # Install (inference only)
+make install-all   # Install everything
+make test          # Run tests
+make lint          # Run linter
+make demo          # Launch Gradio demo
+make train         # Train ControlNet
+make paper         # Build MICCAI paper PDF
+make docker        # Build Docker image
+```
+
 ## Project Structure
 
 ```
-landmarkdiff/
-├── landmarks.py          # MediaPipe 478-point face mesh extraction
-├── conditioning.py        # ControlNet conditioning (tessellation + Canny)
-├── manipulation.py        # Gaussian RBF landmark deformation
-├── masking.py             # Feathered surgical mask generation
-├── inference.py           # Full pipeline (ControlNet / img2img / TPS modes)
-├── losses.py              # Combined loss (diffusion + landmark + identity + perceptual)
-├── evaluation.py          # Metrics (FID, LPIPS, SSIM, NME, Fitzpatrick ITA)
-├── clinical.py            # Clinical edge cases (vitiligo, Bell's palsy, keloid)
-├── postprocess.py         # Face restoration (CodeFormer, GFPGAN, Real-ESRGAN)
-└── synthetic/
-    ├── pair_generator.py  # Training pair generation pipeline
-    ├── tps_warp.py        # Thin-plate spline warping
-    └── augmentation.py    # Clinical photography augmentations
+landmarkdiff/               # Core library
+    landmarks.py            #   MediaPipe 478-point face mesh extraction
+    conditioning.py         #   ControlNet conditioning (tessellation + Canny)
+    manipulation.py         #   Gaussian RBF landmark deformation
+    masking.py              #   Feathered surgical mask generation
+    inference.py            #   Full pipeline (ControlNet / img2img / TPS modes)
+    losses.py               #   Combined loss (diffusion + landmark + identity + perceptual)
+    evaluation.py           #   Metrics (FID, LPIPS, SSIM, NME, Fitzpatrick ITA)
+    clinical.py             #   Clinical edge cases (vitiligo, Bell's palsy, keloid)
+    postprocess.py          #   Face restoration (CodeFormer, GFPGAN, Real-ESRGAN)
+    synthetic/
+        pair_generator.py   #   Training pair generation pipeline
+        tps_warp.py         #   Thin-plate spline warping
+        augmentation.py     #   Clinical photography augmentations
 
-scripts/
-├── app.py                 # Gradio web demo
-├── train_controlnet.py    # ControlNet fine-tuning script
-├── evaluate.py            # Automated evaluation harness
-├── demo.py                # CLI demo with visualizations
-└── ...                    # Data download, pair generation, SLURM scripts
+scripts/                    # CLI tools and job scripts
+    app.py                  #   Gradio web demo (5 tabs)
+    train_controlnet.py     #   ControlNet fine-tuning
+    evaluate.py             #   Automated evaluation harness
+    demo.py                 #   CLI demo with visualizations
+    ...                     #   Data download, pair generation, SLURM scripts
 
-paper/                     # MICCAI 2026 manuscript (Springer LNCS)
-configs/                   # Training configuration
-containers/                # Apptainer/Singularity definition
-tests/                     # Unit tests
+examples/                   # Example scripts for common tasks
+benchmarks/                 # Performance benchmarks
+paper/                      # MICCAI 2026 manuscript (Springer LNCS)
+docs/                       # Documentation, tutorials, API reference
+    tutorials/              #   Quick start, custom procedures, training, deployment
+    api/                    #   Module-level API docs
+configs/                    # Training configuration (YAML)
+containers/                 # Apptainer/Singularity definition
+tests/                      # Unit tests (9 test modules)
+demos/                      # Sample output images
 ```
+
+See [docs/](docs/) for full documentation, [examples/](examples/) for runnable scripts, and [benchmarks/](benchmarks/) for performance data.
 
 ## Evaluation Metrics
 

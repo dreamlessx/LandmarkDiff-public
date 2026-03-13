@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Discussions
+    url: https://github.com/dreamlessx/LandmarkDiff-public/discussions
+    about: Ask questions and discuss ideas
+  - name: Model Zoo
+    url: https://github.com/dreamlessx/LandmarkDiff-public/blob/main/MODEL_ZOO.md
+    about: Pre-trained models and checkpoints
