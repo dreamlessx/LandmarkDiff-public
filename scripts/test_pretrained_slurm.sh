@@ -8,10 +8,10 @@
 #SBATCH --time=01:00:00
 #SBATCH --output=slurm-test-%j.out
 
-WORK_DIR="/data/p_csb_meiler/agarwm5/landmarkdiff_work/LandmarkDiff"
+WORK_DIR="/path/to/LandmarkDiff"
 cd "$WORK_DIR"
 
-source /home/agarwm5/miniconda3/etc/profile.d/conda.sh
+source $HOME/miniconda3/etc/profile.d/conda.sh
 conda activate landmarkdiff
 
 python scripts/test_pretrained.py

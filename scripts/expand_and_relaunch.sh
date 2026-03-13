@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=tesla_expand
 #SBATCH --partition=batch
-#SBATCH --account=p_csb_meiler
+#SBATCH --account=YOUR_GROUP
 #SBATCH --mem=16G
 #SBATCH --cpus-per-task=4
 #SBATCH --time=02:00:00
@@ -10,10 +10,10 @@
 # Wait for CelebA extraction to finish, then merge all faces
 # and relaunch synthetic generation with the full pool
 
-WORK_DIR="/data/p_csb_meiler/agarwm5/landmarkdiff_work/LandmarkDiff"
+WORK_DIR="/path/to/LandmarkDiff"
 cd "$WORK_DIR"
 
-source /home/agarwm5/miniconda3/etc/profile.d/conda.sh
+source $HOME/miniconda3/etc/profile.d/conda.sh
 conda activate landmarkdiff
 
 echo "=== Expanding face pool at $(date) ==="
@@ -67,17 +67,17 @@ cat > /tmp/synth_wave2.sh << 'INNEREOF'
 #!/bin/bash
 #SBATCH --job-name=tesla_synth2
 #SBATCH --partition=batch
-#SBATCH --account=p_csb_meiler
+#SBATCH --account=YOUR_GROUP
 #SBATCH --mem=32G
 #SBATCH --cpus-per-task=8
 #SBATCH --time=48:00:00
 #SBATCH --output=slurm-synth2-%A_%a.out
 #SBATCH --array=0-3
 
-WORK_DIR="/data/p_csb_meiler/agarwm5/landmarkdiff_work/LandmarkDiff"
+WORK_DIR="/path/to/LandmarkDiff"
 cd "$WORK_DIR"
 
-source /home/agarwm5/miniconda3/etc/profile.d/conda.sh
+source $HOME/miniconda3/etc/profile.d/conda.sh
 conda activate landmarkdiff
 
 PROCEDURES=("rhinoplasty" "blepharoplasty" "rhytidectomy" "orthognathic")

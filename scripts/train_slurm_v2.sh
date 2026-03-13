@@ -20,7 +20,7 @@ export WANDB_MODE=offline
 # Trap preemption signal -> save checkpoint -> requeue
 trap 'echo "Caught USR1 — saving checkpoint..."; kill -INT $TRAIN_PID; wait $TRAIN_PID; scontrol requeue $SLURM_JOB_ID' USR1
 
-WORK_DIR="/data/p_csb_meiler/agarwm5/landmarkdiff_work/LandmarkDiff"
+WORK_DIR="/path/to/LandmarkDiff"
 DATA_DIR="${WORK_DIR}/data/synthetic_pairs_v2"
 CKPT_DIR="${WORK_DIR}/checkpoints_v2"
 WANDB_DIR="${WORK_DIR}/wandb"
@@ -29,7 +29,7 @@ mkdir -p "$CKPT_DIR" "$WANDB_DIR"
 
 cd "$WORK_DIR"
 
-source /home/agarwm5/miniconda3/etc/profile.d/conda.sh
+source $HOME/miniconda3/etc/profile.d/conda.sh
 conda activate landmarkdiff
 
 echo "=== Phase A v2 Training ==="
