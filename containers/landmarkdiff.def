@@ -1,0 +1,33 @@
+Bootstrap: docker
+From: nvcr.io/nvidia/pytorch:24.01-py3
+
+%labels
+    Author Ary
+    Version 0.1.0
+
+%post
+    pip install --no-cache-dir \
+        diffusers>=0.27.0 \
+        transformers>=4.38.0 \
+        accelerate>=0.27.0 \
+        safetensors>=0.4.0 \
+        mediapipe>=0.10.9 \
+        opencv-python>=4.9.0 \
+        webdataset>=0.2.0 \
+        wandb>=0.16.0 \
+        lpips>=0.1.4 \
+        deepspeed>=0.13.0 \
+        insightface>=0.7.3 \
+        onnxruntime-gpu>=1.17.0 \
+        torch-fidelity>=0.3.0 \
+        scikit-image>=0.22.0
+
+    # Install libx265 for HEVC video decoding
+    apt-get update && apt-get install -y libx265-dev && rm -rf /var/lib/apt/lists/*
+
+%environment
+    export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+    export TORCH_NCCL_ASYNC_ERROR_HANDLING=1
+
+%runscript
+    exec python "$@"

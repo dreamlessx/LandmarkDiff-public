@@ -1,0 +1,338 @@
+"""Landmark manipulation engine with Free-Form Deformation (FFD/RBF).
+
+All v1/v2 UI uses RELATIVE sliders (0-100 intensity).
+Millimeter inputs exist only in v3+ with FLAME calibrated metric space.
+"""
+
+from __future__ import annotations
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Optional, TYPE_CHECKING
+
+import numpy as np
+
+from landmarkdiff.landmarks import FaceLandmarks, LANDMARK_REGIONS
+
+if TYPE_CHECKING:
+    from landmarkdiff.clinical import ClinicalFlags
+
+
+@dataclass(frozen=True)
+class DeformationHandle:
+    """A control handle for FFD manipulation."""
+
+    landmark_index: int
+    displacement: np.ndarray  # (2,) or (3,) pixel displacement
+    influence_radius: float   # Gaussian RBF radius in pixels
+
+
+# Procedure-specific landmark indices from the technical specification
+PROCEDURE_LANDMARKS: dict[str, list[int]] = {
+    "rhinoplasty": [
+        1, 2, 4, 5, 6, 19, 94, 141, 168, 195, 197, 236, 240,
+        274, 275, 278, 279, 294, 326, 327, 360, 363, 370, 456, 460,
+    ],
+    "blepharoplasty": [
+        33, 7, 163, 144, 145, 153, 154, 155, 157, 158, 159, 160, 161, 246,
+        362, 382, 381, 380, 374, 373, 390, 249, 263, 466, 388, 387, 386,
+        385, 384, 398,
+    ],
+    "rhytidectomy": [
+        10, 21, 54, 58, 67, 93, 103, 109, 127, 132, 136, 150, 162, 172,
+        176, 187, 207, 213, 234, 284, 297, 323, 332, 338, 356, 361, 365,
+        379, 389, 397, 400, 427, 454,
+    ],
+    "orthognathic": [
+        0, 17, 18, 36, 37, 39, 40, 57, 61, 78, 80, 81, 82, 84, 87, 88,
+        91, 95, 146, 167, 169, 170, 175, 181, 191, 200, 201, 202, 204,
+        208, 211, 212, 214, 269, 270, 291, 311, 312, 317, 321, 324, 325,
+        375, 396, 405, 407, 415,
+    ],
+}
+
+# Default influence radii per procedure (in pixels at 512x512)
+PROCEDURE_RADIUS: dict[str, float] = {
+    "rhinoplasty": 30.0,
+    "blepharoplasty": 15.0,
+    "rhytidectomy": 40.0,
+    "orthognathic": 35.0,
+}
+
+
+def gaussian_rbf_deform(
+    landmarks: np.ndarray,
+    handle: DeformationHandle,
+) -> np.ndarray:
+    """Apply Gaussian RBF deformation around a control handle.
+
+    Formula: delta_p_i = delta_handle * exp(-||p_i - p_handle||^2 / (2 * r^2))
+
+    Args:
+        landmarks: (N, 2) or (N, 3) landmark coordinates in pixels.
+        handle: Control handle specifying index, displacement, and radius.
+
+    Returns:
+        New landmark array with deformation applied (immutable — returns copy).
+    """
+    result = landmarks.copy()
+    center = landmarks[handle.landmark_index, :2]
+    displacement = handle.displacement[:2]
+
+    distances_sq = np.sum((landmarks[:, :2] - center) ** 2, axis=1)
+    weights = np.exp(-distances_sq / (2.0 * handle.influence_radius ** 2))
+
+    result[:, 0] += displacement[0] * weights
+    result[:, 1] += displacement[1] * weights
+
+    if landmarks.shape[1] > 2 and len(handle.displacement) > 2:
+        result[:, 2] += handle.displacement[2] * weights
+
+    return result
+
+
+def apply_procedure_preset(
+    face: FaceLandmarks,
+    procedure: str,
+    intensity: float = 50.0,
+    image_size: int = 512,
+    clinical_flags: Optional["ClinicalFlags"] = None,
+) -> FaceLandmarks:
+    """Apply a surgical procedure preset to landmarks.
+
+    Args:
+        face: Input face landmarks.
+        procedure: One of 'rhinoplasty', 'blepharoplasty', 'rhytidectomy', 'orthognathic'.
+        intensity: Relative intensity 0-100 (mild=33, moderate=66, aggressive=100).
+        image_size: Reference image size for displacement scaling.
+        clinical_flags: Optional clinical condition flags.
+
+    Returns:
+        New FaceLandmarks with manipulated landmarks.
+    """
+    if procedure not in PROCEDURE_LANDMARKS:
+        raise ValueError(f"Unknown procedure: {procedure}. Choose from {list(PROCEDURE_LANDMARKS)}")
+
+    landmarks = face.landmarks.copy()
+    indices = PROCEDURE_LANDMARKS[procedure]
+    radius = PROCEDURE_RADIUS[procedure]
+    scale = intensity / 100.0
+
+    # Ehlers-Danlos: wider influence radii for hypermobile tissue
+    if clinical_flags and clinical_flags.ehlers_danlos:
+        radius *= 1.5
+
+    # Procedure-specific displacement vectors (normalized to image_size)
+    pixel_scale = image_size / 512.0
+    handles = _get_procedure_handles(procedure, indices, scale, radius * pixel_scale)
+
+    # Bell's palsy: remove handles on the affected (paralyzed) side
+    if clinical_flags and clinical_flags.bells_palsy:
+        from landmarkdiff.clinical import get_bells_palsy_side_indices
+        affected = get_bells_palsy_side_indices(clinical_flags.bells_palsy_side)
+        affected_indices = set()
+        for region_indices in affected.values():
+            affected_indices.update(region_indices)
+        handles = [h for h in handles if h.landmark_index not in affected_indices]
+
+    # Convert to pixel space for deformation
+    pixel_landmarks = landmarks.copy()
+    pixel_landmarks[:, 0] *= face.image_width
+    pixel_landmarks[:, 1] *= face.image_height
+
+    for handle in handles:
+        pixel_landmarks = gaussian_rbf_deform(pixel_landmarks, handle)
+
+    # Convert back to normalized
+    result = pixel_landmarks.copy()
+    result[:, 0] /= face.image_width
+    result[:, 1] /= face.image_height
+
+    return FaceLandmarks(
+        landmarks=result,
+        image_width=face.image_width,
+        image_height=face.image_height,
+        confidence=face.confidence,
+    )
+
+
+def _get_procedure_handles(
+    procedure: str,
+    indices: list[int],
+    scale: float,
+    radius: float,
+) -> list[DeformationHandle]:
+    """Generate anatomically-grounded deformation handles for a procedure.
+
+    Displacements are in 2D pixel space (X, Y) since the mesh conditioning
+    and TPS warp are both 2D. Values calibrated to look natural at 512x512.
+    Based on anthropometric studies (Singh et al. TIFS 2010).
+    """
+    handles = []
+
+    if procedure == "rhinoplasty":
+        # --- Alar base narrowing: move nostrils inward (toward midline) ---
+        # Left nostril landmarks → move RIGHT (+X)
+        left_alar = [240, 236, 141, 363, 370]
+        for idx in left_alar:
+            if idx in indices:
+                handles.append(DeformationHandle(
+                    landmark_index=idx,
+                    displacement=np.array([2.5 * scale, 0.0]),
+                    influence_radius=radius * 0.6,
+                ))
+        # Right nostril landmarks → move LEFT (-X)
+        right_alar = [460, 456, 274, 275, 278, 279]
+        for idx in right_alar:
+            if idx in indices:
+                handles.append(DeformationHandle(
+                    landmark_index=idx,
+                    displacement=np.array([-2.5 * scale, 0.0]),
+                    influence_radius=radius * 0.6,
+                ))
+
+        # --- Tip refinement: subtle upward rotation + narrowing ---
+        tip_indices = [1, 2, 94, 19]
+        for idx in tip_indices:
+            if idx in indices:
+                handles.append(DeformationHandle(
+                    landmark_index=idx,
+                    displacement=np.array([0.0, -2.0 * scale]),
+                    influence_radius=radius * 0.5,
+                ))
+
+        # --- Dorsum narrowing: bilateral squeeze of nasal bridge ---
+        dorsum_left = [195, 197, 236]
+        for idx in dorsum_left:
+            if idx in indices:
+                handles.append(DeformationHandle(
+                    landmark_index=idx,
+                    displacement=np.array([1.5 * scale, 0.0]),
+                    influence_radius=radius * 0.5,
+                ))
+        dorsum_right = [326, 327, 456]
+        for idx in dorsum_right:
+            if idx in indices:
+                handles.append(DeformationHandle(
+                    landmark_index=idx,
+                    displacement=np.array([-1.5 * scale, 0.0]),
+                    influence_radius=radius * 0.5,
+                ))
+
+    elif procedure == "blepharoplasty":
+        # --- Upper lid elevation (primary effect) ---
+        upper_lid_left = [159, 160, 161]  # central upper lid
+        upper_lid_right = [386, 385, 384]
+        for idx in upper_lid_left + upper_lid_right:
+            if idx in indices:
+                handles.append(DeformationHandle(
+                    landmark_index=idx,
+                    displacement=np.array([0.0, -2.0 * scale]),
+                    influence_radius=radius,
+                ))
+        # --- Medial/lateral lid corners: less displacement (tapered) ---
+        corner_left = [158, 157, 133, 33]
+        corner_right = [387, 388, 362, 263]
+        for idx in corner_left + corner_right:
+            if idx in indices:
+                handles.append(DeformationHandle(
+                    landmark_index=idx,
+                    displacement=np.array([0.0, -0.8 * scale]),
+                    influence_radius=radius * 0.7,
+                ))
+        # --- Subtle lower lid tightening ---
+        lower_lid_left = [145, 153, 154]
+        lower_lid_right = [374, 380, 381]
+        for idx in lower_lid_left + lower_lid_right:
+            if idx in indices:
+                handles.append(DeformationHandle(
+                    landmark_index=idx,
+                    displacement=np.array([0.0, 0.5 * scale]),
+                    influence_radius=radius * 0.5,
+                ))
+
+    elif procedure == "rhytidectomy":
+        # Different displacement vectors by anatomical sub-region.
+        # Jowl area: strongest lift (upward + toward ear)
+        jowl_left = [132, 136, 172, 58, 150, 176]
+        for idx in jowl_left:
+            if idx in indices:
+                handles.append(DeformationHandle(
+                    landmark_index=idx,
+                    displacement=np.array([-2.5 * scale, -3.0 * scale]),
+                    influence_radius=radius,
+                ))
+        jowl_right = [361, 365, 397, 288, 379, 400]
+        for idx in jowl_right:
+            if idx in indices:
+                handles.append(DeformationHandle(
+                    landmark_index=idx,
+                    displacement=np.array([2.5 * scale, -3.0 * scale]),
+                    influence_radius=radius,
+                ))
+        # Chin/submental: upward only (no lateral)
+        chin = [152, 148, 377, 378]
+        for idx in chin:
+            if idx in indices:
+                handles.append(DeformationHandle(
+                    landmark_index=idx,
+                    displacement=np.array([0.0, -2.0 * scale]),
+                    influence_radius=radius * 0.8,
+                ))
+        # Temple/upper face: very mild lift
+        temple_left = [10, 21, 54, 67, 103, 109, 162, 127]
+        temple_right = [284, 297, 332, 338, 323, 356, 389, 454]
+        for idx in temple_left:
+            if idx in indices:
+                handles.append(DeformationHandle(
+                    landmark_index=idx,
+                    displacement=np.array([-0.5 * scale, -1.0 * scale]),
+                    influence_radius=radius * 0.6,
+                ))
+        for idx in temple_right:
+            if idx in indices:
+                handles.append(DeformationHandle(
+                    landmark_index=idx,
+                    displacement=np.array([0.5 * scale, -1.0 * scale]),
+                    influence_radius=radius * 0.6,
+                ))
+
+    elif procedure == "orthognathic":
+        # --- Mandible repositioning: move jaw up and forward (visible as upward in 2D) ---
+        lower_jaw = [17, 18, 200, 201, 202, 204, 208, 211, 212, 214]
+        for idx in lower_jaw:
+            if idx in indices:
+                handles.append(DeformationHandle(
+                    landmark_index=idx,
+                    displacement=np.array([0.0, -3.0 * scale]),
+                    influence_radius=radius,
+                ))
+        # --- Chin projection: move chin point forward/upward ---
+        chin_pts = [175, 170, 169, 167, 396]
+        for idx in chin_pts:
+            if idx in indices:
+                handles.append(DeformationHandle(
+                    landmark_index=idx,
+                    displacement=np.array([0.0, -2.0 * scale]),
+                    influence_radius=radius * 0.7,
+                ))
+        # --- Lateral jaw: bilateral symmetric inward pull for narrowing ---
+        jaw_left = [57, 61, 78, 91, 95, 146, 181]
+        for idx in jaw_left:
+            if idx in indices:
+                handles.append(DeformationHandle(
+                    landmark_index=idx,
+                    displacement=np.array([1.5 * scale, -1.0 * scale]),
+                    influence_radius=radius * 0.8,
+                ))
+        jaw_right = [291, 311, 312, 321, 324, 325, 375, 405]
+        for idx in jaw_right:
+            if idx in indices:
+                handles.append(DeformationHandle(
+                    landmark_index=idx,
+                    displacement=np.array([-1.5 * scale, -1.0 * scale]),
+                    influence_radius=radius * 0.8,
+                ))
+
+    return handles
