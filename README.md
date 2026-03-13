@@ -4,7 +4,7 @@ Anatomically-conditioned latent diffusion for photorealistic facial surgery outc
 
 LandmarkDiff takes a patient's pre-operative photograph and a specified surgical procedure, then generates a photorealistic prediction of post-operative facial appearance. It works by deforming MediaPipe Face Mesh landmarks according to procedure-specific anatomical displacement vectors, then conditioning a Stable Diffusion 1.5 backbone via ControlNet to synthesize the predicted face while preserving patient identity.
 
-> **Paper:** "LandmarkDiff: Anatomically-Conditioned Latent Diffusion for Photorealistic Facial Surgery Outcome Prediction," submitted to MICCAI 2026.
+> **Paper:** "LandmarkDiff: Anatomically-Conditioned Latent Diffusion for Photorealistic Facial Surgery Outcome Prediction," targeting MICCAI 2026.
 
 ## Supported Procedures
 
@@ -40,8 +40,8 @@ Input Photo → MediaPipe 478-point extraction
 ### Installation
 
 ```bash
-git clone https://github.com/dreamlessx/LandmarkDiff.git
-cd LandmarkDiff
+git clone https://github.com/dreamlessx/LandmarkDiff-public.git
+cd LandmarkDiff-public
 pip install -e .
 
 # For training
@@ -159,6 +159,38 @@ LandmarkDiff includes specialized handling for:
 - ~6GB VRAM for inference (SD1.5 + ControlNet)
 - A100 80GB recommended for training
 - MediaPipe for face landmark detection
+
+## Roadmap
+
+### Current (v0.1 - Spring 2026)
+- [x] Core pipeline: landmark extraction, RBF deformation, ControlNet conditioning, mask compositing
+- [x] 4 procedure presets (rhinoplasty, blepharoplasty, rhytidectomy, orthognathic)
+- [x] Synthetic training pair generation via TPS warps
+- [x] Clinical edge case handling (vitiligo, Bell's palsy, keloid, Ehlers-Danlos)
+- [x] Neural post-processing (CodeFormer, Real-ESRGAN, ArcFace identity verification)
+- [x] Gradio demo with multi-angle capture
+- [ ] ControlNet fine-tuning on 50K+ synthetic pairs (in progress)
+- [ ] Populate results tables in paper
+
+### Next (v0.2 - Summer 2026)
+- [ ] FLUX.1-dev backbone upgrade (higher quality generation at 1024x1024)
+- [ ] IP-Adapter FaceID for stronger identity preservation
+- [ ] Additional procedure presets (mentoplasty, brow lift, otoplasty)
+- [ ] Clinical validation with board-certified plastic surgeons
+- [ ] Hugging Face interactive demo deployment
+- [ ] arXiv preprint (target: April 2026)
+
+### Future (v1.0)
+- [ ] FLAME 3D morphable model integration for depth-aware deformation
+- [ ] Multi-view consistency loss across frontal/profile predictions
+- [ ] Physics-informed tissue simulation (FEM for soft tissue response)
+- [ ] React Native mobile capture app with standardized clinical photo acquisition
+- [ ] Cloud deployment with Triton inference server
+
+### Publication targets
+- MICCAI 2026 workshop paper (July 2026 submission)
+- RSNA 2026 abstract (May 2026)
+- Full conference paper (CVPR/NeurIPS 2027)
 
 ## License
 
