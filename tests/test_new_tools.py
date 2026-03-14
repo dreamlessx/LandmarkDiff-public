@@ -10,6 +10,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -225,6 +226,13 @@ class TestPreflightChecker:
         check = check_config(config, "test.yaml")
         assert not check.passed
 
+    @pytest.mark.skipif(
+        not all(
+            __import__("importlib").util.find_spec(p) is not None
+            for p in ("torch", "diffusers", "transformers", "accelerate", "cv2", "mediapipe")
+        ),
+        reason="Requires all training dependencies (torch, diffusers, etc.)",
+    )
     def test_check_dependencies(self):
         from scripts.preflight_training import check_dependencies
 

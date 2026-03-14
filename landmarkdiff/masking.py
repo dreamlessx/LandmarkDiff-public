@@ -164,6 +164,45 @@ MASK_CONFIG: dict[str, dict] = {
         "dilation_px": 35,
         "feather_sigma": 18.0,
     },
+    "brow_lift": {
+        "landmark_indices": [
+            70,
+            63,
+            105,
+            66,
+            107,  # left brow
+            300,
+            293,
+            334,
+            296,
+            336,  # right brow
+            9,
+            8,
+            10,  # forehead midline
+            109,
+            67,
+            103,  # upper face left
+            338,
+            297,
+            332,  # upper face right
+        ],
+        "dilation_px": 25,
+        "feather_sigma": 15.0,
+    },
+    "mentoplasty": {
+        "landmark_indices": [
+            148,
+            149,
+            150,
+            152,
+            171,
+            175,
+            176,
+            377,
+        ],
+        "dilation_px": 25,
+        "feather_sigma": 12.0,
+    },
 }
 
 

@@ -15,6 +15,13 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+try:
+    import torch  # noqa: F401
+
+    HAS_TORCH = True
+except ImportError:
+    HAS_TORCH = False
+
 
 # ── Training Launcher Tests ──────────────────────────────────────
 
@@ -318,6 +325,7 @@ class TestPostTrainingPipeline:
 # ── ControlNet Evaluation Tests ──────────────────────────────────
 
 
+@pytest.mark.skipif(not HAS_TORCH, reason="torch not installed")
 class TestControlNetEvaluation:
     """Tests for evaluate_controlnet in scripts/run_evaluation.py."""
 
@@ -458,6 +466,7 @@ class TestTrainingDashboard:
 # ── Dry-Run Validator Tests ──────────────────────────────────────
 
 
+@pytest.mark.skipif(not HAS_TORCH, reason="torch not installed")
 class TestDryRunValidator:
     """Tests for scripts/dry_run_training.py."""
 
@@ -636,6 +645,7 @@ class TestFastSplit:
 # ── Comparison Grid Generator Tests ─────────────────────────────
 
 
+@pytest.mark.skipif(not HAS_TORCH, reason="torch not installed")
 class TestComparisonGrid:
     """Tests for scripts/compare_outputs.py."""
 
@@ -749,6 +759,7 @@ class TestComparisonGrid:
 # ── Training Resilience Tests ───────────────────────────────────
 
 
+@pytest.mark.skipif(not HAS_TORCH, reason="torch not installed")
 class TestTrainingResilience:
     """Tests for scripts/training_resilience.py."""
 
@@ -1408,12 +1419,14 @@ class TestPipelineIntegration:
 
         assert hasattr(ptp, "HAS_LINEAGE")
 
+    @pytest.mark.skipif(not HAS_TORCH, reason="torch not installed")
     def test_train_controlnet_has_lineage_import(self):
         """train_controlnet.py imports lineage module."""
         import scripts.train_controlnet as tc
 
         assert hasattr(tc, "HAS_LINEAGE")
 
+    @pytest.mark.skipif(not HAS_TORCH, reason="torch not installed")
     def test_train_controlnet_has_resilience_import(self):
         """train_controlnet.py imports resilience module."""
         import scripts.train_controlnet as tc

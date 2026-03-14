@@ -7,10 +7,19 @@ from pathlib import Path
 
 import cv2
 import numpy as np
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+try:
+    import torch  # noqa: F401
 
+    HAS_TORCH = True
+except ImportError:
+    HAS_TORCH = False
+
+
+@pytest.mark.skipif(not HAS_TORCH, reason="torch not installed")
 class TestBatchInference:
     """Tests for batch_inference.py."""
 
@@ -107,6 +116,7 @@ class TestComputeFID:
         assert img.shape[:2] == (299, 299)
 
 
+@pytest.mark.skipif(not HAS_TORCH, reason="torch not installed")
 class TestClinicalDemo:
     """Tests for clinical_demo.py."""
 
@@ -165,6 +175,7 @@ class TestAugmentationPreview:
         assert sample is None
 
 
+@pytest.mark.skipif(not HAS_TORCH, reason="torch not installed")
 class TestCompareModels:
     """Tests for compare_models.py."""
 

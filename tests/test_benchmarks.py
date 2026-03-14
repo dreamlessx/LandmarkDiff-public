@@ -6,23 +6,35 @@ and core functions handle mocked data properly.
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import sys
 from pathlib import Path
+from types import ModuleType
 from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
 
-# Ensure benchmarks directory is importable (must come before scripts/ on path).
-# Clear any cached modules from scripts/ that share names with benchmarks/.
-_benchmarks_dir = str(Path(__file__).resolve().parent.parent / "benchmarks")
-sys.path.insert(0, _benchmarks_dir)
-for _mod in ("benchmark_inference", "benchmark_landmarks", "benchmark_training"):
-    if _mod in sys.modules:
-        _existing = getattr(sys.modules[_mod], "__file__", "") or ""
-        if "benchmarks" not in _existing:
-            del sys.modules[_mod]
+_BENCHMARKS_DIR = Path(__file__).resolve().parent.parent / "benchmarks"
+
+
+def _import_benchmark(name: str) -> ModuleType:
+    """Import a benchmark module by file path to avoid scripts/ shadowing."""
+    path = _BENCHMARKS_DIR / f"{name}.py"
+    spec = importlib.util.spec_from_file_location(name, path)
+    assert spec is not None and spec.loader is not None
+    mod = importlib.util.module_from_spec(spec)
+    # Register in sys.modules so intra-module references work and repeated
+    # calls within the same process return a consistent object.
+    sys.modules[name] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+benchmark_inference = _import_benchmark("benchmark_inference")
+benchmark_landmarks = _import_benchmark("benchmark_landmarks")
+benchmark_training = _import_benchmark("benchmark_training")
 
 
 # ---------------------------------------------------------------------------
@@ -34,21 +46,18 @@ class TestImports:
     """Verify that all benchmark modules can be imported."""
 
     def test_import_benchmark_inference(self):
-        import benchmark_inference
 
         assert hasattr(benchmark_inference, "main")
         assert hasattr(benchmark_inference, "build_parser")
         assert hasattr(benchmark_inference, "run_benchmark")
 
     def test_import_benchmark_landmarks(self):
-        import benchmark_landmarks
 
         assert hasattr(benchmark_landmarks, "main")
         assert hasattr(benchmark_landmarks, "build_parser")
         assert hasattr(benchmark_landmarks, "run_benchmark")
 
     def test_import_benchmark_training(self):
-        import benchmark_training
 
         assert hasattr(benchmark_training, "main")
         assert hasattr(benchmark_training, "build_parser")
@@ -64,7 +73,6 @@ class TestArgparse:
     """Verify argparse parsers accept expected arguments."""
 
     def test_inference_parser_defaults(self):
-        import benchmark_inference
 
         parser = benchmark_inference.build_parser()
         args = parser.parse_args([])
@@ -77,7 +85,6 @@ class TestArgparse:
         assert args.warmup == 1
 
     def test_inference_parser_custom(self):
-        import benchmark_inference
 
         parser = benchmark_inference.build_parser()
         args = parser.parse_args(
@@ -107,7 +114,6 @@ class TestArgparse:
         assert args.warmup == 2
 
     def test_landmarks_parser_defaults(self):
-        import benchmark_landmarks
 
         parser = benchmark_landmarks.build_parser()
         args = parser.parse_args([])
@@ -117,7 +123,6 @@ class TestArgparse:
         assert args.log_interval == 10
 
     def test_landmarks_parser_custom(self):
-        import benchmark_landmarks
 
         parser = benchmark_landmarks.build_parser()
         args = parser.parse_args(
@@ -138,7 +143,6 @@ class TestArgparse:
         assert args.log_interval == 25
 
     def test_training_parser_defaults(self):
-        import benchmark_training
 
         parser = benchmark_training.build_parser()
         args = parser.parse_args([])
@@ -149,7 +153,6 @@ class TestArgparse:
         assert args.log_interval == 20
 
     def test_training_parser_custom(self):
-        import benchmark_training
 
         parser = benchmark_training.build_parser()
         args = parser.parse_args(
@@ -182,7 +185,6 @@ class TestFormatResults:
     """Test results formatting functions."""
 
     def test_inference_format_results(self):
-        import benchmark_inference
 
         parser = benchmark_inference.build_parser()
         args = parser.parse_args(["--mode", "tps", "--device", "cpu", "--steps", "10"])
@@ -201,7 +203,6 @@ class TestFormatResults:
         assert results["throughput_ips"] > 0
 
     def test_landmarks_format_results(self):
-        import benchmark_landmarks
 
         parser = benchmark_landmarks.build_parser()
         args = parser.parse_args(["--resolution", "512"])
@@ -217,7 +218,6 @@ class TestFormatResults:
         assert results["throughput_ips"] > 0
 
     def test_training_format_results(self):
-        import benchmark_training
 
         parser = benchmark_training.build_parser()
         args = parser.parse_args(["--device", "cpu", "--batch_size", "2"])
@@ -242,7 +242,6 @@ class TestSaveResults:
     """Test that results can be saved to JSON."""
 
     def test_inference_save(self, tmp_path):
-        import benchmark_inference
 
         results = {"benchmark": "inference", "mean_s": 1.5}
         benchmark_inference.save_results(results, str(tmp_path))
@@ -252,7 +251,6 @@ class TestSaveResults:
         assert data["mean_s"] == 1.5
 
     def test_landmarks_save(self, tmp_path):
-        import benchmark_landmarks
 
         results = {"benchmark": "landmarks", "mean_ms": 10.5}
         benchmark_landmarks.save_results(results, str(tmp_path))
@@ -262,7 +260,6 @@ class TestSaveResults:
         assert data["mean_ms"] == 10.5
 
     def test_training_save(self, tmp_path):
-        import benchmark_training
 
         results = {"benchmark": "training", "mean_ms": 50.0}
         benchmark_training.save_results(results, str(tmp_path))
@@ -281,7 +278,6 @@ class TestLandmarkBenchmarkRun:
     """Test running landmark benchmark with mocked MediaPipe."""
 
     def test_run_with_mock(self):
-        import benchmark_landmarks
 
         mock_face = MagicMock()
         parser = benchmark_landmarks.build_parser()
@@ -306,7 +302,6 @@ class TestLandmarkBenchmarkRun:
         assert results["detections"] == 5
 
     def test_run_no_detections(self):
-        import benchmark_landmarks
 
         parser = benchmark_landmarks.build_parser()
         args = parser.parse_args(
@@ -337,7 +332,6 @@ class TestInferenceBenchmarkEdgeCases:
     """Test inference benchmark handles failures gracefully."""
 
     def test_pipeline_load_failure(self):
-        import benchmark_inference
 
         parser = benchmark_inference.build_parser()
         args = parser.parse_args(
@@ -363,7 +357,6 @@ class TestInferenceBenchmarkEdgeCases:
             assert result is None
 
     def test_main_returns_1_on_failure(self):
-        import benchmark_inference
 
         with patch.dict(
             "sys.modules",
@@ -396,7 +389,6 @@ class TestTrainingBenchmarkCPU:
     def test_cpu_run(self):
         """Run training benchmark on CPU with minimal config."""
         pytest.importorskip("torch")
-        import benchmark_training
 
         parser = benchmark_training.build_parser()
         args = parser.parse_args(
@@ -419,7 +411,6 @@ class TestTrainingBenchmarkCPU:
 
     def test_missing_torch(self):
         """Test graceful handling when torch is not installed."""
-        import benchmark_training
 
         parser = benchmark_training.build_parser()
         _args = parser.parse_args(
@@ -451,7 +442,6 @@ class TestTrainingBenchmarkCPU:
     def test_save_with_output(self, tmp_path):
         """Test that --output flag triggers JSON save."""
         pytest.importorskip("torch")
-        import benchmark_training
 
         parser = benchmark_training.build_parser()
         args = parser.parse_args(

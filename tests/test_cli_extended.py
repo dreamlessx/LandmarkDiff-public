@@ -235,7 +235,9 @@ class TestMainModuleDirectImport:
         from landmarkdiff.__main__ import main
 
         with patch("sys.argv", ["landmarkdiff", "--version"]):
-            main()
+            with pytest.raises(SystemExit) as exc:
+                main()
+            assert exc.value.code == 0
         out = capsys.readouterr().out
         assert "0.2.0" in out
 
