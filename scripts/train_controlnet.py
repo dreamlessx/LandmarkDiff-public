@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import logging
 import math
 import os
 from pathlib import Path
@@ -73,6 +74,8 @@ try:
     HAS_LINEAGE = True
 except ImportError:
     HAS_LINEAGE = False
+
+logger = logging.getLogger(__name__)
 
 
 class SyntheticPairDataset(Dataset):
@@ -298,7 +301,7 @@ def _generate_samples(
         comparison = np.hstack([cond, img, tgt])
         Image.fromarray(comparison).save(sample_dir / f"sample_{i}.png")
 
-    print(f"Samples saved: {sample_dir}")
+    logger.info("Samples saved: %s", sample_dir)
     ema_controlnet.train()
 
 
@@ -356,9 +359,12 @@ def train(
         weight_dtype = torch.float32
 
     if _IS_MAIN:
-        print(
-            f"Device: {device} | Dtype: {weight_dtype} | Phase: {phase}"
-            f"{f' | DDP: {_WORLD_SIZE} GPUs' if _DDP_ENABLED else ''}"
+        logger.info(
+            "Device: %s | Dtype: %s | Phase: %s%s",
+            device,
+            weight_dtype,
+            phase,
+            f" | DDP: {_WORLD_SIZE} GPUs" if _DDP_ENABLED else "",
         )
 
     # ─── Load models ───
@@ -373,7 +379,7 @@ def train(
     # Use local_files_only when HF_HUB_OFFLINE is set or token is unavailable
     _local_only = os.environ.get("HF_HUB_OFFLINE", "0") == "1"
     _load_kw: dict = {"local_files_only": True} if _local_only else {}
-    print(f"Loading models...{' (offline mode)' if _local_only else ''}")
+    logger.info("Loading models...%s", " (offline mode)" if _local_only else "")
     tokenizer = CLIPTokenizer.from_pretrained(base_model_id, subfolder="tokenizer", **_load_kw)
     text_encoder = CLIPTextModel.from_pretrained(
         base_model_id, subfolder="text_encoder", **_load_kw
@@ -385,7 +391,7 @@ def train(
         phaseA_path = Path(resume_phaseA)
         if (phaseA_path / "controlnet_ema").exists():
             phaseA_path = phaseA_path / "controlnet_ema"
-        print(f"Initializing Phase B from Phase A checkpoint: {phaseA_path}")
+        logger.info("Initializing Phase B from Phase A checkpoint: %s", phaseA_path)
         controlnet = ControlNetModel.from_pretrained(str(phaseA_path))
     else:
         controlnet = ControlNetModel.from_pretrained(
@@ -446,7 +452,7 @@ def train(
 
     # ─── Data ───
     if _IS_MAIN:
-        print(f"Loading data from {data_dir}...")
+        logger.info("Loading data from %s...", data_dir)
     dataset = SyntheticPairDataset(
         data_dir,
         resolution=512,
@@ -462,7 +468,7 @@ def train(
 
         proc_curriculum = ProcedureCurriculum(total_steps=num_train_steps)
         if _IS_MAIN:
-            print("Curriculum learning enabled (procedure-weighted sampling)")
+            logger.info("Curriculum learning enabled (procedure-weighted sampling)")
     except ImportError:
         pass
 
@@ -484,9 +490,12 @@ def train(
         prefetch_factor=2 if num_workers > 0 else None,
     )
     if _IS_MAIN:
-        print(
-            f"Dataset: {len(dataset)} pairs | Batch: {train_batch_size} | Accum: {gradient_accumulation_steps}"
-            f"{f' | Per-GPU batch: {train_batch_size}' if _DDP_ENABLED else ''}"
+        logger.info(
+            "Dataset: %d pairs | Batch: %d | Accum: %d%s",
+            len(dataset),
+            train_batch_size,
+            gradient_accumulation_steps,
+            f" | Per-GPU batch: {train_batch_size}" if _DDP_ENABLED else "",
         )
 
     # ─── Text embeddings (constant — "a photo of a person's face") ───
@@ -557,15 +566,15 @@ def train(
         if ckpts:
             resume_from_checkpoint = str(ckpts[-1])
             if _IS_MAIN:
-                print(f"Auto-detected checkpoint: {resume_from_checkpoint}")
+                logger.info("Auto-detected checkpoint: %s", resume_from_checkpoint)
         else:
             resume_from_checkpoint = None
             if _IS_MAIN:
-                print("No checkpoints found, starting from scratch")
+                logger.info("No checkpoints found, starting from scratch")
 
     if resume_from_checkpoint and Path(resume_from_checkpoint).exists():
         if _IS_MAIN:
-            print(f"Resuming from {resume_from_checkpoint}")
+            logger.info("Resuming from %s", resume_from_checkpoint)
         state = torch.load(
             Path(resume_from_checkpoint) / "training_state.pt",
             map_location="cpu",
@@ -578,7 +587,7 @@ def train(
             scheduler.load_state_dict(state["scheduler"])
         global_step = state["global_step"]
         if _IS_MAIN:
-            print(f"Resumed at step {global_step}")
+            logger.info("Resumed at step %d", global_step)
 
     # ─── Validation callback ───
     val_callback = None
@@ -590,9 +599,9 @@ def train(
             output_dir=out / "validation",
             num_samples=min(8, len(dataset)),
         )
-        print(f"Validation callback enabled ({val_callback.num_samples} samples)")
+        logger.info("Validation callback enabled (%d samples)", val_callback.num_samples)
     except ImportError:
-        print("Validation callback unavailable (missing dependencies)")
+        logger.warning("Validation callback unavailable (missing dependencies)")
 
     # ─── Phase B auxiliary losses ───
     combined_loss = None
@@ -606,7 +615,7 @@ def train(
             phase="B",
             use_differentiable_arcface=True,
         )
-        print("Phase B: identity (PyTorch ArcFace) + perceptual (LPIPS) losses enabled")
+        logger.info("Phase B: identity (PyTorch ArcFace) + perceptual (LPIPS) losses enabled")
 
     # ─── Curriculum sampling weights ───
     # Pre-compute per-sample procedure weights for curriculum-based sampling.
@@ -626,9 +635,9 @@ def train(
             _curriculum_weights[i] = proc_curriculum.get_weight(0, proc)
         if _IS_MAIN:
             weights_summary = proc_curriculum.get_procedure_weights(0)
-            print(f"Curriculum weights (step 0): {weights_summary}")
+            logger.info("Curriculum weights (step 0): %s", weights_summary)
             if _DDP_ENABLED:
-                print("  (DDP: using per-sample loss weighting instead of sampler)")
+                logger.info("  (DDP: using per-sample loss weighting instead of sampler)")
 
     # ─── SLURM signal handler + gradient watchdog ───
     _signal_handler = None
@@ -647,11 +656,11 @@ def train(
         _signal_handler = SlurmSignalHandler(save_fn=_save_fn)
         _signal_handler.register()
         _grad_watchdog = GradientWatchdog()
-        print("SLURM signal handler + gradient watchdog enabled")
+        logger.info("SLURM signal handler + gradient watchdog enabled")
 
     # ─── Training loop ───
-    print(f"\nStarting training from step {global_step}...")
-    print(f"Optimizer steps: {total_optimizer_steps} | Warmup: {warmup_steps}")
+    logger.info("Starting training from step %d...", global_step)
+    logger.info("Optimizer steps: %d | Warmup: %d", total_optimizer_steps, warmup_steps)
     _epoch = 0
     if sampler is not None:
         sampler.set_epoch(_epoch)
@@ -783,7 +792,9 @@ def train(
                 _skip_step = True
             elif action == "alert" and _signal_handler is not None:
                 # Severe instability — trigger emergency checkpoint
-                print(f"  Gradient alert at step {global_step}: saving emergency checkpoint")
+                logger.warning(
+                    "Gradient alert at step %d: saving emergency checkpoint", global_step
+                )
                 _signal_handler.save_fn()
 
         # Step optimizer
@@ -802,8 +813,10 @@ def train(
         # Check for SLURM signal (graceful exit)
         if _signal_handler is not None and _signal_handler.should_exit:
             if _IS_MAIN:
-                print(
-                    f"Graceful exit at step {global_step} after {_signal_handler.signal_received}"
+                logger.info(
+                    "Graceful exit at step %d after %s",
+                    global_step,
+                    _signal_handler.signal_received,
                 )
             break
 
@@ -815,10 +828,15 @@ def train(
             steps_per_sec = global_step / max(elapsed, 1)
             eta_h = (num_train_steps - global_step) / max(steps_per_sec, 0.01) / 3600
             grad_norm = _last_grad_norm if "_last_grad_norm" in dir() else 0.0
-            print(
-                f"Step {global_step}/{num_train_steps} | Loss: {avg_loss:.6f} | "
-                f"LR: {lr_current:.2e} | GradNorm: {grad_norm:.2f} | "
-                f"{steps_per_sec:.1f} it/s | ETA: {eta_h:.1f}h"
+            logger.info(
+                "Step %d/%d | Loss: %.6f | LR: %.2e | GradNorm: %.2f | %.1f it/s | ETA: %.1fh",
+                global_step,
+                num_train_steps,
+                avg_loss,
+                lr_current,
+                grad_norm,
+                steps_per_sec,
+                eta_h,
             )
 
             if HAS_WANDB:
@@ -869,7 +887,7 @@ def train(
                     data_iter = iter(dataloader)
 
                 weights_s = proc_curriculum.get_procedure_weights(global_step)
-                print(f"  Curriculum updated (difficulty={difficulty:.2f}): {weights_s}")
+                logger.info("Curriculum updated (difficulty=%.2f): %s", difficulty, weights_s)
                 if HAS_WANDB:
                     wandb.log({"curriculum/difficulty": difficulty}, step=global_step)
 
@@ -912,8 +930,8 @@ def train(
                             step=global_step,
                         )
                 except Exception as val_err:
-                    print(f"WARNING: Validation failed at step {global_step}: {val_err}")
-                    print("Continuing training...")
+                    logger.warning("Validation failed at step %d: %s", global_step, val_err)
+                    logger.warning("Continuing training...")
 
         # ─── Checkpoint (main process only) ───
         if global_step % checkpoint_every == 0 and _IS_MAIN:
@@ -945,7 +963,7 @@ def train(
                     metrics=_ckpt_metrics,
                     phase=phase,
                 )
-                print(f"Checkpoint saved: {ckpt_dir} | {train._ckpt_manager.summary()}")
+                logger.info("Checkpoint saved: %s | %s", ckpt_dir, train._ckpt_manager.summary())
             except ImportError:
                 # Fallback: save without manager
                 ckpt_dir = out / f"checkpoint-{global_step}"
@@ -961,7 +979,7 @@ def train(
                     },
                     ckpt_dir / "training_state.pt",
                 )
-                print(f"Checkpoint saved: {ckpt_dir}")
+                logger.info("Checkpoint saved: %s", ckpt_dir)
 
         # DDP barrier to sync processes after checkpoint
         if _DDP_ENABLED and global_step % checkpoint_every == 0:
@@ -973,7 +991,7 @@ def train(
     if _signal_handler is not None:
         _signal_handler.unregister()
     if _grad_watchdog is not None and _IS_MAIN:
-        print(f"Gradient watchdog: {_grad_watchdog.summary()}")
+        logger.info("Gradient watchdog: %s", _grad_watchdog.summary())
 
     # ─── Final save (main process only) ───
     if _IS_MAIN:
@@ -984,9 +1002,9 @@ def train(
         # Plot validation curves
         if val_callback is not None:
             val_callback.plot_history()
-            print(f"Validation curves saved to {out}/validation/")
+            logger.info("Validation curves saved to %s/validation/", out)
 
-        print(f"\nTraining complete. Final model: {final_dir}")
+        logger.info("Training complete. Final model: %s", final_dir)
 
         # Record in experiment lineage
         if HAS_LINEAGE:
@@ -1013,9 +1031,9 @@ def train(
                         slurm_job_id=slurm_job_id,
                     )
                     db.save()
-                    print(f"  Lineage: training recorded (config={config_path})")
+                    logger.info("Lineage: training recorded (config=%s)", config_path)
             except Exception as e:
-                print(f"  Lineage recording failed: {e}")
+                logger.warning("Lineage recording failed: %s", e)
 
         # Finish experiment tracking
         if exp_tracker and exp_id:
@@ -1041,6 +1059,7 @@ def train(
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     parser = argparse.ArgumentParser(description="Train LandmarkDiff ControlNet")
     parser.add_argument(
         "--config", default=None, help="YAML config file (overrides all other args)"
@@ -1104,9 +1123,9 @@ if __name__ == "__main__":
         # CLI args override config (if explicitly set)
         if args.data_dir:
             train_kwargs["data_dir"] = args.data_dir
-        print(f"Loaded config: {args.config}")
-        print(f"  Experiment: {config.experiment_name}")
-        print(f"  Phase: {config.training.phase}")
+        logger.info("Loaded config: %s", args.config)
+        logger.info("  Experiment: %s", config.experiment_name)
+        logger.info("  Phase: %s", config.training.phase)
         train(**train_kwargs)
     else:
         if args.data_dir is None:

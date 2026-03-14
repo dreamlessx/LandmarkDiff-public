@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import shutil
 import sys
 from pathlib import Path
@@ -28,6 +29,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+logger = logging.getLogger(__name__)
 
 
 class PreflightCheck:
@@ -372,16 +375,16 @@ def run_preflight(config_path: str, phase: str = "A") -> bool:
 
     config_file = PROJECT_ROOT / config_path
     if not config_file.exists():
-        print(f"Config not found: {config_path}")
+        logger.error("Config not found: %s", config_path)
         return False
 
     with open(config_file) as f:
         config = yaml.safe_load(f)
 
-    print(f"{'=' * 60}")
-    print(f"PREFLIGHT CHECK — Phase {phase}")
-    print(f"Config: {config_path}")
-    print(f"{'=' * 60}\n")
+    logger.info("=" * 60)
+    logger.info("PREFLIGHT CHECK -- Phase %s", phase)
+    logger.info("Config: %s", config_path)
+    logger.info("=" * 60)
 
     checks = [
         check_config(config, config_path),
@@ -400,7 +403,7 @@ def run_preflight(config_path: str, phase: str = "A") -> bool:
     all_pass = True
     n_warn = 0
     for check in checks:
-        print(check)
+        logger.info("%s", check)
         if not check.passed:
             all_pass = False
         if check.warning:
@@ -409,22 +412,25 @@ def run_preflight(config_path: str, phase: str = "A") -> bool:
     passed = sum(1 for c in checks if c.passed)
     failed = sum(1 for c in checks if not c.passed)
 
-    print(f"\n{'=' * 60}")
+    logger.info("=" * 60)
     if all_pass and n_warn == 0:
-        print(f"ALL CHECKS PASSED ({passed}/{len(checks)})")
-        print("Ready to submit training!")
+        logger.info("ALL CHECKS PASSED (%d/%d)", passed, len(checks))
+        logger.info("Ready to submit training!")
     elif all_pass:
-        print(f"PASSED WITH WARNINGS ({passed}/{len(checks)} passed, {n_warn} warnings)")
-        print("Training can proceed but check warnings above.")
+        logger.warning(
+            "PASSED WITH WARNINGS (%d/%d passed, %d warnings)", passed, len(checks), n_warn
+        )
+        logger.warning("Training can proceed but check warnings above.")
     else:
-        print(f"PREFLIGHT FAILED ({failed} failures, {n_warn} warnings)")
-        print("Fix failures before training.")
-    print(f"{'=' * 60}")
+        logger.error("PREFLIGHT FAILED (%d failures, %d warnings)", failed, n_warn)
+        logger.error("Fix failures before training.")
+    logger.info("=" * 60)
 
     return all_pass
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     parser = argparse.ArgumentParser(description="Pre-training validation")
     parser.add_argument("--config", required=True, help="Training config YAML")
     parser.add_argument("--phase", default="A", choices=["A", "B"])

@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
 import time
 from collections import defaultdict
@@ -55,6 +56,8 @@ from landmarkdiff.landmarks import extract_landmarks
 from landmarkdiff.manipulation import apply_procedure_preset
 from landmarkdiff.masking import generate_surgical_mask
 from landmarkdiff.synthetic.tps_warp import warp_image_tps
+
+logger = logging.getLogger(__name__)
 
 PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
 
@@ -150,7 +153,7 @@ def evaluate_tps_baseline(
         results.append(metrics)
 
         if (i + 1) % 20 == 0:
-            print(f"    TPS baseline: {i + 1}/{len(samples)}")
+            logger.info("TPS baseline: %d/%d", i + 1, len(samples))
 
     return results
 
@@ -179,8 +182,8 @@ def evaluate_controlnet(
     # Check GPU availability
     has_gpu = torch.cuda.is_available()
     if not has_gpu:
-        print("  WARNING: No GPU available — ControlNet evaluation requires CUDA.")
-        print("  Falling back to TPS baseline as proxy.")
+        logger.warning("No GPU available -- ControlNet evaluation requires CUDA.")
+        logger.warning("Falling back to TPS baseline as proxy.")
         tps_results = evaluate_tps_baseline(samples, output_dir, intensity)
         for r in tps_results:
             r["method"] = "controlnet_proxy_tps"
@@ -189,8 +192,8 @@ def evaluate_controlnet(
     # Validate checkpoint
     ckpt_path = Path(checkpoint)
     if not ckpt_path.exists():
-        print(f"  WARNING: Checkpoint not found: {checkpoint}")
-        print("  Falling back to TPS baseline as proxy.")
+        logger.warning("Checkpoint not found: %s", checkpoint)
+        logger.warning("Falling back to TPS baseline as proxy.")
         tps_results = evaluate_tps_baseline(samples, output_dir, intensity)
         for r in tps_results:
             r["method"] = "controlnet_proxy_tps"
@@ -204,8 +207,8 @@ def evaluate_controlnet(
         )
         pipe.load()
     except Exception as e:
-        print(f"  WARNING: Failed to load ControlNet pipeline: {e}")
-        print("  Falling back to TPS baseline as proxy.")
+        logger.warning("Failed to load ControlNet pipeline: %s", e)
+        logger.warning("Falling back to TPS baseline as proxy.")
         tps_results = evaluate_tps_baseline(samples, output_dir, intensity)
         for r in tps_results:
             r["method"] = "controlnet_proxy_tps"
@@ -228,7 +231,11 @@ def evaluate_controlnet(
             )
             output = gen_result["output"]
         except Exception as e:
-            print(f"    Sample {sample['prefix']}: generation failed ({e}), using TPS fallback")
+            logger.warning(
+                "Sample %s: generation failed (%s), using TPS fallback",
+                sample["prefix"],
+                e,
+            )
             # Fall back to TPS warp for this sample
             face = sample["face"]
             manip_fb = apply_procedure_preset(face, proc, intensity, image_size=512)
@@ -260,7 +267,7 @@ def evaluate_controlnet(
         results.append(metrics)
 
         if (i + 1) % 10 == 0:
-            print(f"    ControlNet: {i + 1}/{len(samples)}")
+            logger.info("ControlNet: %d/%d", i + 1, len(samples))
 
     return results
 
@@ -464,12 +471,12 @@ def run_evaluation(
     t_start = time.time()
 
     # Load test set
-    print(f"Loading test set from {test_path}...")
+    logger.info("Loading test set from %s...", test_path)
     samples = load_test_set(test_path, max_samples)
     if not samples:
-        print("ERROR: No test samples loaded")
+        logger.error("No test samples loaded")
         sys.exit(1)
-    print(f"  Loaded {len(samples)} samples")
+    logger.info("Loaded %d samples", len(samples))
 
     # Count by procedure and Fitzpatrick
     proc_counts = defaultdict(int)
@@ -477,8 +484,8 @@ def run_evaluation(
     for s in samples:
         proc_counts[s["procedure"]] += 1
         fitz_counts[s["fitzpatrick"]] += 1
-    print(f"  Procedures: {dict(proc_counts)}")
-    print(f"  Fitzpatrick: {dict(sorted(fitz_counts.items()))}")
+    logger.info("Procedures: %s", dict(proc_counts))
+    logger.info("Fitzpatrick: %s", dict(sorted(fitz_counts.items())))
 
     # Run evaluations
     all_method_results: dict[str, list[dict]] = {}
@@ -486,14 +493,14 @@ def run_evaluation(
 
     # TPS baseline
     if include_baseline:
-        print("\nEvaluating TPS baseline...")
+        logger.info("Evaluating TPS baseline...")
         tps_results = evaluate_tps_baseline(samples, out_path, intensity)
         all_method_results["TPS_baseline"] = tps_results
         all_method_agg["TPS_baseline"] = aggregate_metrics(tps_results)
 
     # ControlNet evaluation with fine-tuned checkpoint
     if checkpoint:
-        print(f"\nEvaluating ControlNet checkpoint: {checkpoint}")
+        logger.info("Evaluating ControlNet checkpoint: %s", checkpoint)
         cn_results = evaluate_controlnet(samples, out_path, checkpoint, intensity)
         method_label = "ControlNet"
         if cn_results and cn_results[0].get("method") == "controlnet_proxy_tps":
@@ -502,13 +509,13 @@ def run_evaluation(
         all_method_agg[method_label] = aggregate_metrics(cn_results)
 
     # Print results
-    print(f"\n{'=' * 70}")
-    print(f"  Evaluation Results (n={len(samples)})")
-    print(f"{'=' * 70}")
+    logger.info("=" * 70)
+    logger.info("Evaluation Results (n=%d)", len(samples))
+    logger.info("=" * 70)
 
     header = f"{'Method':<20} {'SSIM':>8} {'LPIPS':>8} {'NME':>8} {'ID Sim':>8} {'n':>5}"
-    print(header)
-    print("-" * len(header))
+    logger.info("%s", header)
+    logger.info("-" * len(header))
 
     for method, agg in all_method_agg.items():
         ssim = agg.get("ssim_mean", -1)
@@ -516,21 +523,29 @@ def run_evaluation(
         nme = agg.get("nme_mean", -1)
         identity = agg.get("identity_mean", -1)
         n = agg.get("n", 0)
-        print(f"{method:<20} {ssim:>8.4f} {lpips:>8.4f} {nme:>8.4f} {identity:>8.4f} {n:>5}")
+        logger.info(
+            "%s %8.4f %8.4f %8.4f %8.4f %5d",
+            method.ljust(20),
+            ssim,
+            lpips,
+            nme,
+            identity,
+            n,
+        )
 
     # Per-procedure breakdown
-    print(f"\n{'=' * 70}")
-    print("  Per-Procedure Breakdown")
-    print(f"{'=' * 70}")
+    logger.info("=" * 70)
+    logger.info("Per-Procedure Breakdown")
+    logger.info("=" * 70)
     for method, agg in all_method_agg.items():
-        print(f"\n  {method}:")
+        logger.info("  %s:", method)
         for proc in PROCEDURES:
             proc_data = agg.get("by_procedure", {}).get(proc, {})
             if proc_data:
                 ssim = proc_data.get("ssim_mean", -1)
                 lpips = proc_data.get("lpips_mean", -1)
                 n = proc_data.get("n", 0)
-                print(f"    {proc:<20} SSIM={ssim:.4f}  LPIPS={lpips:.4f}  (n={n})")
+                logger.info("    %s SSIM=%.4f  LPIPS=%.4f  (n=%d)", proc.ljust(20), ssim, lpips, n)
 
     # Generate LaTeX tables
     latex_dir = out_path / "latex"
@@ -545,7 +560,7 @@ def run_evaluation(
     fitz_table = generate_fitzpatrick_table(all_method_agg)
     (latex_dir / "fitzpatrick_equity.tex").write_text(fitz_table)
 
-    print(f"\n  LaTeX tables saved to {latex_dir}")
+    logger.info("LaTeX tables saved to %s", latex_dir)
 
     # Save full report
     report = {
@@ -563,11 +578,12 @@ def run_evaluation(
     with open(report_path, "w") as f:
         json.dump(report, f, indent=2, default=str)
 
-    print(f"\n  Full report: {report_path}")
-    print(f"  Total time: {time.time() - t_start:.1f}s")
+    logger.info("Full report: %s", report_path)
+    logger.info("Total time: %.1fs", time.time() - t_start)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     parser = argparse.ArgumentParser(description="Comprehensive evaluation runner")
     parser.add_argument("--test_dir", required=True, help="Test data directory")
     parser.add_argument("--output", default="results/paper_eval", help="Output directory")

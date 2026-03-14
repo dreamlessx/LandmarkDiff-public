@@ -40,6 +40,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
 import time
 from pathlib import Path
@@ -60,6 +61,8 @@ from landmarkdiff.landmarks import extract_landmarks, render_landmark_image, vis
 from landmarkdiff.manipulation import apply_procedure_preset
 from landmarkdiff.masking import generate_surgical_mask
 from landmarkdiff.synthetic.tps_warp import warp_image_tps
+
+logger = logging.getLogger(__name__)
 
 PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
 
@@ -294,13 +297,13 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if not input_dir.exists():
-        print(f"ERROR: Input directory not found: {input_dir}")
+        logger.error("Input directory not found: %s", input_dir)
         sys.exit(1)
 
     # Collect images
     all_images = collect_images(input_dir)
     if not all_images:
-        print(f"No images found in {input_dir}")
+        logger.error("No images found in %s", input_dir)
         sys.exit(1)
 
     # SLURM array job partitioning
@@ -309,9 +312,13 @@ def main():
         start = args.array_index * chunk_size
         end = start + chunk_size if args.array_index < args.array_total - 1 else len(all_images)
         all_images = all_images[start:end]
-        print(
-            f"SLURM array {args.array_index}/{args.array_total}: "
-            f"processing images {start}-{end} ({len(all_images)} images)"
+        logger.info(
+            "SLURM array %d/%d: processing images %d-%d (%d images)",
+            args.array_index,
+            args.array_total,
+            start,
+            end,
+            len(all_images),
         )
 
     if args.max_images:
@@ -321,8 +328,8 @@ def main():
 
     # Intensity grid mode
     if args.intensity_grid:
-        print(f"Generating intensity grids for {len(all_images)} images...")
-        print(f"Intensities: {args.grid_intensities}")
+        logger.info("Generating intensity grids for %d images...", len(all_images))
+        logger.info("Intensities: %s", args.grid_intensities)
         grid_dir = output_dir / "intensity_grids"
         grid_dir.mkdir(parents=True, exist_ok=True)
         success = 0
@@ -338,20 +345,21 @@ def main():
                 )
                 if ok:
                     success += 1
-                    print(f"  [{i + 1}/{len(all_images)}] {img_path.name}/{proc}: OK")
+                    logger.info("[%d/%d] %s/%s: OK", i + 1, len(all_images), img_path.name, proc)
                 else:
-                    print(f"  [{i + 1}/{len(all_images)}] {img_path.name}/{proc}: SKIP (no face)")
-        print(f"\nGenerated {success} intensity grids in {grid_dir}")
+                    logger.warning(
+                        "[%d/%d] %s/%s: SKIP (no face)", i + 1, len(all_images), img_path.name, proc
+                    )
+        logger.info("Generated %d intensity grids in %s", success, grid_dir)
         return
 
-    print(f"Input: {input_dir} ({len(all_images)} images)")
-    print(f"Output: {output_dir}")
-    print(f"Procedures: {procedures}")
-    print(f"Intensity: {args.intensity}%")
-    print(f"Neural post-processing: {args.neural}")
+    logger.info("Input: %s (%d images)", input_dir, len(all_images))
+    logger.info("Output: %s", output_dir)
+    logger.info("Procedures: %s", procedures)
+    logger.info("Intensity: %s%%", args.intensity)
+    logger.info("Neural post-processing: %s", args.neural)
     if args.displacement_model:
-        print(f"Displacement model: {args.displacement_model}")
-    print()
+        logger.info("Displacement model: %s", args.displacement_model)
 
     # Process
     all_results = []
@@ -371,15 +379,23 @@ def main():
             )
             if result is None:
                 failed += 1
-                print(f"  [{i + 1}/{len(all_images)}] {img_path.name} / {proc}: FAILED (no face)")
+                logger.warning(
+                    "[%d/%d] %s / %s: FAILED (no face)", i + 1, len(all_images), img_path.name, proc
+                )
             else:
                 all_results.append(result)
                 ssim = result["ssim"]
                 lpips = result["lpips"]
                 elapsed = result["elapsed_seconds"]
-                print(
-                    f"  [{i + 1}/{len(all_images)}] {img_path.name} / {proc}: "
-                    f"SSIM={ssim:.3f} LPIPS={lpips:.3f} ({elapsed:.1f}s)"
+                logger.info(
+                    "[%d/%d] %s / %s: SSIM=%.3f LPIPS=%.3f (%.1fs)",
+                    i + 1,
+                    len(all_images),
+                    img_path.name,
+                    proc,
+                    ssim,
+                    lpips,
+                    elapsed,
                 )
 
     total_time = time.time() - t_start
@@ -442,25 +458,32 @@ def main():
         json.dump(report, f, indent=2, default=str)
 
     # Print summary
-    print(f"\n{'=' * 60}")
-    print("Batch Inference Complete")
-    print(f"{'=' * 60}")
-    print(f"Processed: {len(all_results)} / {len(all_images)} images")
-    print(f"Failed: {failed}")
-    print(f"Total time: {total_time:.1f}s ({total_time / max(len(all_results), 1):.1f}s/image)")
+    logger.info("=" * 60)
+    logger.info("Batch Inference Complete")
+    logger.info("=" * 60)
+    logger.info("Processed: %d / %d images", len(all_results), len(all_images))
+    logger.info("Failed: %d", failed)
+    logger.info(
+        "Total time: %.1fs (%.1fs/image)", total_time, total_time / max(len(all_results), 1)
+    )
     if "aggregate" in report:
         agg = report["aggregate"]
-        print(f"SSIM: {agg['ssim_mean']:.4f} +/- {agg['ssim_std']:.4f}")
-        print(f"LPIPS: {agg['lpips_mean']:.4f} +/- {agg['lpips_std']:.4f}")
-        print(f"NME: {agg['nme_mean']:.4f}")
+        logger.info("SSIM: %.4f +/- %.4f", agg["ssim_mean"], agg["ssim_std"])
+        logger.info("LPIPS: %.4f +/- %.4f", agg["lpips_mean"], agg["lpips_std"])
+        logger.info("NME: %.4f", agg["nme_mean"])
     if "fitzpatrick_breakdown" in report:
-        print("\nFitzpatrick breakdown:")
+        logger.info("Fitzpatrick breakdown:")
         for ftype, data in sorted(report["fitzpatrick_breakdown"].items()):
-            print(
-                f"  Type {ftype}: n={data['count']}, SSIM={data['ssim_mean']:.4f}, LPIPS={data['lpips_mean']:.4f}"
+            logger.info(
+                "  Type %s: n=%d, SSIM=%.4f, LPIPS=%.4f",
+                ftype,
+                data["count"],
+                data["ssim_mean"],
+                data["lpips_mean"],
             )
-    print(f"\nReport saved: {report_path}")
+    logger.info("Report saved: %s", report_path)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     main()

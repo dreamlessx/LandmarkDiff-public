@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
 import time
 from pathlib import Path
@@ -35,6 +36,8 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+logger = logging.getLogger(__name__)
 
 
 def load_val_samples(val_dir: str, n_samples: int = 20, seed: int = 42) -> list[dict]:
@@ -186,33 +189,35 @@ def main():
 
     # Load validation samples
     val_path = PROJECT_ROOT / args.val_dir
-    print(f"Loading {args.n_val} validation samples from {val_path}")
+    logger.info("Loading %d validation samples from %s", args.n_val, val_path)
     samples = load_val_samples(str(val_path), args.n_val, args.seed)
 
     if not samples:
-        print(f"No validation samples found in {val_path}")
+        logger.warning("No validation samples found in %s", val_path)
         # Try training_combined as fallback
         fallback = PROJECT_ROOT / "data" / "training_combined"
-        print(f"Trying fallback: {fallback}")
+        logger.info("Trying fallback: %s", fallback)
         samples = load_val_samples(str(fallback), args.n_val, args.seed)
 
     if not samples:
-        print("ERROR: No validation samples available")
+        logger.error("No validation samples available")
         sys.exit(1)
 
-    print(f"Loaded {len(samples)} samples")
+    logger.info("Loaded %d samples", len(samples))
 
     # Compute baseline (input vs target similarity)
-    print("\nComputing baseline scores...")
+    logger.info("Computing baseline scores...")
     baseline = compute_tps_score(samples)
-    print(f"  Baseline: SSIM={baseline['ssim_mean']:.4f} +/- {baseline['ssim_std']:.4f}")
-    print(f"  Pixel diff: {baseline['pixel_diff_mean']:.4f} +/- {baseline['pixel_diff_std']:.4f}")
+    logger.info("Baseline: SSIM=%.4f +/- %.4f", baseline["ssim_mean"], baseline["ssim_std"])
+    logger.info(
+        "Pixel diff: %.4f +/- %.4f", baseline["pixel_diff_mean"], baseline["pixel_diff_std"]
+    )
 
     # Score each checkpoint
     if args.checkpoint_dir:
         ckpt_path = PROJECT_ROOT / args.checkpoint_dir
         if not ckpt_path.exists():
-            print(f"Checkpoint dir not found: {ckpt_path}")
+            logger.error("Checkpoint dir not found: %s", ckpt_path)
             sys.exit(1)
 
         from scripts.analyze_training_run import find_checkpoints
@@ -220,31 +225,35 @@ def main():
         checkpoints = find_checkpoints(str(ckpt_path))
 
         if not checkpoints:
-            print("No checkpoints found. Scoring TPS baseline only.")
+            logger.warning("No checkpoints found. Scoring TPS baseline only.")
         else:
-            print(f"\nFound {len(checkpoints)} checkpoints")
+            logger.info("Found %d checkpoints", len(checkpoints))
             scores = {}
             for ckpt in checkpoints:
                 name = Path(ckpt["path"]).name
-                print(f"\nScoring {name}...")
+                logger.info("Scoring %s...", name)
                 t0 = time.time()
                 score = score_checkpoint_tps(ckpt["path"], samples)
                 elapsed = time.time() - t0
                 score["elapsed_s"] = round(elapsed, 1)
                 scores[name] = score
-                print(
-                    f"  SSIM={score.get('ssim_mean', 0):.4f} ({score.get('successful', 0)}/{score.get('total', 0)} faces) [{elapsed:.1f}s]"
+                logger.info(
+                    "  SSIM=%.4f (%d/%d faces) [%.1fs]",
+                    score.get("ssim_mean", 0),
+                    score.get("successful", 0),
+                    score.get("total", 0),
+                    elapsed,
                 )
 
             # Rank
             if scores:
-                print(f"\n{'=' * 50}")
-                print("CHECKPOINT RANKING (by SSIM)")
-                print(f"{'=' * 50}")
+                logger.info("=" * 50)
+                logger.info("CHECKPOINT RANKING (by SSIM)")
+                logger.info("=" * 50)
                 ranked = rank_checkpoints(scores)
                 for i, (name, val) in enumerate(ranked, 1):
-                    print(f"  {i}. {name}: SSIM={val:.4f}")
-                print(f"\nBest: {ranked[0][0]}")
+                    logger.info("  %d. %s: SSIM=%.4f", i, name, val)
+                logger.info("Best: %s", ranked[0][0])
 
     # Save results
     if args.json:
@@ -261,8 +270,9 @@ def main():
         out_path.parent.mkdir(parents=True, exist_ok=True)
         with open(out_path, "w") as f:
             json.dump(result, f, indent=2)
-        print(f"\nResults saved to {args.json}")
+        logger.info("Results saved to %s", args.json)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     main()

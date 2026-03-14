@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import shutil
 import sys
 from collections import defaultdict
@@ -29,6 +30,8 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+logger = logging.getLogger(__name__)
 
 PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
 
@@ -56,10 +59,10 @@ def stratified_split(
     # Find all pairs
     input_files = sorted(data_path.glob("*_input.png"))
     if not input_files:
-        print(f"No pairs found in {data_dir}")
+        logger.error("No pairs found in %s", data_dir)
         return {}
 
-    print(f"Found {len(input_files)} pairs")
+    logger.info("Found %d pairs", len(input_files))
 
     # Load metadata for stratification
     meta = load_metadata(data_path)
@@ -147,19 +150,19 @@ def stratified_split(
     with open(out_path / "split_info.json", "w") as f:
         json.dump(split_info, f, indent=2)
 
-    # Print summary
-    print("\nSplit Summary:")
-    print(f"  Train: {len(train_prefixes)} pairs")
-    print(f"  Val:   {len(val_prefixes)} pairs")
-    print(f"  Test:  {len(test_prefixes)} pairs")
-    print("\nPer-procedure breakdown:")
+    # Log summary
+    logger.info("Split Summary:")
+    logger.info("  Train: %d pairs", len(train_prefixes))
+    logger.info("  Val:   %d pairs", len(val_prefixes))
+    logger.info("  Test:  %d pairs", len(test_prefixes))
+    logger.info("Per-procedure breakdown:")
     for proc in sorted(set(p for s in split_stats.values() for p in s)):
         tr = split_stats["train"].get(proc, 0)
         va = split_stats["val"].get(proc, 0)
         te = split_stats["test"].get(proc, 0)
-        print(f"  {proc:<20} train={tr:>4}  val={va:>3}  test={te:>3}")
+        logger.info("  %-20s train=%4d  val=%3d  test=%3d", proc, tr, va, te)
 
-    print(f"\nSplit saved to {out_path}/")
+    logger.info("Split saved to %s/", out_path)
     return split_info
 
 
@@ -169,7 +172,7 @@ def verify_splits(split_dir: str) -> None:
     info_path = split_path / "split_info.json"
 
     if not info_path.exists():
-        print(f"No split_info.json found in {split_dir}")
+        logger.error("No split_info.json found in %s", split_dir)
         return
 
     with open(info_path) as f:
@@ -184,13 +187,13 @@ def verify_splits(split_dir: str) -> None:
     tt_overlap = train_set & test_set
     vt_overlap = val_set & test_set
 
-    print("Split verification:")
-    print(f"  Train: {len(train_set)} prefixes")
-    print(f"  Val:   {len(val_set)} prefixes")
-    print(f"  Test:  {len(test_set)} prefixes")
-    print(f"  Train-Val overlap: {len(tv_overlap)}")
-    print(f"  Train-Test overlap: {len(tt_overlap)}")
-    print(f"  Val-Test overlap: {len(vt_overlap)}")
+    logger.info("Split verification:")
+    logger.info("  Train: %d prefixes", len(train_set))
+    logger.info("  Val:   %d prefixes", len(val_set))
+    logger.info("  Test:  %d prefixes", len(test_set))
+    logger.info("  Train-Val overlap: %d", len(tv_overlap))
+    logger.info("  Train-Test overlap: %d", len(tt_overlap))
+    logger.info("  Val-Test overlap: %d", len(vt_overlap))
 
     # Verify files exist
     for split in ["train", "val", "test"]:
@@ -198,17 +201,18 @@ def verify_splits(split_dir: str) -> None:
         if sdir.exists():
             n_input = len(list(sdir.glob("*_input.png")))
             n_target = len(list(sdir.glob("*_target.png")))
-            print(f"  {split}/ contains {n_input} inputs, {n_target} targets")
+            logger.info("  %s/ contains %d inputs, %d targets", split, n_input, n_target)
         else:
-            print(f"  {split}/ directory missing!")
+            logger.error("  %s/ directory missing!", split)
 
     if tv_overlap or tt_overlap or vt_overlap:
-        print("\nWARNING: Data leakage detected!")
+        logger.warning("Data leakage detected!")
     else:
-        print("\nAll checks passed — no data leakage.")
+        logger.info("All checks passed -- no data leakage.")
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     parser = argparse.ArgumentParser(description="Split dataset for train/val/test")
     parser.add_argument(
         "--data_dir", default=None, help="Source data directory with *_input.png pairs"

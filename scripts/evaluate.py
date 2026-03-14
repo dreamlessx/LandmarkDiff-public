@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
 import time
 from pathlib import Path
@@ -21,6 +22,8 @@ from landmarkdiff.evaluation import (
 )
 from landmarkdiff.inference import LandmarkDiffPipeline
 from landmarkdiff.landmarks import extract_landmarks
+
+logger = logging.getLogger(__name__)
 
 
 def load_test_pairs(
@@ -96,10 +99,10 @@ def run_evaluation(
 
     pairs = load_test_pairs(test_path, num_samples)
     if not pairs:
-        print(f"ERROR: No test pairs found in {test_dir}")
+        logger.error("No test pairs found in %s", test_dir)
         sys.exit(1)
 
-    print(f"Found {len(pairs)} test pairs")
+    logger.info("Found %d test pairs", len(pairs))
 
     # Load pipeline if not TPS-only
     pipe = None
@@ -125,7 +128,7 @@ def run_evaluation(
         target_img = cv2.imread(pair["target_path"])
 
         if input_img is None or target_img is None:
-            print(f"  Skipping {pair['id']}: could not load images")
+            logger.warning("Skipping %s: could not load images", pair["id"])
             continue
 
         input_img = cv2.resize(input_img, (512, 512))
@@ -150,7 +153,7 @@ def run_evaluation(
 
                 face = extract_landmarks(input_img)
                 if face is None:
-                    print(f"  Skipping {pair['id']}: no face detected")
+                    logger.warning("Skipping %s: no face detected", pair["id"])
                     continue
                 from landmarkdiff.manipulation import apply_procedure_preset
                 from landmarkdiff.masking import generate_surgical_mask
@@ -161,7 +164,7 @@ def run_evaluation(
                 pred_img = mask_composite(warped, input_img, mask)
 
         except Exception as e:
-            print(f"  Skipping {pair['id']}: {e}")
+            logger.warning("Skipping %s: %s", pair["id"], e)
             continue
 
         predictions.append(pred_img)
@@ -185,13 +188,13 @@ def run_evaluation(
         if (i + 1) % 10 == 0:
             elapsed = time.time() - start_time
             rate = (i + 1) / elapsed
-            print(f"  [{i + 1}/{len(pairs)}] {rate:.1f} img/s")
+            logger.info("[%d/%d] %.1f img/s", i + 1, len(pairs), rate)
 
     if not predictions:
-        print("ERROR: No valid predictions generated")
+        logger.error("No valid predictions generated")
         sys.exit(1)
 
-    print(f"\nComputing metrics on {len(predictions)} samples...")
+    logger.info("Computing metrics on %d samples...", len(predictions))
 
     # Compute batch metrics with full stratification
     metrics = evaluate_batch(
@@ -211,7 +214,7 @@ def run_evaluation(
                 str(out_path / "generated"),
             )
         except Exception as e:
-            print(f"FID computation failed: {e}")
+            logger.error("FID computation failed: %s", e)
 
     # Save results
     elapsed = time.time() - start_time
@@ -231,16 +234,17 @@ def run_evaluation(
     with open(report_path, "w") as f:
         json.dump(report, f, indent=2)
 
-    print(f"\n{'=' * 60}")
-    print(metrics.summary())
-    print(f"{'=' * 60}")
-    print(f"Report saved to {report_path}")
-    print(f"Total time: {elapsed:.1f}s ({len(predictions) / elapsed:.1f} img/s)")
+    logger.info("=" * 60)
+    logger.info("%s", metrics.summary())
+    logger.info("=" * 60)
+    logger.info("Report saved to %s", report_path)
+    logger.info("Total time: %.1fs (%.1f img/s)", elapsed, len(predictions) / elapsed)
 
     return metrics
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     parser = argparse.ArgumentParser(description="LandmarkDiff Evaluation Harness")
     parser.add_argument("--test-dir", required=True, help="Directory with test pairs")
     parser.add_argument("--output", default="eval_results", help="Output directory")

@@ -40,6 +40,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import logging
 import os
 import signal
 import sys
@@ -52,6 +53,8 @@ import torch
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
+
+logger = logging.getLogger(__name__)
 
 
 # ── SLURM Signal Handler ────────────────────────────────────────
@@ -107,21 +110,21 @@ class SlurmSignalHandler:
         self.should_exit = True
 
         job_id = os.environ.get("SLURM_JOB_ID", "unknown")
-        print(f"\n{'=' * 60}")
-        print(f"SIGNAL RECEIVED: {sig_name} (SLURM job {job_id})")
-        print("Saving emergency checkpoint...")
+        logger.warning("=" * 60)
+        logger.warning("SIGNAL RECEIVED: %s (SLURM job %s)", sig_name, job_id)
+        logger.warning("Saving emergency checkpoint...")
 
         if self.save_fn is not None:
             try:
                 t0 = time.time()
                 self.save_fn()
                 elapsed = time.time() - t0
-                print(f"Emergency checkpoint saved in {elapsed:.1f}s")
+                logger.info("Emergency checkpoint saved in %.1fs", elapsed)
             except Exception as e:
-                print(f"ERROR saving checkpoint: {e}")
+                logger.error("Error saving checkpoint: %s", e)
 
-        print(f"Exiting gracefully after signal {sig_name}")
-        print(f"{'=' * 60}\n")
+        logger.warning("Exiting gracefully after signal %s", sig_name)
+        logger.warning("=" * 60)
 
     def check_and_exit(self) -> None:
         """Call in training loop — exits if signal was received.
@@ -190,14 +193,14 @@ class OOMHandler:
         self.oom_count += 1
 
         if self.oom_count > self.max_oom_retries:
-            print(f"OOM recovery exhausted ({self.max_oom_retries} retries). Giving up.")
+            logger.error("OOM recovery exhausted (%d retries). Giving up.", self.max_oom_retries)
             return False
 
         old_bs = self.current_batch_size
         new_bs = max(self.min_batch_size, old_bs // 2)
 
         if new_bs == old_bs and old_bs == self.min_batch_size:
-            print(f"Already at minimum batch size ({self.min_batch_size}). Cannot recover.")
+            logger.error("Already at minimum batch size (%d). Cannot recover.", self.min_batch_size)
             return False
 
         self.current_batch_size = new_bs
@@ -208,11 +211,11 @@ class OOMHandler:
             torch.cuda.empty_cache()
             torch.cuda.synchronize()
 
-        print(f"\nOOM RECOVERY #{self.oom_count}: batch size {old_bs} → {new_bs}")
+        logger.warning("OOM RECOVERY #%d: batch size %d -> %d", self.oom_count, old_bs, new_bs)
         if torch.cuda.is_available():
             allocated = torch.cuda.memory_allocated() / 1e9
             reserved = torch.cuda.memory_reserved() / 1e9
-            print(f"  CUDA memory: {allocated:.1f}GB allocated, {reserved:.1f}GB reserved")
+            logger.warning("CUDA memory: %.1fGB allocated, %.1fGB reserved", allocated, reserved)
 
         return True
 
@@ -355,21 +358,21 @@ def validate_all_checkpoints(checkpoint_dir: str | Path) -> list[CheckpointValid
     )
 
     if not ckpt_dirs:
-        print(f"No checkpoints found in {ckpt_dir}")
+        logger.warning("No checkpoints found in %s", ckpt_dir)
         return []
 
     for d in ckpt_dirs:
         result = validate_checkpoint(d)
         results.append(result)
         status = "OK" if result.valid else "FAIL"
-        print(f"  [{status}] {d.name} — step {result.step}, {result.size_mb:.1f}MB")
+        logger.info("[%s] %s -- step %d, %.1fMB", status, d.name, result.step, result.size_mb)
         for err in result.errors:
-            print(f"    ERROR: {err}")
+            logger.error("  %s", err)
         for warn in result.warnings:
-            print(f"    WARN: {warn}")
+            logger.warning("  %s", warn)
 
     valid = sum(1 for r in results if r.valid)
-    print(f"\n{valid}/{len(results)} checkpoints valid")
+    logger.info("%d/%d checkpoints valid", valid, len(results))
 
     return results
 
@@ -423,9 +426,13 @@ class GradientWatchdog:
             self._consecutive_nan += 1
             self._total_nan += 1
             if self._consecutive_nan >= self.nan_tolerance:
-                print(f"  ALERT: {self._consecutive_nan} consecutive NaN/Inf losses at step {step}")
+                logger.error(
+                    "ALERT: %d consecutive NaN/Inf losses at step %d",
+                    self._consecutive_nan,
+                    step,
+                )
                 return "alert"
-            print(f"  WARNING: NaN/Inf loss at step {step} (#{self._consecutive_nan})")
+            logger.warning("NaN/Inf loss at step %d (#%d)", step, self._consecutive_nan)
             self._total_skipped += 1
             return "skip"
 
@@ -437,7 +444,7 @@ class GradientWatchdog:
         if not _is_finite(total_norm):
             self._total_nan += 1
             self._total_skipped += 1
-            print(f"  WARNING: NaN/Inf gradient norm at step {step}")
+            logger.warning("NaN/Inf gradient norm at step %d", step)
             return "skip"
 
         # Track history
@@ -455,8 +462,8 @@ class GradientWatchdog:
             recent_mean = sum(self._loss_history[-10:]) / 10
             older_mean = sum(self._loss_history[:-10]) / max(1, len(self._loss_history) - 10)
             if older_mean > 0 and recent_mean / older_mean > self.spike_threshold:
-                print(
-                    f"  WARNING: loss spike at step {step} ({recent_mean:.4f} vs {older_mean:.4f})"
+                logger.warning(
+                    "Loss spike at step %d (%.4f vs %.4f)", step, recent_mean, older_mean
                 )
                 return "alert"
 
@@ -464,7 +471,7 @@ class GradientWatchdog:
         if total_norm < self.vanish_threshold and len(self._grad_norm_history) >= 5:
             recent_norms = self._grad_norm_history[-5:]
             if all(n < self.vanish_threshold for n in recent_norms):
-                print(f"  WARNING: vanishing gradients at step {step} (norm={total_norm:.2e})")
+                logger.warning("Vanishing gradients at step %d (norm=%.2e)", step, total_norm)
                 return "alert"
 
         return "ok"
@@ -538,7 +545,7 @@ def create_emergency_save_fn(
         # Also save EMA model in diffusers format for immediate use
         ema_controlnet.save_pretrained(ckpt_dir / "controlnet_ema")
 
-        print(f"  Emergency checkpoint: {ckpt_dir} (step {step})")
+        logger.info("Emergency checkpoint: %s (step %d)", ckpt_dir, step)
 
     return _save
 
@@ -547,6 +554,7 @@ def create_emergency_save_fn(
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     parser = argparse.ArgumentParser(description="Training resilience utilities")
     parser.add_argument("--validate", default=None, help="Validate a single checkpoint directory")
     parser.add_argument(
@@ -556,7 +564,7 @@ if __name__ == "__main__":
 
     if args.validate:
         result = validate_checkpoint(args.validate)
-        print(result)
+        logger.info("%s", result)
         sys.exit(0 if result.valid else 1)
 
     if args.validate_all:

@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
 from pathlib import Path
 
@@ -36,6 +37,8 @@ import numpy as np
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
+
+logger = logging.getLogger(__name__)
 
 from landmarkdiff.evaluation import (
     compute_lpips,
@@ -197,12 +200,12 @@ def compare_models(
     out_path.mkdir(parents=True, exist_ok=True)
 
     # Load test samples
-    print(f"Loading test samples from {test_path}...")
+    logger.info("Loading test samples from %s...", test_path)
     samples = load_test_samples(test_path, max_samples)
     if not samples:
-        print("ERROR: No test samples loaded")
+        logger.error("No test samples loaded")
         sys.exit(1)
-    print(f"  Loaded {len(samples)} samples")
+    logger.info("  Loaded %d samples", len(samples))
 
     # Model names
     model_names = []
@@ -212,8 +215,7 @@ def compare_models(
         name = Path(ckpt).name
         model_names.append(name)
 
-    print(f"Models: {model_names}")
-    print()
+    logger.info("Models: %s", model_names)
 
     # Collect all results
     all_metrics: dict[str, list[dict]] = {name: [] for name in model_names}
@@ -247,7 +249,7 @@ def compare_models(
 
         # Progress
         if (i + 1) % 10 == 0 or i == 0:
-            print(f"  Processed {i + 1}/{len(samples)}")
+            logger.info("  Processed %d/%d", i + 1, len(samples))
 
     # Assemble full grid
     if grid_rows:
@@ -259,7 +261,7 @@ def compare_models(
             page_num = page_idx // page_size + 1
             grid_path = out_path / f"comparison_page{page_num}.png"
             cv2.imwrite(str(grid_path), grid)
-            print(f"  Grid saved: {grid_path}")
+            logger.info("  Grid saved: %s", grid_path)
 
     # Compute aggregate statistics
     report = {
@@ -272,11 +274,11 @@ def compare_models(
     has_targets = any(s["target"] is not None for s in samples)
 
     if has_targets:
-        print(f"\n{'=' * 70}")
-        print(f"  Model Comparison Results (n={len(samples)})")
-        print(f"{'=' * 70}")
-        print(f"{'Model':<20} {'SSIM':>8} {'LPIPS':>8}")
-        print("-" * 40)
+        logger.info("=" * 70)
+        logger.info("  Model Comparison Results (n=%d)", len(samples))
+        logger.info("=" * 70)
+        logger.info("%-20s %8s %8s", "Model", "SSIM", "LPIPS")
+        logger.info("-" * 40)
 
         for name in model_names:
             if not all_metrics[name]:
@@ -289,7 +291,7 @@ def compare_models(
             std_ssim = np.std(ssim_vals)
             std_lpips = np.std(lpips_vals)
 
-            print(f"{name:<20} {mean_ssim:.4f}   {mean_lpips:.4f}")
+            logger.info("%-20s %.4f   %.4f", name, mean_ssim, mean_lpips)
 
             report["models"][name] = {
                 "ssim_mean": round(float(mean_ssim), 4),
@@ -301,9 +303,9 @@ def compare_models(
 
         # Statistical significance tests (pairwise)
         if len(model_names) >= 2:
-            print(f"\n{'=' * 70}")
-            print("  Pairwise Statistical Tests (paired t-test, alpha=0.05)")
-            print(f"{'=' * 70}")
+            logger.info("=" * 70)
+            logger.info("  Pairwise Statistical Tests (paired t-test, alpha=0.05)")
+            logger.info("=" * 70)
             report["pairwise_tests"] = {}
 
             for i, name_a in enumerate(model_names):
@@ -328,18 +330,24 @@ def compare_models(
 
                     ssim_sig = "*" if ssim_test["significant"] else ""
                     lpips_sig = "*" if lpips_test["significant"] else ""
-                    print(f"\n{name_a} vs {name_b}:")
-                    print(
-                        f"  SSIM:  t={ssim_test['t_stat']:+.3f}, p={ssim_test['p_value']:.4f} {ssim_sig}"
+                    logger.info("%s vs %s:", name_a, name_b)
+                    logger.info(
+                        "  SSIM:  t=%+.3f, p=%.4f %s",
+                        ssim_test["t_stat"],
+                        ssim_test["p_value"],
+                        ssim_sig,
                     )
-                    print(
-                        f"  LPIPS: t={lpips_test['t_stat']:+.3f}, p={lpips_test['p_value']:.4f} {lpips_sig}"
+                    logger.info(
+                        "  LPIPS: t=%+.3f, p=%.4f %s",
+                        lpips_test["t_stat"],
+                        lpips_test["p_value"],
+                        lpips_sig,
                     )
 
         # Per-procedure breakdown
-        print(f"\n{'=' * 70}")
-        print("  Per-Procedure Breakdown")
-        print(f"{'=' * 70}")
+        logger.info("=" * 70)
+        logger.info("  Per-Procedure Breakdown")
+        logger.info("=" * 70)
         report["per_procedure"] = {}
 
         for proc in PROCEDURES:
@@ -347,7 +355,7 @@ def compare_models(
             if not proc_samples:
                 continue
 
-            print(f"\n  {proc} (n={len(proc_samples)}):")
+            logger.info("  %s (n=%d):", proc, len(proc_samples))
             report["per_procedure"][proc] = {}
 
             for name in model_names:
@@ -358,7 +366,7 @@ def compare_models(
                     continue
                 ssim_mean = np.mean([m["ssim"] for m in proc_metrics])
                 lpips_mean = np.mean([m["lpips"] for m in proc_metrics])
-                print(f"    {name:<20} SSIM={ssim_mean:.4f}  LPIPS={lpips_mean:.4f}")
+                logger.info("    %-20s SSIM=%.4f  LPIPS=%.4f", name, ssim_mean, lpips_mean)
                 report["per_procedure"][proc][name] = {
                     "ssim_mean": round(float(ssim_mean), 4),
                     "lpips_mean": round(float(lpips_mean), 4),
@@ -369,10 +377,11 @@ def compare_models(
     report_path = out_path / "comparison_report.json"
     with open(report_path, "w") as f:
         json.dump(report, f, indent=2)
-    print(f"\nReport saved: {report_path}")
+    logger.info("Report saved: %s", report_path)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     parser = argparse.ArgumentParser(description="Compare model checkpoints")
     parser.add_argument(
         "--checkpoints", nargs="+", required=True, help="Checkpoint directories to compare"

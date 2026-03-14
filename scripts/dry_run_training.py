@@ -31,6 +31,7 @@ import argparse
 import contextlib
 import copy
 import json
+import logging
 import shutil
 import sys
 import time
@@ -46,6 +47,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
+logger = logging.getLogger(__name__)
+
 
 class DryRunResult:
     """Tracks dry-run validation results."""
@@ -57,10 +60,13 @@ class DryRunResult:
     def check(self, name: str, passed: bool, detail: str = ""):
         self.checks.append({"name": name, "passed": passed, "detail": detail})
         icon = "+" if passed else "X"
-        msg = f"  [{icon}] {name}"
+        msg = f"[{icon}] {name}"
         if detail:
-            msg += f" — {detail}"
-        print(msg)
+            msg += f" -- {detail}"
+        if passed:
+            logger.info("  %s", msg)
+        else:
+            logger.error("  %s", msg)
         return passed
 
     @property
@@ -126,16 +132,15 @@ def run_dry_run(
     """Run a complete training dry-run validation."""
     result = DryRunResult()
 
-    print(f"{'=' * 60}")
-    print("  Training Dry-Run Validator")
-    print(f"{'=' * 60}")
-    print(f"  Steps: {n_steps} | Device: CPU (forced)")
+    logger.info("=" * 60)
+    logger.info("Training Dry-Run Validator")
+    logger.info("=" * 60)
+    logger.info("Steps: %d | Device: CPU (forced)", n_steps)
     if config_path:
-        print(f"  Config: {config_path}")
-    print()
+        logger.info("Config: %s", config_path)
 
     # ── Step 1: Config validation ──
-    print("Phase 1: Configuration")
+    logger.info("Phase 1: Configuration")
     config = None
     if config_path:
         try:
@@ -155,7 +160,7 @@ def run_dry_run(
         result.check("Config (skipped)", True, "no config file provided")
 
     # ── Step 2: Create synthetic dataset ──
-    print("\nPhase 2: Dataset")
+    logger.info("Phase 2: Dataset")
     tmp_dir = PROJECT_ROOT / ".dry_run_tmp"
     data_dir = tmp_dir / "data"
 
@@ -206,7 +211,7 @@ def run_dry_run(
         result.check("DataLoader batching", False, str(e))
 
     # ── Step 3: Model loading ──
-    print("\nPhase 3: Model Loading")
+    logger.info("Phase 3: Model Loading")
     device = torch.device("cpu")
     weight_dtype = torch.float32
 
@@ -289,7 +294,7 @@ def run_dry_run(
         return result
 
     # ── Step 4: Training loop ──
-    print("\nPhase 4: Training Loop")
+    logger.info("Phase 4: Training Loop")
 
     # Text embeddings
     try:
@@ -376,7 +381,7 @@ def run_dry_run(
         loss_val = loss.item()
         losses.append(loss_val)
         if verbose:
-            print(f"    Step {step + 1}/{n_steps}: loss={loss_val:.6f}")
+            logger.debug("Step %d/%d: loss=%.6f", step + 1, n_steps, loss_val)
 
     result.check(
         "Forward+backward pass",
@@ -403,7 +408,7 @@ def run_dry_run(
     result.check("Gradients flow to ControlNet", params_differ, "params updated from init")
 
     # ── Step 5: Checkpoint save/load ──
-    print("\nPhase 5: Checkpoint Save/Load")
+    logger.info("Phase 5: Checkpoint Save/Load")
     ckpt_dir = tmp_dir / "checkpoint-test"
     ckpt_dir.mkdir(parents=True, exist_ok=True)
 
@@ -438,7 +443,7 @@ def run_dry_run(
         result.check("Checkpoint resume", False, str(e))
 
     # ── Step 6: Inference loading ──
-    print("\nPhase 6: Inference Pipeline")
+    logger.info("Phase 6: Inference Pipeline")
     try:
         from landmarkdiff.inference import LandmarkDiffPipeline
 
@@ -447,7 +452,7 @@ def run_dry_run(
         result.check("Inference import", False, str(e))
 
     # ── Step 7: Post-training tools ──
-    print("\nPhase 7: Post-Training Tools")
+    logger.info("Phase 7: Post-Training Tools")
     try:
         from scripts.analyze_training_run import (
             TrainingMetrics,
@@ -495,17 +500,17 @@ def run_dry_run(
     _cleanup(tmp_dir)
 
     # ── Summary ──
-    print(f"\n{'=' * 60}")
-    print(f"  {result.summary()}")
-    print(f"{'=' * 60}")
+    logger.info("=" * 60)
+    logger.info("%s", result.summary())
+    logger.info("=" * 60)
 
     if result.all_passed:
-        print("\n  Training pipeline is ready for SLURM submission.")
+        logger.info("Training pipeline is ready for SLURM submission.")
     else:
-        print("\n  FIX the failures above before submitting to SLURM.")
+        logger.error("FIX the failures above before submitting to SLURM.")
         for c in result.checks:
             if not c["passed"]:
-                print(f"    FAILED: {c['name']} — {c['detail']}")
+                logger.error("  FAILED: %s -- %s", c["name"], c["detail"])
 
     return result
 
@@ -518,6 +523,7 @@ def _cleanup(tmp_dir: Path):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     parser = argparse.ArgumentParser(description="Training dry-run validator")
     parser.add_argument("--config", default=None, help="YAML config to validate")
     parser.add_argument("--steps", type=int, default=5, help="Mini training steps")

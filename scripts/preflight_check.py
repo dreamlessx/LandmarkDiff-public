@@ -15,11 +15,14 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import logging
 import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
+
+logger = logging.getLogger(__name__)
 
 
 def check_mark(ok: bool) -> str:
@@ -184,83 +187,89 @@ def check_forward_pass(data_dir: str, phase: str = "A") -> tuple[bool, dict]:
 
 def run_preflight(data_dir: str, phase: str = "A", quick: bool = False) -> bool:
     """Run all pre-flight checks."""
-    print("=" * 60)
-    print(f"  LandmarkDiff Pre-flight Check (Phase {phase})")
-    print("=" * 60)
-    print()
+    logger.info("=" * 60)
+    logger.info("LandmarkDiff Pre-flight Check (Phase %s)", phase)
+    logger.info("=" * 60)
 
     all_ok = True
 
     # 1. Dataset
-    print("1. Dataset check...")
+    logger.info("1. Dataset check...")
     ok, info = check_dataset(data_dir)
     all_ok &= ok
-    print(f"   [{check_mark(ok)}] {info.get('input_files', 0)} training pairs")
+    logger.info("   [%s] %d training pairs", check_mark(ok), info.get("input_files", 0))
     if info.get("has_metadata"):
-        print(f"   [{check_mark(True)}] Metadata found ({info.get('metadata_pairs', 0)} entries)")
+        n_meta = info.get("metadata_pairs", 0)
+        logger.info("   [%s] Metadata found (%d entries)", check_mark(True), n_meta)
     for key in ("error", "warning"):
         if key in info:
-            print(f"   {'!!!' if key == 'error' else 'WRN'}: {info[key]}")
-    print()
+            if key == "error":
+                logger.error("   !!! %s", info[key])
+            else:
+                logger.warning("   WRN: %s", info[key])
 
     # 2. Imports
-    print("2. Import check...")
+    logger.info("2. Import check...")
     ok, failures = check_imports()
     all_ok &= ok
     if ok:
-        print(f"   [{check_mark(True)}] All modules importable")
+        logger.info("   [%s] All modules importable", check_mark(True))
     else:
-        print(f"   [{check_mark(False)}] Missing: {', '.join(failures)}")
-    print()
+        logger.error("   [%s] Missing: %s", check_mark(False), ", ".join(failures))
 
     # 3. GPU
-    print("3. GPU check...")
+    logger.info("3. GPU check...")
     ok, info = check_gpu()
     if info.get("cuda"):
-        print(f"   [{check_mark(ok)}] {info.get('device_name')} ({info.get('vram_total_gb')}GB)")
-        print(f"   [{check_mark(info.get('bf16_supported', False))}] BF16 support")
+        gpu_name = info.get("device_name")
+        gpu_vram = info.get("vram_total_gb")
+        logger.info("   [%s] %s (%sGB)", check_mark(ok), gpu_name, gpu_vram)
+        logger.info("   [%s] BF16 support", check_mark(info.get("bf16_supported", False)))
     else:
-        print(f"   [{check_mark(False)}] No CUDA device found")
+        logger.error("   [%s] No CUDA device found", check_mark(False))
         all_ok = False
     if "warning" in info:
-        print(f"   WRN: {info['warning']}")
-    print()
+        logger.warning("   WRN: %s", info["warning"])
 
     # 4. Model cache
-    print("4. Model cache check...")
+    logger.info("4. Model cache check...")
     ok, info = check_model_cache()
-    print(f"   [{check_mark(info.get('sd15_cached', False))}] SD1.5 weights")
-    print(f"   [{check_mark(info.get('controlnet_cached', False))}] ControlNet weights")
+    logger.info("   [%s] SD1.5 weights", check_mark(info.get("sd15_cached", False)))
+    logger.info("   [%s] ControlNet weights", check_mark(info.get("controlnet_cached", False)))
     if "warning" in info:
-        print(f"   WRN: {info['warning']}")
-    print()
+        logger.warning("   WRN: %s", info["warning"])
 
     # 5. Forward pass (skip if --quick)
     if not quick:
-        print("5. Forward pass check...")
+        logger.info("5. Forward pass check...")
         ok, info = check_forward_pass(data_dir, phase)
         all_ok &= ok
         if ok:
-            print(f"   [{check_mark(True)}] Dataset loading works")
-            print(f"   [{check_mark(True)}] Sample shapes correct: {info.get('input_shape')}")
+            logger.info("   [%s] Dataset loading works", check_mark(True))
+            input_shape = info.get("input_shape")
+            logger.info(
+                "   [%s] Sample shapes correct: %s",
+                check_mark(True),
+                input_shape,
+            )
         else:
-            print(f"   [{check_mark(False)}] {info.get('error', 'Unknown error')}")
+            logger.error("   [%s] %s", check_mark(False), info.get("error", "Unknown error"))
     else:
-        print("5. Forward pass check... SKIPPED (--quick)")
-    print()
+        logger.info("5. Forward pass check... SKIPPED (--quick)")
 
     # Summary
-    print("=" * 60)
+    logger.info("=" * 60)
     if all_ok:
-        print("  ALL CHECKS PASSED — Ready to train!")
+        logger.info("ALL CHECKS PASSED -- Ready to train!")
     else:
-        print("  SOME CHECKS FAILED — Fix issues before training")
-    print("=" * 60)
+        logger.error("SOME CHECKS FAILED -- Fix issues before training")
+    logger.info("=" * 60)
 
     return all_ok
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     parser = argparse.ArgumentParser(description="Pre-flight training check")
     parser.add_argument("--data_dir", default="data/training_combined")
     parser.add_argument("--phase", default="A", choices=["A", "B"])

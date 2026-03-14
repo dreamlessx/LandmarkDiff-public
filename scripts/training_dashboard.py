@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
 import time
 from pathlib import Path
@@ -35,6 +36,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+logger = logging.getLogger(__name__)
 
 
 def find_latest_log() -> str | None:
@@ -336,16 +339,18 @@ def generate_dashboard(
     if log_path is None:
         log_path = find_latest_log()
         if log_path is None:
-            print("No SLURM training logs found")
+            logger.error("No SLURM training logs found")
             return ""
 
     if not Path(log_path).exists():
-        print(f"Log not found: {log_path}")
+        logger.error("Log not found: %s", log_path)
         return ""
 
-    print(f"Parsing: {Path(log_path).name}")
+    logger.info("Parsing: %s", Path(log_path).name)
     data = parse_log_data(log_path)
-    print(f"  Found {len(data['steps'])} data points, {len(data['checkpoints'])} checkpoints")
+    logger.info(
+        "Found %d data points, %d checkpoints", len(data["steps"]), len(data["checkpoints"])
+    )
 
     html = generate_dashboard_html(data)
 
@@ -354,12 +359,13 @@ def generate_dashboard(
         output_path = str(PROJECT_ROOT / f"dashboard_{stem}.html")
 
     Path(output_path).write_text(html)
-    print(f"  Dashboard: {output_path}")
+    logger.info("Dashboard: %s", output_path)
 
     return output_path
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     parser = argparse.ArgumentParser(description="Training dashboard generator")
     parser.add_argument("--log", default=None, help="SLURM log file (auto-detect if omitted)")
     parser.add_argument("--output", default=None, help="Output HTML path")
@@ -369,13 +375,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.watch > 0:
-        print(f"Watch mode: regenerating every {args.watch}s (Ctrl+C to stop)")
+        logger.info("Watch mode: regenerating every %ds (Ctrl+C to stop)", args.watch)
         while True:
             try:
                 generate_dashboard(args.log, args.output)
                 time.sleep(args.watch)
             except KeyboardInterrupt:
-                print("\nStopped.")
+                logger.info("Stopped.")
                 break
     else:
         path = generate_dashboard(args.log, args.output)

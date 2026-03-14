@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
 import re
 import subprocess
@@ -35,6 +36,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+logger = logging.getLogger(__name__)
 
 # SLURM defaults
 SLURM_DEFAULTS = {
@@ -166,7 +169,7 @@ def generate_slurm_script(
 def submit_slurm(script_path: str, dry_run: bool = False) -> int | None:
     """Submit a SLURM script and return job ID."""
     if dry_run:
-        print(f"[DRY RUN] Would submit: sbatch {script_path}")
+        logger.info("[DRY RUN] Would submit: sbatch %s", script_path)
         return None
 
     result = subprocess.run(
@@ -176,7 +179,7 @@ def submit_slurm(script_path: str, dry_run: bool = False) -> int | None:
     )
 
     if result.returncode != 0:
-        print(f"sbatch failed: {result.stderr.strip()}")
+        logger.error("sbatch failed: %s", result.stderr.strip())
         return None
 
     # Parse job ID from "Submitted batch job 12345"
@@ -184,7 +187,7 @@ def submit_slurm(script_path: str, dry_run: bool = False) -> int | None:
     if match:
         return int(match.group(1))
 
-    print(f"Unexpected sbatch output: {result.stdout.strip()}")
+    logger.error("Unexpected sbatch output: %s", result.stdout.strip())
     return None
 
 
@@ -232,59 +235,54 @@ def main():
 
     config_path = args.config
     if not Path(config_path).exists():
-        print(f"Config not found: {config_path}")
+        logger.error("Config not found: %s", config_path)
         sys.exit(1)
 
     config = load_config(config_path)
     phase = config.get("training", {}).get("phase", "A")
     exp_name = config.get("experiment_name", f"phase{phase}")
 
-    print(f"{'=' * 60}")
-    print(f"TRAINING LAUNCHER: {exp_name}")
-    print(f"{'=' * 60}")
-    print(f"Config: {config_path}")
-    print(f"Phase: {phase} | GPUs: {args.gpus}")
-    print()
+    logger.info("=" * 60)
+    logger.info("TRAINING LAUNCHER: %s", exp_name)
+    logger.info("=" * 60)
+    logger.info("Config: %s", config_path)
+    logger.info("Phase: %s | GPUs: %d", phase, args.gpus)
 
     # Check for existing jobs
     existing = check_existing_jobs("ldiff_")
     if existing:
-        print("Active training jobs:")
+        logger.info("Active training jobs:")
         for j in existing:
-            print(f"  {j['id']} {j['name']} [{j['state']}] {j['elapsed']}")
-        print()
+            logger.info("  %s %s [%s] %s", j["id"], j["name"], j["state"], j["elapsed"])
 
     # Preflight checks
     if not args.skip_preflight:
-        print("Running preflight checks...")
+        logger.info("Running preflight checks...")
         passed, messages, n_warnings = run_preflight(config_path)
 
         for msg in messages:
-            print(f"  {msg}")
-        print()
+            logger.info("  %s", msg)
 
         if not passed:
-            print("PREFLIGHT FAILED — fix issues before submitting.")
-            print("Use --skip-preflight to bypass (not recommended).")
+            logger.error("PREFLIGHT FAILED -- fix issues before submitting.")
+            logger.error("Use --skip-preflight to bypass (not recommended).")
             sys.exit(1)
 
         if n_warnings > 0 and not args.force:
-            print(f"{n_warnings} warning(s). Use --force to submit anyway.")
+            logger.warning("%d warning(s). Use --force to submit anyway.", n_warnings)
             # Dependency/GPU warnings are expected on login nodes
             # Auto-force if all warnings are dep/GPU related
             dep_gpu_only = all(
                 "Dependencies" in m or "GPU" in m for m in messages if m.startswith("WARN:")
             )
             if dep_gpu_only:
-                print("  (Auto-forcing: only dependency/GPU warnings from login node)")
+                logger.info("  (Auto-forcing: only dependency/GPU warnings from login node)")
             else:
                 sys.exit(1)
 
-        print("Preflight PASSED")
+        logger.info("Preflight PASSED")
     else:
-        print("Preflight checks SKIPPED")
-
-    print()
+        logger.info("Preflight checks SKIPPED")
 
     # Generate SLURM script
     script_content = generate_slurm_script(
@@ -298,34 +296,34 @@ def main():
     with open(script_path, "w") as f:
         f.write(script_content)
     os.chmod(script_path, 0o755)
-    print(f"SLURM script: {script_path}")
+    logger.info("SLURM script: %s", script_path)
 
     if args.dry_run or args.validate:
-        print("\n[DRY RUN] Script contents:")
-        print("-" * 40)
-        print(script_content)
-        print("-" * 40)
+        logger.info("[DRY RUN] Script contents:")
+        logger.info("-" * 40)
+        logger.info("%s", script_content)
+        logger.info("-" * 40)
 
         if args.validate:
-            print("\nRunning training dry-run validation...")
+            logger.info("Running training dry-run validation...")
             from scripts.dry_run_training import run_dry_run
 
             dr_result = run_dry_run(config_path, n_steps=3)
             if not dr_result.all_passed:
-                print("\nDry-run validation FAILED. Fix issues before submitting.")
+                logger.error("Dry-run validation FAILED. Fix issues before submitting.")
                 sys.exit(1)
 
-        print("Use without --dry-run to submit.")
+        logger.info("Use without --dry-run to submit.")
         return
 
     # Submit
-    print("\nSubmitting to SLURM...")
+    logger.info("Submitting to SLURM...")
     job_id = submit_slurm(str(script_path))
 
     if job_id:
-        print(f"Job submitted: {job_id}")
-        print(f"Monitor: squeue -j {job_id}")
-        print(f"Logs: tail -f slurm-{exp_name}-{job_id}.out")
+        logger.info("Job submitted: %d", job_id)
+        logger.info("Monitor: squeue -j %d", job_id)
+        logger.info("Logs: tail -f slurm-%s-%d.out", exp_name, job_id)
 
         # Save launch info
         launch_info = {
@@ -342,7 +340,7 @@ def main():
             json.dump(launch_info, f, indent=2)
 
         if args.monitor:
-            print("\nStarting monitor...")
+            logger.info("Starting monitor...")
             os.execvp(
                 "python",
                 [
@@ -353,9 +351,10 @@ def main():
                 ],
             )
     else:
-        print("Submission failed.")
+        logger.error("Submission failed.")
         sys.exit(1)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     main()

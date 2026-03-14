@@ -33,6 +33,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import logging
 import sys
 from pathlib import Path
 
@@ -41,6 +42,8 @@ import numpy as np
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
+
+logger = logging.getLogger(__name__)
 
 from landmarkdiff.inference import mask_composite
 from landmarkdiff.landmarks import extract_landmarks
@@ -169,14 +172,14 @@ def generate_comparison_grid(
     out_path = Path(output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
 
-    print(f"Loading test images from {test_path}...")
+    logger.info("Loading test images from %s...", test_path)
     by_proc = load_test_images(test_path, max_per_proc)
 
     total_samples = sum(len(v) for v in by_proc.values())
-    print(f"  Loaded {total_samples} samples across {len(by_proc)} procedures")
+    logger.info("  Loaded %d samples across %d procedures", total_samples, len(by_proc))
 
     if total_samples == 0:
-        print("No test images found")
+        logger.warning("No test images found")
         return {}
 
     # Define methods: always include TPS baseline
@@ -233,7 +236,7 @@ def generate_comparison_grid(
             rows.append(panels)
 
     if not rows:
-        print("No comparison rows generated")
+        logger.warning("No comparison rows generated")
         return {}
 
     # Add labels to first row
@@ -264,13 +267,13 @@ def generate_comparison_grid(
     # Save
     grid_path = out_path / "comparison_grid.png"
     cv2.imwrite(str(grid_path), grid)
-    print(f"  Grid saved: {grid_path} ({grid.shape[1]}x{grid.shape[0]})")
+    logger.info("  Grid saved: %s (%dx%d)", grid_path, grid.shape[1], grid.shape[0])
 
     # Generate LaTeX figure code
     latex = generate_latex_figure(col_labels, list(proc_row_indices.keys()))
     latex_path = out_path / "comparison_figure.tex"
     latex_path.write_text(latex)
-    print(f"  LaTeX: {latex_path}")
+    logger.info("  LaTeX: %s", latex_path)
 
     # Save individual per-procedure grids
     for proc, indices in proc_row_indices.items():
@@ -310,6 +313,7 @@ def generate_latex_figure(columns: list[str], procedures: list[str]) -> str:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     parser = argparse.ArgumentParser(description="Multi-method comparison grid generator")
     parser.add_argument("--test_dir", default="data/splits/test", help="Test data directory")
     parser.add_argument(
