@@ -12,6 +12,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import logging
 import sys
 from pathlib import Path
 
@@ -19,6 +20,9 @@ import cv2
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+logger = logging.getLogger(__name__)
 
 from landmarkdiff.conditioning import generate_conditioning, render_wireframe
 from landmarkdiff.inference import mask_composite
@@ -50,7 +54,7 @@ def add_label(
     text: str,
     position: str = "bottom",
     font_scale: float = 0.5,
-    color=(255, 255, 255),
+    color: tuple[int, int, int] = (255, 255, 255),
 ) -> np.ndarray:
     """Add a text label to an image."""
     img = img.copy()
@@ -81,7 +85,7 @@ def figure_architecture(output_dir: Path, dpi: int = 200):
         import matplotlib.patches as mpatches
         import matplotlib.pyplot as plt
     except ImportError:
-        print("matplotlib not installed -- skipping architecture diagram")
+        logger.warning("matplotlib not installed -- skipping architecture diagram")
         return
 
     fig, ax = plt.subplots(figsize=(14, 4))
@@ -159,7 +163,7 @@ def figure_architecture(output_dir: Path, dpi: int = 200):
     # Also save PNG for quick preview
     fig.savefig(str(output_dir / "fig_architecture.png"), dpi=dpi, bbox_inches="tight")
     plt.close(fig)
-    print(f"Architecture diagram: {out_path}")
+    logger.info("Architecture diagram: %s", out_path)
 
 
 # -----------------------------------------------------------------------
@@ -171,12 +175,12 @@ def figure_procedure_grid(image_path: str, output_dir: Path, size: int = 192):
     """6-procedure x 3-intensity comparison grid."""
     img = cv2.imread(image_path)
     if img is None:
-        print(f"Cannot read {image_path}")
+        logger.warning("Cannot read %s", image_path)
         return
     img = cv2.resize(img, (512, 512))
     face = extract_landmarks(img)
     if face is None:
-        print(f"No face detected in {image_path}")
+        logger.warning("No face detected in %s", image_path)
         return
 
     intensities = [33, 66, 100]
@@ -200,7 +204,7 @@ def figure_procedure_grid(image_path: str, output_dir: Path, size: int = 192):
                 composite = mask_composite(warped, img, mask)
                 panel = cv2.resize(composite, (size, size))
             except Exception as e:
-                print(f"  {proc} {intensity}%: {e}")
+                logger.warning("  %s %d%%: %s", proc, intensity, e)
                 panel = np.zeros((size, size, 3), dtype=np.uint8)
             row_panels.append(panel)
 
@@ -209,7 +213,7 @@ def figure_procedure_grid(image_path: str, output_dir: Path, size: int = 192):
     grid = np.vstack(rows)
     out_path = output_dir / "fig_procedure_grid.png"
     cv2.imwrite(str(out_path), grid)
-    print(f"Procedure grid (6x3): {out_path} ({grid.shape[1]}x{grid.shape[0]})")
+    logger.info("Procedure grid (6x3): %s (%dx%d)", out_path, grid.shape[1], grid.shape[0])
 
 
 def _blank_panel(size: int, label: str) -> np.ndarray:
@@ -282,7 +286,7 @@ def figure_deformation_overlay(
     row = np.hstack([panel_orig, panel_overlay, panel_warped])
     out_path = output_dir / f"fig_deformation_{procedure}.png"
     cv2.imwrite(str(out_path), row)
-    print(f"Deformation overlay ({procedure}): {out_path}")
+    logger.info("Deformation overlay (%s): %s", procedure, out_path)
 
 
 # -----------------------------------------------------------------------
@@ -346,7 +350,7 @@ def figure_postprocess_comparison(image_path: str, output_dir: Path, size: int =
     row = np.hstack(grid_panels)
     out_path = output_dir / "fig_postprocess.png"
     cv2.imwrite(str(out_path), row)
-    print(f"Post-processing comparison: {out_path}")
+    logger.info("Post-processing comparison: %s", out_path)
 
 
 # -----------------------------------------------------------------------
@@ -358,12 +362,12 @@ def figure_pipeline(image_path: str, output_dir: Path, size: int = 256):
     """Pipeline overview: Input -> Landmarks -> Wireframe -> Canny -> Mask -> TPS -> Output."""
     img = cv2.imread(image_path)
     if img is None:
-        print(f"Cannot read {image_path}")
+        logger.warning("Cannot read %s", image_path)
         return
     img = cv2.resize(img, (512, 512))
     face = extract_landmarks(img)
     if face is None:
-        print(f"No face in {image_path}")
+        logger.warning("No face in %s", image_path)
         return
 
     procedure = "rhinoplasty"
@@ -394,7 +398,7 @@ def figure_pipeline(image_path: str, output_dir: Path, size: int = 256):
     grid = np.hstack(panels)
     out_path = output_dir / "fig_pipeline.png"
     cv2.imwrite(str(out_path), grid)
-    print(f"Pipeline figure: {out_path} ({grid.shape[1]}x{grid.shape[0]})")
+    logger.info("Pipeline figure: %s (%dx%d)", out_path, grid.shape[1], grid.shape[0])
 
 
 # -----------------------------------------------------------------------
@@ -434,7 +438,7 @@ def figure_conditioning(image_path: str, output_dir: Path, size: int = 256):
     row = np.hstack(grid_panels)
     out_path = output_dir / "fig_conditioning.png"
     cv2.imwrite(str(out_path), row)
-    print(f"Conditioning figure: {out_path}")
+    logger.info("Conditioning figure: %s", out_path)
 
 
 # -----------------------------------------------------------------------
@@ -442,12 +446,16 @@ def figure_conditioning(image_path: str, output_dir: Path, size: int = 256):
 # -----------------------------------------------------------------------
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Generate paper figures")
+def build_parser() -> argparse.ArgumentParser:
+    """Build argument parser for paper figure generation."""
+    parser = argparse.ArgumentParser(
+        description="Generate publication-quality figures for the LandmarkDiff paper",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
     parser.add_argument("--input", default=None, help="Single input face image path")
     parser.add_argument("--input_dir", default=None, help="Directory of face images")
     parser.add_argument("--output", default="paper/figures", help="Output directory")
-    parser.add_argument("--max_images", type=int, default=4)
+    parser.add_argument("--max_images", type=int, default=4, help="Max images from input_dir")
     parser.add_argument("--size", type=int, default=256, help="Panel size in pixels")
     parser.add_argument("--dpi", type=int, default=200, help="DPI for vector figures")
     parser.add_argument(
@@ -464,7 +472,13 @@ def main():
         ],
         help="Which figure(s) to generate",
     )
-    args = parser.parse_args()
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Entry point for paper figure generation."""
+    parser = build_parser()
+    args = parser.parse_args(argv)
 
     output_dir = Path(args.output)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -493,11 +507,11 @@ def main():
         figures_generated += 1
 
     if image_path is None and args.figure not in ("architecture",):
-        print("No input image found. Provide --input or --input_dir.")
+        logger.warning("No input image found. Provide --input or --input_dir.")
         if figures_generated == 0:
-            sys.exit(1)
-        print(f"\n{figures_generated} figures generated in {output_dir}/")
-        return
+            return 1
+        logger.info("%d figures generated in %s/", figures_generated, output_dir)
+        return 0
 
     if args.figure in ("all", "procedure_grid") and image_path:
         figure_procedure_grid(image_path, output_dir, args.size)
@@ -520,8 +534,9 @@ def main():
         figure_conditioning(image_path, output_dir, args.size)
         figures_generated += 1
 
-    print(f"\n{figures_generated} figures generated in {output_dir}/")
+    logger.info("%d figures generated in %s/", figures_generated, output_dir)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
