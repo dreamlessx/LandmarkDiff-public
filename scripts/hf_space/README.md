@@ -9,7 +9,7 @@ python_version: "3.11"
 app_file: app.py
 pinned: true
 license: mit
-short_description: Facial surgery outcome prediction -- 2D foundation toward 3D reconstruction
+short_description: Facial surgery prediction -- 2D foundation toward 3D
 tags:
   - medical-imaging
   - face
