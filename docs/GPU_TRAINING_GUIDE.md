@@ -6,7 +6,7 @@ Complete setup for training LandmarkDiff on SLURM-based HPC clusters with A100/A
 
 - SLURM cluster with A100 GPU (80GB preferred, 40GB works with reduced batch)
 - Apptainer/Singularity installed
-- `/gscratch/` or equivalent fast storage (Lustre preferred)
+- Fast scratch storage (Lustre preferred, e.g. `/scratch/$USER/`)
 - Python 3.10+
 
 ## 1. Build Container
@@ -31,12 +31,12 @@ apptainer exec --nv landmarkdiff.sif python -c "import diffusers; import torch; 
 srun --partition=gpu --gres=gpu:0 --mem=16G --time=2:00:00 --pty bash
 
 # Download 5000 FFHQ images (512x512 for SD1.5 native resolution)
-python scripts/download_ffhq.py --num 5000 --resolution 512 --output /gscratch/$GROUP/landmarkdiff/data/ffhq
+python scripts/download_ffhq.py --num 5000 --resolution 512 --output /scratch/$USER/landmarkdiff/data/ffhq
 
 # Generate synthetic training pairs
 python scripts/generate_synthetic_data.py \
-    --input /gscratch/$GROUP/landmarkdiff/data/ffhq \
-    --output /gscratch/$GROUP/landmarkdiff/data/synthetic_pairs \
+    --input /scratch/$USER/landmarkdiff/data/ffhq \
+    --output /scratch/$USER/landmarkdiff/data/synthetic_pairs \
     --num 5000
 ```
 
@@ -68,9 +68,9 @@ Edit `scripts/train_slurm.sh`:
 ```bash
 # Set these paths:
 CONTAINER="/path/to/landmarkdiff.sif"
-DATA_DIR="/gscratch/$GROUP/landmarkdiff/data/synthetic_pairs"
-CKPT_DIR="/gscratch/$GROUP/landmarkdiff/checkpoints"
-WANDB_DIR="/gscratch/$GROUP/landmarkdiff/wandb"
+DATA_DIR="/scratch/$USER/landmarkdiff/data/synthetic_pairs"
+CKPT_DIR="/scratch/$USER/landmarkdiff/checkpoints"
+WANDB_DIR="/scratch/$USER/landmarkdiff/wandb"
 ```
 
 Submit:

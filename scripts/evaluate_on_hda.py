@@ -160,10 +160,9 @@ def evaluate_pair(
 
     # Identity similarity (ArcFace)
     try:
-        from landmarkdiff.arcface_torch import ArcFaceEncoder
+        from landmarkdiff.evaluation import compute_identity_similarity
 
-        encoder = ArcFaceEncoder()
-        id_sim = encoder.compute_similarity(predicted, ground_truth)
+        id_sim = compute_identity_similarity(predicted, ground_truth)
         metrics["identity_sim"] = float(id_sim)
     except Exception:
         metrics["identity_sim"] = float("nan")

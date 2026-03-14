@@ -23,10 +23,19 @@ data/processed/
 *.tar.gz
 *.webdataset
 
-# Environment
+# Environment & secrets
 .env
+.env.*
 .venv/
 venv/
+*.pem
+*.key
+credentials*
+secrets*
+id_rsa*
+id_ed25519*
+*.p12
+*.pfx
 
 # IDE
 .vscode/
