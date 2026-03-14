@@ -36,7 +36,6 @@ import numpy as np
 
 class LandmarkDiffAPIError(Exception):
     """Base exception for LandmarkDiff API errors."""
-    pass
 
 
 @dataclass
@@ -112,7 +111,7 @@ class LandmarkDiffClient:
 
         Returns:
             Dict with status and version info.
-        
+
         Raises:
             LandmarkDiffAPIError: If server is unreachable or returns an error.
         """
@@ -123,6 +122,7 @@ class LandmarkDiffClient:
             return resp.json()
         except Exception as e:
             import requests
+
             if isinstance(e, requests.ConnectionError):
                 raise LandmarkDiffAPIError(
                     f"Cannot connect to LandmarkDiff server at {self.base_url}. "
@@ -140,7 +140,7 @@ class LandmarkDiffClient:
 
         Returns:
             List of procedure names.
-        
+
         Raises:
             LandmarkDiffAPIError: If server is unreachable or returns an error.
         """
@@ -151,6 +151,7 @@ class LandmarkDiffClient:
             return resp.json().get("procedures", [])
         except Exception as e:
             import requests
+
             if isinstance(e, requests.ConnectionError):
                 raise LandmarkDiffAPIError(
                     f"Cannot connect to LandmarkDiff server at {self.base_url}. "
@@ -209,6 +210,7 @@ class LandmarkDiffClient:
             )
         except Exception as e:
             import requests
+
             if isinstance(e, requests.ConnectionError):
                 raise LandmarkDiffAPIError(
                     f"Cannot connect to LandmarkDiff server at {self.base_url}. "
@@ -231,7 +233,7 @@ class LandmarkDiffClient:
 
         Returns:
             Dict with analysis results.
-        
+
         Raises:
             LandmarkDiffAPIError: If server is unreachable or returns an error.
         """
@@ -245,6 +247,7 @@ class LandmarkDiffClient:
             return resp.json()
         except Exception as e:
             import requests
+
             if isinstance(e, requests.ConnectionError):
                 raise LandmarkDiffAPIError(
                     f"Cannot connect to LandmarkDiff server at {self.base_url}. "

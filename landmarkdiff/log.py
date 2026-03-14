@@ -51,18 +51,18 @@ def setup_logging(
             fmt or LOG_FORMAT,
             datefmt=LOG_DATE_FORMAT,
         )
-        
+
         # Add stream handler
         stream_handler = logging.StreamHandler(stream or sys.stderr)
         stream_handler.setFormatter(formatter)
         root_logger.addHandler(stream_handler)
-        
+
         # Add file handler if log_file is specified
         if log_file:
             file_handler = logging.FileHandler(log_file)
             file_handler.setFormatter(formatter)
             root_logger.addHandler(file_handler)
-        
+
         # Prevent propagation to root logger to avoid duplicate messages
         root_logger.propagate = False
         _CONFIGURED = True
