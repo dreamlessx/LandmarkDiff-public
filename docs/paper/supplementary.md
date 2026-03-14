@@ -2,6 +2,40 @@
 
 Supplementary material for "LandmarkDiff: Anatomically-Conditioned Facial Surgery Outcome Prediction."
 
+## Reproducing Supplementary Results
+
+All tables and figures in this document can be reproduced using the scripts listed below. Run them after training is complete and a checkpoint is available at `weights/controlnet/`.
+
+| Section | Script | Description |
+|---------|--------|-------------|
+| S1 (per-procedure results) | `scripts/intensity_sweep.py` | Generate per-procedure intensity sweep figures |
+| S1 (per-procedure results) | `scripts/run_evaluation.py` | Compute FID/LPIPS/SSIM/NME/Identity Sim |
+| S1 (per-procedure results) | `scripts/cross_procedure_eval.py` | Aggregate metrics across all 6 procedures |
+| S2.1 (conditioning ablation) | `scripts/run_ablation.py` | Ablate conditioning inputs |
+| S2.2 (post-processing ablation) | `scripts/run_ablation.py` | Ablate post-processing stages |
+| S2.3 (RBF sensitivity) | `scripts/hyperparameter_sensitivity.py` | Sweep RBF radius |
+| S2.4 (loss weight sensitivity) | `scripts/hyperparameter_sensitivity.py` | Sweep loss weights |
+| S3 (Fitzpatrick analysis) | `scripts/cross_procedure_eval.py --group skin_type` | Per-skin-type breakdown |
+| S4 (failure analysis) | `scripts/analyze_failures.py` | Identify and cluster failure modes |
+| S4 (failure examples) | `scripts/generate_comparison_figure.py` | Render failure case comparisons |
+| Denoising trajectory | `scripts/progressive_denoising.py` | Denoising strip for any procedure |
+| Landmark heatmap | `scripts/landmark_accuracy_heatmap.py` | Per-landmark NME heatmap |
+
+Quick example -- reproduce S1 for rhinoplasty at all intensities:
+
+```bash
+python scripts/intensity_sweep.py \
+    --input data/test_faces/ \
+    --output paper/figures/supp_s1_rhinoplasty.png \
+    --procedure rhinoplasty
+
+python scripts/run_evaluation.py \
+    --procedure rhinoplasty \
+    --intensities 20 40 60 80 100 \
+    --checkpoint weights/controlnet/ \
+    --output eval/supp_s1_rhinoplasty.json
+```
+
 ---
 
 ## S1. Additional Procedure Results

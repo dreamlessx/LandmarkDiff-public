@@ -97,8 +97,81 @@ paper/figures/
 
 ## Additional Figure Scripts
 
+### General
+
 - `scripts/generate_figures.py` -- general-purpose figure generation
 - `scripts/generate_qualitative_figure.py` -- qualitative comparison grids
 - `scripts/generate_paper_tables.py` -- LaTeX tables for the results section
 - `scripts/populate_paper_tables.py` -- fills table placeholders with computed metrics
 - `scripts/json_to_latex.py` -- converts JSON evaluation results to LaTeX tables
+
+### New in v0.2.2
+
+- `scripts/build_qualitative_grid.py` -- multi-procedure qualitative comparison grid suitable for the main paper figure. Accepts a directory of input faces and produces a single composited PNG with one row per face and one column per procedure.
+
+  ```bash
+  python scripts/build_qualitative_grid.py \
+      --input_dir data/test_faces/ \
+      --output paper/figures/fig_qualitative_grid.png \
+      --procedures rhinoplasty blepharoplasty rhytidectomy orthognathic brow_lift mentoplasty \
+      --intensity 65
+  ```
+
+- `scripts/generate_comparison_figure.py` -- side-by-side comparison of LandmarkDiff against baseline methods (TPS-only, SD img2img). Used for Table 1 row visualization.
+
+  ```bash
+  python scripts/generate_comparison_figure.py \
+      --input data/test_faces/000001.png \
+      --output paper/figures/fig_comparison.png \
+      --procedure rhinoplasty
+  ```
+
+- `scripts/landmark_accuracy_heatmap.py` -- generates a 478-point landmark error heatmap overlaid on the canonical face mesh. Color-codes per-landmark NME from a saved evaluation JSON.
+
+  ```bash
+  python scripts/landmark_accuracy_heatmap.py \
+      --results eval/landmark_errors.json \
+      --output paper/figures/fig_landmark_heatmap.png \
+      --procedure rhinoplasty
+  ```
+
+- `scripts/visualize_attention.py` -- extracts and visualizes ControlNet cross-attention maps at each denoising step. Produces per-step attention overlays and a summary strip.
+
+  ```bash
+  python scripts/visualize_attention.py \
+      --input data/test_faces/000001.png \
+      --checkpoint weights/controlnet/ \
+      --output paper/figures/fig_attention/ \
+      --procedure rhinoplasty \
+      --steps 30
+  ```
+
+- `scripts/visualize_latent_space.py` -- projects latent codes from a set of generated images into 2D via UMAP or PCA. Points are colored by procedure, producing a scatter plot that shows procedure-level clustering.
+
+  ```bash
+  python scripts/visualize_latent_space.py \
+      --input_dir data/test_faces/ \
+      --checkpoint weights/controlnet/ \
+      --output paper/figures/fig_latent_space.png \
+      --projection umap
+  ```
+
+- `scripts/progressive_denoising.py` -- renders a horizontal strip showing the diffusion output at selected denoising steps (e.g., t=1000, 800, 600, 400, 200, 0). Useful for the supplementary denoising trajectory figure.
+
+  ```bash
+  python scripts/progressive_denoising.py \
+      --input data/test_faces/000001.png \
+      --checkpoint weights/controlnet/ \
+      --output paper/figures/fig_denoising.png \
+      --procedure rhinoplasty \
+      --steps 30
+  ```
+
+- `scripts/intensity_sweep.py` -- generates a horizontal strip of outputs at 0%, 20%, 40%, 60%, 80%, 100% intensity for a single face and procedure. Used in the supplementary S1 tables and figures.
+
+  ```bash
+  python scripts/intensity_sweep.py \
+      --input data/test_faces/000001.png \
+      --output paper/figures/fig_intensity_sweep_rhinoplasty.png \
+      --procedure rhinoplasty
+  ```
