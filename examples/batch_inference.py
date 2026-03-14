@@ -4,25 +4,23 @@ import argparse
 from pathlib import Path
 
 import cv2
-import numpy as np
-from PIL import Image
 
+from landmarkdiff.inference import mask_composite
 from landmarkdiff.landmarks import extract_landmarks
 from landmarkdiff.manipulation import apply_procedure_preset
 from landmarkdiff.masking import generate_surgical_mask
 from landmarkdiff.synthetic.tps_warp import warp_image_tps
-from landmarkdiff.inference import mask_composite
 
 
 def main():
     parser = argparse.ArgumentParser(description="Batch LandmarkDiff inference")
     parser.add_argument("input_dir", type=str, help="Directory of input face images")
     parser.add_argument("--procedure", type=str, default="rhinoplasty")
-    parser.add_argument("--intensity", type=float, default=60.0,
-                        help="Deformation intensity 0-100")
+    parser.add_argument("--intensity", type=float, default=60.0, help="Deformation intensity 0-100")
     parser.add_argument("--output", type=str, default="output/batch/")
-    parser.add_argument("--mode", type=str, default="tps",
-                        choices=["tps", "controlnet", "img2img", "controlnet_ip"])
+    parser.add_argument(
+        "--mode", type=str, default="tps", choices=["tps", "controlnet", "img2img", "controlnet_ip"]
+    )
     args = parser.parse_args()
 
     input_dir = Path(args.input_dir)
@@ -38,13 +36,14 @@ def main():
     pipeline = None
     if args.mode != "tps":
         from landmarkdiff.inference import LandmarkDiffPipeline
+
         pipeline = LandmarkDiffPipeline(mode=args.mode, device="cuda")
         pipeline.load()
 
     # Process each image
     results = []
     for i, img_path in enumerate(images):
-        print(f"[{i+1}/{len(images)}] Processing {img_path.name}...")
+        print(f"[{i + 1}/{len(images)}] Processing {img_path.name}...")
         try:
             img_bgr = cv2.imread(str(img_path))
             if img_bgr is None:
@@ -57,7 +56,10 @@ def main():
 
             if args.mode == "tps":
                 manip = apply_procedure_preset(
-                    face, args.procedure, args.intensity, image_size=512,
+                    face,
+                    args.procedure,
+                    args.intensity,
+                    image_size=512,
                 )
                 mask = generate_surgical_mask(face, args.procedure, 512, 512)
                 warped = warp_image_tps(img_bgr, face.pixel_coords, manip.pixel_coords)

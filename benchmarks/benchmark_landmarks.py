@@ -2,8 +2,8 @@
 
 import argparse
 import time
+
 import numpy as np
-from PIL import Image
 
 from landmarkdiff.landmarks import extract_landmarks
 
@@ -15,7 +15,8 @@ def main():
     args = parser.parse_args()
 
     # Create synthetic test images
-    print(f"Benchmarking landmark extraction ({args.num_images} images, {args.resolution}x{args.resolution})...")
+    res = args.resolution
+    print(f"Benchmarking landmark extraction ({args.num_images} images, {res}x{res})...")
 
     times = []
     for i in range(args.num_images):
@@ -28,13 +29,13 @@ def main():
         times.append(elapsed)
 
         if (i + 1) % 10 == 0:
-            print(f"  {i+1}/{args.num_images} - avg: {np.mean(times)*1000:.1f}ms/image")
+            print(f"  {i + 1}/{args.num_images} - avg: {np.mean(times) * 1000:.1f}ms/image")
 
-    print(f"\nResults:")
-    print(f"  Mean: {np.mean(times)*1000:.1f} ms/image")
-    print(f"  Median: {np.median(times)*1000:.1f} ms/image")
-    print(f"  Std: {np.std(times)*1000:.1f} ms")
-    print(f"  Throughput: {1/np.mean(times):.1f} images/sec")
+    print("\nResults:")
+    print(f"  Mean: {np.mean(times) * 1000:.1f} ms/image")
+    print(f"  Median: {np.median(times) * 1000:.1f} ms/image")
+    print(f"  Std: {np.std(times) * 1000:.1f} ms")
+    print(f"  Throughput: {1 / np.mean(times):.1f} images/sec")
 
 
 if __name__ == "__main__":

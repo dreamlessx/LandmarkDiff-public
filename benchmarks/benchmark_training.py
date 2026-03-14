@@ -2,6 +2,7 @@
 
 import argparse
 import time
+
 import numpy as np
 
 
@@ -12,11 +13,13 @@ def main():
     parser.add_argument("--batch_size", type=int, default=4)
     args = parser.parse_args()
 
-    print(f"Benchmarking training ({args.num_steps} steps, batch {args.batch_size}, {args.device})...")
+    print(
+        f"Benchmarking training ({args.num_steps} steps, batch {args.batch_size}, {args.device})..."
+    )
 
     try:
         import torch
-        from diffusers import ControlNetModel, StableDiffusionControlNetPipeline
+        from diffusers import ControlNetModel, StableDiffusionControlNetPipeline  # noqa: F401
     except ImportError as e:
         print(f"Missing dependency: {e}")
         print("Install training deps: pip install -e '.[train]'")
@@ -43,7 +46,7 @@ def main():
 
         # simulate forward pass tensors
         latents = torch.randn(latent_shape, device=device, dtype=dtype)
-        cond = torch.randn(cond_shape, device=device, dtype=dtype)
+        _cond = torch.randn(cond_shape, device=device, dtype=dtype)
         noise = torch.randn_like(latents)
 
         # simulate loss computation
@@ -57,13 +60,13 @@ def main():
         step_times.append(elapsed)
 
         if (step + 1) % 20 == 0:
-            print(f"  Step {step+1}/{args.num_steps} - {elapsed*1000:.1f}ms/step")
+            print(f"  Step {step + 1}/{args.num_steps} - {elapsed * 1000:.1f}ms/step")
 
     print(f"\nResults (batch_size={args.batch_size}):")
-    print(f"  Mean: {np.mean(step_times)*1000:.1f} ms/step")
-    print(f"  Median: {np.median(step_times)*1000:.1f} ms/step")
-    print(f"  Throughput: {1/np.mean(step_times):.1f} steps/sec")
-    print(f"  Throughput: {args.batch_size/np.mean(step_times):.1f} images/sec")
+    print(f"  Mean: {np.mean(step_times) * 1000:.1f} ms/step")
+    print(f"  Median: {np.median(step_times) * 1000:.1f} ms/step")
+    print(f"  Throughput: {1 / np.mean(step_times):.1f} steps/sec")
+    print(f"  Throughput: {args.batch_size / np.mean(step_times):.1f} images/sec")
 
 
 if __name__ == "__main__":

@@ -1,20 +1,22 @@
 """Compare all procedures side-by-side on a single face."""
 
 import argparse
-import numpy as np
 from pathlib import Path
+
+import numpy as np
 from PIL import Image, ImageDraw
 
-from landmarkdiff.landmarks import extract_landmarks
-from landmarkdiff.manipulation import apply_procedure_preset, PROCEDURE_LANDMARKS
 from landmarkdiff.conditioning import render_wireframe
+from landmarkdiff.landmarks import extract_landmarks
+from landmarkdiff.manipulation import PROCEDURE_LANDMARKS, apply_procedure_preset
 
 
 def main():
     parser = argparse.ArgumentParser(description="Compare all procedures")
     parser.add_argument("image", type=str, help="Path to input face image")
-    parser.add_argument("--intensity", type=float, default=60.0,
-                        help="Deformation intensity (0-100)")
+    parser.add_argument(
+        "--intensity", type=float, default=60.0, help="Deformation intensity (0-100)"
+    )
     parser.add_argument("--output", type=str, default="output/comparison.png")
     args = parser.parse_args()
 

@@ -3,25 +3,41 @@
 import numpy as np
 from PIL import Image
 
+from landmarkdiff.conditioning import render_wireframe
 from landmarkdiff.landmarks import extract_landmarks
 from landmarkdiff.manipulation import DeformationHandle, gaussian_rbf_deform
-from landmarkdiff.conditioning import render_wireframe
 
 
 def main():
     # define a custom procedure: lip augmentation
     lip_handles = [
         # upper lip - push forward and slightly up
-        DeformationHandle(landmark_index=13, displacement=np.array([0, -3, -5]), influence_radius=15.0),
-        DeformationHandle(landmark_index=14, displacement=np.array([0, -3, -5]), influence_radius=15.0),
-        DeformationHandle(landmark_index=82, displacement=np.array([0, -2, -4]), influence_radius=12.0),
-        DeformationHandle(landmark_index=312, displacement=np.array([0, -2, -4]), influence_radius=12.0),
+        DeformationHandle(
+            landmark_index=13, displacement=np.array([0, -3, -5]), influence_radius=15.0
+        ),
+        DeformationHandle(
+            landmark_index=14, displacement=np.array([0, -3, -5]), influence_radius=15.0
+        ),
+        DeformationHandle(
+            landmark_index=82, displacement=np.array([0, -2, -4]), influence_radius=12.0
+        ),
+        DeformationHandle(
+            landmark_index=312, displacement=np.array([0, -2, -4]), influence_radius=12.0
+        ),
         # lower lip - push forward and slightly down
-        DeformationHandle(landmark_index=17, displacement=np.array([0, 2, -4]), influence_radius=15.0),
-        DeformationHandle(landmark_index=15, displacement=np.array([0, 2, -4]), influence_radius=15.0),
+        DeformationHandle(
+            landmark_index=17, displacement=np.array([0, 2, -4]), influence_radius=15.0
+        ),
+        DeformationHandle(
+            landmark_index=15, displacement=np.array([0, 2, -4]), influence_radius=15.0
+        ),
         # lip corners - slight lift
-        DeformationHandle(landmark_index=61, displacement=np.array([0, -2, -2]), influence_radius=10.0),
-        DeformationHandle(landmark_index=291, displacement=np.array([0, -2, -2]), influence_radius=10.0),
+        DeformationHandle(
+            landmark_index=61, displacement=np.array([0, -2, -2]), influence_radius=10.0
+        ),
+        DeformationHandle(
+            landmark_index=291, displacement=np.array([0, -2, -2]), influence_radius=10.0
+        ),
     ]
 
     # load image and extract landmarks
@@ -35,6 +51,7 @@ def main():
 
     # apply handles at different intensities
     import cv2
+
     for intensity in [30, 60, 90]:
         scale = intensity / 100.0
         deformed_pts = landmarks.landmarks.copy()
@@ -50,6 +67,7 @@ def main():
 
         # wrap back into FaceLandmarks for rendering
         from landmarkdiff.landmarks import FaceLandmarks
+
         deformed_face = FaceLandmarks(
             landmarks=deformed_pts,
             image_width=landmarks.image_width,

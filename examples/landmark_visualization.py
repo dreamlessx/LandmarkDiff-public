@@ -1,13 +1,14 @@
 """Visualize face mesh landmarks and deformation vectors."""
 
 import argparse
-import numpy as np
 from pathlib import Path
+
+import numpy as np
 from PIL import Image
 
+from landmarkdiff.conditioning import render_wireframe
 from landmarkdiff.landmarks import extract_landmarks
 from landmarkdiff.manipulation import apply_procedure_preset
-from landmarkdiff.conditioning import render_wireframe
 
 
 def main():
@@ -34,6 +35,7 @@ def main():
 
     # deform at multiple intensities
     import cv2
+
     for intensity in [20, 40, 60, 80, 100]:
         deformed = apply_procedure_preset(landmarks, args.procedure, intensity=intensity)
         mesh_deformed = render_wireframe(deformed, (512, 512))
@@ -43,8 +45,10 @@ def main():
         vis[:, :, 0] = mesh_original  # original in blue channel
         vis[:, :, 2] = mesh_deformed  # deformed in red channel
 
-        original_px = landmarks.pixel_coords[:, :2] * np.array([512 / landmarks.image_width, 512 / landmarks.image_height])
-        deformed_px = deformed.pixel_coords[:, :2] * np.array([512 / deformed.image_width, 512 / deformed.image_height])
+        scale_orig = np.array([512 / landmarks.image_width, 512 / landmarks.image_height])
+        scale_def = np.array([512 / deformed.image_width, 512 / deformed.image_height])
+        original_px = landmarks.pixel_coords[:, :2] * scale_orig
+        deformed_px = deformed.pixel_coords[:, :2] * scale_def
 
         # draw displacement arrows for moved landmarks
         for i in range(len(original_px)):

@@ -2,6 +2,7 @@
 
 import argparse
 import time
+
 import numpy as np
 
 
@@ -17,6 +18,7 @@ def main():
 
     try:
         from landmarkdiff.inference import LandmarkDiffPipeline
+
         pipeline = LandmarkDiffPipeline(mode=args.mode, device=args.device)
         pipeline.load()
     except Exception as e:
@@ -27,10 +29,10 @@ def main():
     # Warm-up
     print("Warming up...")
     dummy = np.random.randint(0, 255, (512, 512, 3), dtype=np.uint8)
-    try:
+    import contextlib
+
+    with contextlib.suppress(Exception):
         pipeline.generate(dummy, procedure="rhinoplasty", intensity=0.5)
-    except Exception:
-        pass
 
     # Benchmark
     times = []
@@ -42,9 +44,9 @@ def main():
             pipeline.generate(img, procedure="rhinoplasty", intensity=0.5)
             elapsed = time.perf_counter() - start
             times.append(elapsed)
-            print(f"  [{i+1}/{args.num_images}] {elapsed:.2f}s")
+            print(f"  [{i + 1}/{args.num_images}] {elapsed:.2f}s")
         except Exception as e:
-            print(f"  [{i+1}/{args.num_images}] Failed: {e}")
+            print(f"  [{i + 1}/{args.num_images}] Failed: {e}")
 
     if times:
         print(f"\nResults ({args.mode} mode, {args.steps} steps):")

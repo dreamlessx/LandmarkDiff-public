@@ -6,21 +6,27 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+from landmarkdiff.conditioning import render_wireframe
 from landmarkdiff.landmarks import extract_landmarks
 from landmarkdiff.manipulation import apply_procedure_preset
-from landmarkdiff.conditioning import render_wireframe
 
 
 def main():
     parser = argparse.ArgumentParser(description="Basic LandmarkDiff inference")
     parser.add_argument("image", type=str, help="Path to input face image")
-    parser.add_argument("--procedure", type=str, default="rhinoplasty",
-                        choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"])
-    parser.add_argument("--intensity", type=float, default=60.0,
-                        help="Deformation intensity (0-100)")
+    parser.add_argument(
+        "--procedure",
+        type=str,
+        default="rhinoplasty",
+        choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"],
+    )
+    parser.add_argument(
+        "--intensity", type=float, default=60.0, help="Deformation intensity (0-100)"
+    )
     parser.add_argument("--output", type=str, default="output/")
-    parser.add_argument("--mode", type=str, default="controlnet",
-                        choices=["controlnet", "img2img", "tps"])
+    parser.add_argument(
+        "--mode", type=str, default="controlnet", choices=["controlnet", "img2img", "tps"]
+    )
     args = parser.parse_args()
 
     output_dir = Path(args.output)
@@ -48,6 +54,7 @@ def main():
     deformed_mesh = render_wireframe(deformed, (512, 512))
 
     import cv2
+
     cv2.imwrite(str(output_dir / "mesh_original.png"), original_mesh)
     cv2.imwrite(str(output_dir / "mesh_deformed.png"), deformed_mesh)
     print(f"  Saved mesh visualizations to {output_dir}/")

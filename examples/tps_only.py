@@ -1,8 +1,9 @@
 """CPU-only inference using thin-plate spline warping (no GPU needed)."""
 
 import argparse
-import numpy as np
 from pathlib import Path
+
+import numpy as np
 from PIL import Image
 
 from landmarkdiff.landmarks import extract_landmarks
@@ -14,8 +15,9 @@ def main():
     parser = argparse.ArgumentParser(description="TPS-only inference (CPU)")
     parser.add_argument("image", type=str, help="Path to input face image")
     parser.add_argument("--procedure", type=str, default="rhinoplasty")
-    parser.add_argument("--intensity", type=float, default=60.0,
-                        help="Deformation intensity (0-100)")
+    parser.add_argument(
+        "--intensity", type=float, default=60.0, help="Deformation intensity (0-100)"
+    )
     parser.add_argument("--output", type=str, default="output/tps_result.png")
     args = parser.parse_args()
 
