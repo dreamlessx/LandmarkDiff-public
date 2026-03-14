@@ -1,5 +1,7 @@
 include LICENSE
 include README.md
+include CHANGELOG.md
+include CITATION.cff
 include landmarkdiff/py.typed
 recursive-exclude tests *
 recursive-exclude scripts *
