@@ -875,3 +875,56 @@ MIT License. See [LICENSE](LICENSE) for details.
 - [CodeFormer](https://github.com/sczhou/CodeFormer) and [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) for face restoration
 - [InsightFace](https://github.com/deepinsight/insightface) for ArcFace identity verification
 - [FFHQ](https://github.com/NVlabs/ffhq-dataset) for training data
+
+```{toctree}
+:maxdepth: 2
+:caption: Getting Started
+
+getting-started
+install
+tutorials/quickstart
+faq
+```
+
+```{toctree}
+:maxdepth: 2
+:caption: Procedures
+
+procedures/rhinoplasty
+procedures/blepharoplasty
+procedures/rhytidectomy
+procedures/orthognathic
+procedures/brow_lift
+procedures/mentoplasty
+```
+
+```{toctree}
+:maxdepth: 2
+:caption: Tutorials
+
+tutorials/custom_procedures
+tutorials/training
+tutorials/evaluation
+tutorials/deployment
+GPU_TRAINING_GUIDE
+```
+
+```{toctree}
+:maxdepth: 2
+:caption: API Reference
+
+api/landmarks
+api/manipulation
+api/conditioning
+api/inference
+api/evaluation
+api/clinical
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: Project
+
+benchmarks
+changelog
+```

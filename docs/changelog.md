@@ -5,35 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Planned
-- FLUX.1-dev backbone upgrade
-- IP-Adapter FaceID integration
-- Additional procedure presets (mentoplasty, brow lift, otoplasty)
-- Hugging Face Spaces demo
-- Clinical validation study results
-
-## [0.1.0] - 2026-03-13
+## [0.2.0] - Unreleased
 
 ### Added
-- Core pipeline: MediaPipe 478-point landmark extraction, Gaussian RBF deformation, ControlNet conditioning, feathered mask compositing
-- 4 surgical procedure presets: rhinoplasty, blepharoplasty, rhytidectomy, orthognathic
-- 3-mode inference pipeline: ControlNet, img2img, TPS
-- Synthetic training pair generation via thin-plate spline warps
-- 8 clinical photography augmentation types (lighting, color temp, JPEG, noise, distortion, blur, vignette, fluorescent)
-- Clinical edge case handling: vitiligo, Bell's palsy, keloid-prone skin, Ehlers-Danlos syndrome
-- Neural post-processing: CodeFormer face restoration, Real-ESRGAN super-resolution, ArcFace identity verification
-- Evaluation harness: FID, LPIPS, SSIM, NME with Fitzpatrick skin type stratification (I-VI)
-- Gradio web demo with 5 tabs: single prediction, multi-procedure comparison, intensity sweep, face analysis, multi-angle capture
-- Face verifier module: 7-metric distortion detection with cascaded neural restoration
-- 4-term training loss: diffusion MSE, landmark NME, ArcFace identity, LPIPS perceptual
-- ControlNet fine-tuning script with BF16 mixed precision, EMA, cosine LR schedule
-- SLURM job scripts for HPC training
-- Apptainer container definition
-- MICCAI 2026 paper source (Springer LNCS format)
-- Comprehensive test suite (9 test modules)
-- GPU training guide for SLURM clusters
+- Brow lift procedure preset (PR #35, thanks @Deepak8858)
+- Mentoplasty procedure preset (PR #36, thanks @P-r-e-m-i-u-m)
+- Data-driven displacement model from real surgical data
+- Clinical flags for edge case handling
+- DisplacementModel class for fitted surgical displacements
+- 6 new example scripts (evaluation, visualization, batch processing)
+- Comprehensive API documentation
+- GitHub wiki with 11 pages
+- 200+ tracked issues for roadmap
 
-[Unreleased]: https://github.com/dreamlessx/LandmarkDiff-public/compare/v0.1.0...HEAD
+### Changed
+- Intensity parameter standardized to 0-100 scale
+- Post-processing pipeline order: CodeFormer -> Real-ESRGAN -> histogram match -> sharpen -> blend
+- Improved mask compositing with LAB skin tone matching
+
+### Fixed
+- SLURM config no longer hardcodes account names
+- API docs now match actual code signatures
+- Broken links in documentation index
+
+## [0.1.0] - 2024-12-15
+
+### Added
+- Initial release
+- 4 procedures: rhinoplasty, blepharoplasty, rhytidectomy, orthognathic
+- 4 inference modes: tps, img2img, controlnet, controlnet_ip
+- MediaPipe 478-point face mesh landmark extraction
+- Gaussian RBF landmark deformation
+- ControlNet conditioning (CrucibleAI/ControlNetMediaPipeFace)
+- Post-processing: CodeFormer, Real-ESRGAN, histogram matching
+- ArcFace identity preservation check
+- Gradio web demo
+- CLI interface
+
+[0.2.0]: https://github.com/dreamlessx/LandmarkDiff-public/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/dreamlessx/LandmarkDiff-public/releases/tag/v0.1.0
