@@ -32,6 +32,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 import cv2
 import numpy as np
@@ -261,7 +262,7 @@ def evaluate_batch(
         per_procedure[proc] = {k: _agg(samples, k) for k in metric_keys}
 
     # Per-Fitzpatrick
-    per_fitzpatrick = {}
+    per_fitzpatrick: dict[str, dict[str, Any]] = {}
     for ftype, samples in fitz_groups.items():
         per_fitzpatrick[ftype] = {k: _agg(samples, k) for k in metric_keys}
         per_fitzpatrick[ftype]["count"] = len(samples)

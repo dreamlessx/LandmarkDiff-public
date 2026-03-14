@@ -25,6 +25,7 @@ import logging
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 import cv2
 import numpy as np
@@ -99,26 +100,24 @@ def run_inference(
         from landmarkdiff.inference import LandmarkDiffPipeline
 
         pipeline = LandmarkDiffPipeline(
-            checkpoint_dir=str(checkpoint_dir) if checkpoint_dir else None,
+            controlnet_checkpoint=str(checkpoint_dir) if checkpoint_dir else None,
         )
+        pipeline.load()
 
         input_img = cv2.imread(str(input_path))
         if input_img is None:
             return None
 
-        cond_img = cv2.imread(str(conditioning_path))
-        if cond_img is None:
-            return None
+        input_img = cv2.resize(input_img, (resolution, resolution))
 
-        result = pipeline.predict(
-            input_image=input_img,
-            conditioning_image=cond_img,
+        output = pipeline.generate(
+            image=input_img,
             procedure=procedure,
             num_inference_steps=num_steps,
             guidance_scale=guidance_scale,
         )
 
-        return result
+        return output.get("result", output.get("composite"))
 
     except Exception as e:
         logger.warning("Inference failed: %s", e)
@@ -131,7 +130,7 @@ def evaluate_pair(
     procedure: str,
 ) -> dict:
     """Compute all metrics for a single prediction/ground-truth pair."""
-    metrics = {}
+    metrics: dict[str, Any] = {}
 
     # Ensure same size
     h, w = ground_truth.shape[:2]
@@ -152,7 +151,7 @@ def evaluate_pair(
         face_pred = extract_landmarks(predicted)
         face_gt = extract_landmarks(ground_truth)
         if face_pred is not None and face_gt is not None:
-            metrics["nme"] = float(compute_nme(face_pred, face_gt))
+            metrics["nme"] = float(compute_nme(face_pred.pixel_coords, face_gt.pixel_coords))
         else:
             metrics["nme"] = float("nan")
     except Exception:
@@ -176,8 +175,8 @@ def aggregate_metrics(results: list[dict]) -> dict:
     if not results:
         return {}
 
-    all_metrics = {}
-    procedures = set()
+    all_metrics: dict[str, list[float]] = {}
+    procedures: set[str] = set()
 
     for r in results:
         proc = r.get("procedure", "unknown")
@@ -186,7 +185,7 @@ def aggregate_metrics(results: list[dict]) -> dict:
             if key in r and not np.isnan(r[key]):
                 all_metrics.setdefault(key, []).append(r[key])
 
-    summary = {"overall": {}, "by_procedure": {}}
+    summary: dict[str, Any] = {"overall": {}, "by_procedure": {}}
 
     # Overall stats
     for key, values in all_metrics.items():
