@@ -107,7 +107,7 @@ python scripts/run_inference.py photo.jpg --procedure rhinoplasty --intensity 60
 
 Facial cosmetic surgery is one of the most common elective procedures worldwide. The American Society of Plastic Surgeons (ASPS) reported [15.6 million cosmetic procedures in the US in 2020](https://www.plasticsurgery.org/news/plastic-surgery-statistics), with rhinoplasty and blepharoplasty consistently ranking among the top 5 surgical procedures. These numbers have only grown since.
 
-The problem is expectation management. Roughly 10--15% of rhinoplasty patients seek revision surgery, and a significant driver is the gap between what patients expected and what they got (Rohrich et al., "Importance of Accurate Nasal Analysis and Aesthetic Surgical Judgment in Rhinoplasty," *Plastic and Reconstructive Surgery*, 2014). Preoperative visualization directly affects satisfaction -- patients who see a realistic preview of their outcome report better alignment between expectations and results (Metzler et al., "Psychological profiles and motivational factors," *Aesthetic Surgery Journal*, 2019). 3D imaging has been shown to improve surgeon-patient communication and help set realistic expectations (Leong & Iglesias, "A systematic review of 3D imaging in plastic surgery," *Journal of Plastic, Reconstructive & Aesthetic Surgery*, 2016).
+The problem is expectation management. Roughly 10--15% of rhinoplasty patients seek revision surgery, and a significant driver is the gap between what patients expected and what they got (Rohrich & Ahmad, "A Practical Approach to Rhinoplasty," *Plastic and Reconstructive Surgery*, 2016). Preoperative visualization directly affects satisfaction -- patients who see a realistic preview report better alignment between expectations and results (Kandathil et al., "Examining Preoperative Expectations and Postoperative Satisfaction in Rhinoplasty Patients," *Facial Plastic Surgery & Aesthetic Medicine*, 2021). Systematic reviews of patient-reported outcomes in rhinoplasty confirm that expectation alignment is a key predictor of satisfaction (Leong & Iglesias, "A systematic review of patient-reported outcome measures in aesthetic and functional rhinoplasty," *Journal of Plastic, Reconstructive & Aesthetic Surgery*, 2016).
 
 But here's the catch: the tools that produce good visualizations are expensive, proprietary, or both. Most surgeons -- especially outside wealthy urban practices -- don't have access to them.
 
@@ -124,9 +124,8 @@ But here's the catch: the tools that produce good visualizations are expensive, 
 Most recent academic work on face manipulation focuses on generic editing (make someone look older, change their expression, swap identities) rather than surgery-specific prediction. A few notable examples:
 
 - **DiscoFaceGAN** (Deng et al., CVPR 2020) -- Disentangled controllable face generation using 3DMM coefficients. Powerful for attribute editing, but designed for general-purpose face manipulation, not surgical planning. No procedure-specific deformation models.
-- **FaceShifter** (Li et al., CVPR 2020) -- High-fidelity face swapping. Impressive identity transfer, but the goal is swapping one person's face onto another, not simulating what a surgical procedure would do to the same person.
-- **SurgFace** (Deng et al., AAAI 2023) -- StyleGAN-based face editing with semantic attribute control. Closer to surgery simulation than most academic work, but still operates on generic facial attributes rather than anatomically grounded surgical deformations.
-- **DiffFace** (Kim et al., 2023) -- Diffusion-based face swapping. Shows the potential of diffusion models for face manipulation, but again targets identity transfer, not surgical outcome prediction.
+- **FaceShifter** (Li et al., 2019) -- High-fidelity face swapping with occlusion awareness. Impressive identity transfer, but the goal is swapping one person's face onto another, not simulating what a surgical procedure would do to the same person.
+- **DiffFace** (Kim et al., 2022) -- Diffusion-based face swapping with facial guidance. Shows the potential of diffusion models for face manipulation, but targets identity transfer, not surgical outcome prediction.
 
 The common thread: almost none of this work uses real surgical data to drive deformations, none evaluates fairness across skin tones, and none handles clinical edge cases like Bell's palsy or keloid-prone skin.
 
@@ -148,28 +147,27 @@ Concretely:
 
 ### Comparison Table
 
-| Feature | Vectra 3D | Crisalix | FaceTouchUp | SurgFace | **LandmarkDiff** |
-|---|---|---|---|---|---|
-| Input | Structured light | 2D photo | 2D photo | 2D photo | 2D photo / video |
-| Output | 3D mesh | 3D-ish sim | 2D morph | 2D edit | Photorealistic 2D (3D planned) |
-| Hardware required | ~$50--80K | Phone | Phone | GPU | Phone (CPU mode available) |
-| Open source | No | No | No | No | **Yes (MIT)** |
-| Surgery-specific | Yes | Yes | No | No | Yes |
-| Real surgical data | Unknown | Unknown | No | No | Yes |
-| Clinical edge-case flags | No | No | No | No | Yes |
-| Fairness evaluation | No | No | No | No | Yes (Fitzpatrick I--VI) |
-| Cost | $50--80K+ | Subscription | One-time | Free | **Free** |
+| Feature | Vectra 3D | Crisalix | FaceTouchUp | **LandmarkDiff** |
+|---|---|---|---|---|
+| Input | Structured light | 2D photo | 2D photo | 2D photo / video |
+| Output | 3D mesh | 3D-ish sim | 2D morph | Photorealistic 2D (3D planned) |
+| Hardware required | ~$50--80K | Phone | Phone | Phone (CPU mode available) |
+| Open source | No | No | No | **Yes (MIT)** |
+| Surgery-specific | Yes | Yes | No | Yes |
+| Real surgical data | Unknown | Unknown | No | Yes |
+| Clinical edge-case flags | No | No | No | Yes |
+| Fairness evaluation | No | No | No | Yes (Fitzpatrick I--VI) |
+| Cost | $50--80K+ | Subscription | One-time | **Free** |
 
 ### References
 
 1. American Society of Plastic Surgeons. [2020 Plastic Surgery Statistics Report](https://www.plasticsurgery.org/news/plastic-surgery-statistics). ASPS, 2021.
-2. Rohrich RJ, Ahmad J. "A Practical Approach to Rhinoplasty." *Plastic and Reconstructive Surgery*. 2014;134(6):1277--1288.
-3. Metzler P, et al. "Psychological profiles and motivational factors of patients electing cosmetic surgery of the nose." *Aesthetic Surgery Journal*. 2019;39(12):1340--1348.
+2. Rohrich RJ, Ahmad J. "A Practical Approach to Rhinoplasty." *Plastic and Reconstructive Surgery*. 2016;137(4):725e--746e.
+3. Kandathil CK, et al. "Examining Preoperative Expectations and Postoperative Satisfaction in Rhinoplasty Patients: A Single-Center Study." *Facial Plastic Surgery & Aesthetic Medicine*. 2021;23(1):33--38.
 4. Leong SC, Iglesias MA. "A systematic review of patient-reported outcome measures in aesthetic and functional rhinoplasty." *Journal of Plastic, Reconstructive & Aesthetic Surgery*. 2016;69(12):1635--1645.
 5. Deng Y, et al. "Disentangled and Controllable Face Image Generation via 3D Imitative-Contrastive Learning." CVPR 2020.
-6. Li L, et al. "FaceShifter: Towards High Fidelity And Occlusion Aware Face Swapping." CVPR 2020.
-7. Deng Y, et al. "SurgFace: Fine-Grained Face Editing via Surgical-Like Manipulation." AAAI 2023.
-8. Kim M, et al. "DiffFace: Diffusion-based Face Swapping with Facial Guidance." arXiv 2023.
+6. Li L, et al. "FaceShifter: Towards High Fidelity And Occlusion Aware Face Swapping." arXiv:1912.13457, 2019.
+7. Kim K, et al. "DiffFace: Diffusion-based Face Swapping with Facial Guidance." arXiv:2212.13344, 2022.
 
 ---
 
@@ -458,7 +456,7 @@ The demo has five tabs:
 Upload a photo, pick a procedure, adjust intensity from 0-100%. The interface shows every intermediate step: extracted landmarks, deformed mesh, wireframe conditioning, surgical mask, TPS warp, and the final result in a side-by-side before/after view. Clinical flags (vitiligo, Bell's palsy with side selector, keloid-prone regions, Ehlers-Danlos) are available as checkboxes.
 
 ### Tab 2: Multi-Procedure Comparison
-Set independent intensity sliders for all four procedures and generate them all from the same photo. Useful for showing a patient their options side by side.
+Set independent intensity sliders for all six procedures and generate them all from the same photo. Useful for showing a patient their options side by side.
 
 ### Tab 3: Intensity Sweep
 Pick a procedure and a number of steps (3 to 10). Generates a gallery progressing from 0% to 100% intensity so you can see exactly how the result changes with the intensity parameter.
@@ -945,11 +943,10 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for the detailed roadmap with full milest
 - [ ] Populate results tables in paper
 
 ### Next (v0.3.0) -- Data-Driven Training
-- [ ] Data-driven displacement model fitted from clinical before/after pairs
+- [ ] Anatomically constrained displacement sampling with per-procedure variance
 - [ ] ControlNet fine-tuning on 50K+ synthetic pairs (Phase A)
 - [ ] Combined loss training on clinical pairs (Phase B)
 - [ ] Additional procedure presets (otoplasty, genioplasty)
-- [ ] Clinical validation with board-certified plastic surgeons
 - [ ] MICCAI 2026 workshop paper and arXiv preprint
 
 ### v0.4.0 -- 3D Face Reconstruction
