@@ -1,9 +1,11 @@
 # LandmarkDiff
 
 [![CI](https://github.com/dreamlessx/LandmarkDiff-public/actions/workflows/ci.yml/badge.svg)](https://github.com/dreamlessx/LandmarkDiff-public/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/landmarkdiff.svg)](https://pypi.org/project/landmarkdiff/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch 2.1+](https://img.shields.io/badge/pytorch-2.1+-ee4c2c.svg)](https://pytorch.org/)
+[![Hugging Face Space](https://img.shields.io/badge/%F0%9F%A4%97-Demo-yellow)](https://huggingface.co/spaces/dreamlessx/LandmarkDiff)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Docs](https://img.shields.io/badge/docs-latest-green.svg)](docs/)
 
@@ -44,6 +46,7 @@ python scripts/run_inference.py photo.jpg --procedure rhinoplasty --intensity 60
 
 ## Table of Contents
 
+- [Features](#features)
 - [Why LandmarkDiff](#why-landmarkdiff)
 - [Supported Procedures](#supported-procedures)
 - [How It Works](#how-it-works)
@@ -67,6 +70,26 @@ python scripts/run_inference.py photo.jpg --procedure rhinoplasty --intensity 60
 - [Contributing](#contributing)
 - [License](#license)
 - [Acknowledgments](#acknowledgments)
+
+---
+
+## Features
+
+- **Single-photo input** -- works from any 2D clinical photograph or phone selfie, no 3D scanning hardware needed
+- **6 surgical procedure presets** -- rhinoplasty, blepharoplasty, rhytidectomy, orthognathic surgery, brow lift, mentoplasty (extensible to custom procedures)
+- **4 inference modes** -- TPS (instant CPU), img2img, ControlNet, and ControlNet+IP-Adapter with configurable quality/speed tradeoffs
+- **MediaPipe 478-point face mesh** -- anatomically grounded landmark extraction for precise deformation control
+- **Gaussian RBF deformation engine** -- smooth, spatially weighted displacements calibrated from anthropometric surgical data
+- **ControlNet-conditioned generation** -- photorealistic texture synthesis via Stable Diffusion 1.5 with wireframe conditioning
+- **Neural post-processing** -- CodeFormer face restoration, Real-ESRGAN upscaling, LAB histogram matching, Laplacian pyramid blending
+- **ArcFace identity verification** -- ensures the predicted face preserves patient identity (cosine similarity check)
+- **Clinical edge-case handling** -- built-in support for vitiligo, Bell's palsy, keloid-prone skin, and Ehlers-Danlos syndrome
+- **Fitzpatrick-stratified evaluation** -- all metrics (FID, LPIPS, SSIM, NME, identity) broken down by skin type I through VI
+- **Intensity slider (0-100%)** -- preview subtle through aggressive versions of any procedure
+- **Gradio web demo** -- 5-tab interface with single procedure, multi-procedure comparison, intensity sweep, face analysis, and multi-angle capture
+- **HPC training pipeline** -- SLURM scripts with preemption checkpointing, DDP multi-GPU, curriculum training configs
+- **Docker and Apptainer support** -- CPU and GPU container images for reproducible deployment
+- **PEP 561 typed package** -- ships with `py.typed` marker for downstream type checking
 
 ---
 
@@ -257,6 +280,9 @@ pip install -e ".[app]"
 # With evaluation metrics
 pip install -e ".[eval]"
 
+# With GPU optimizations (xformers, triton)
+pip install -e ".[gpu]"
+
 # Everything
 pip install -e ".[train,eval,app,dev]"
 ```
@@ -349,6 +375,10 @@ result = pipeline.generate(
 ---
 
 ## Gradio Web Demo
+
+**Try it online:** [huggingface.co/spaces/dreamlessx/LandmarkDiff](https://huggingface.co/spaces/dreamlessx/LandmarkDiff) (TPS mode, runs on CPU)
+
+Or run locally:
 
 ```bash
 python scripts/app.py
@@ -885,6 +915,8 @@ To join this list, open a PR or contribute to an issue. See [CONTRIBUTING.md](CO
 Contributions welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide, including development setup, coding style, testing requirements, and how to add new procedures.
 
 For bug reports and feature requests, use the [issue templates](https://github.com/dreamlessx/LandmarkDiff-public/issues/new/choose).
+
+For questions and general discussion, visit [GitHub Discussions](https://github.com/dreamlessx/LandmarkDiff-public/discussions).
 
 For major changes, please open an issue first to discuss the proposed approach.
 
