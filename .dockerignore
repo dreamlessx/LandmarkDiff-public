@@ -1,5 +1,8 @@
+# Version control
 .git
 .github
+
+# Python build artifacts
 __pycache__
 *.pyc
 *.pyo
@@ -7,21 +10,43 @@ __pycache__
 dist/
 build/
 .eggs/
+
+# Model weights (large files, mount as volumes instead)
 *.safetensors
 *.ckpt
 *.bin
 *.pt
 *.pth
+
+# Experiment outputs
 wandb/
 outputs/
 checkpoints/
 data/
-demos/
+
+# Documentation and paper (not needed at runtime)
+docs/
 paper/
+demos/
+
+# Tests (not needed in production image)
+tests/
+
+# Logs
 *.log
 slurm-*.out
+
+# Virtual environments
 .venv/
 venv/
+
+# Tool caches
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store

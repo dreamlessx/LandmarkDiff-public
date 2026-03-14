@@ -1,0 +1,34 @@
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1
+
+# System dependencies for OpenCV and MediaPipe
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy source code (needed for editable install)
+COPY pyproject.toml .
+COPY landmarkdiff/ landmarkdiff/
+COPY scripts/ scripts/
+COPY configs/ configs/
+
+# Install Python dependencies (CPU-only torch via default index)
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu && \
+    pip install --no-cache-dir ".[app]"
+
+# Pre-download MediaPipe model on build
+RUN python -c "import mediapipe" 2>/dev/null || true
+
+EXPOSE 7860
+
+# Default: launch Gradio demo in TPS (CPU) mode
+CMD ["python", "scripts/app.py", "--server_name", "0.0.0.0"]

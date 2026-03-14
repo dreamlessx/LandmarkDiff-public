@@ -1,4 +1,8 @@
-.PHONY: help install install-dev install-train install-app test lint format type-check clean demo train docker docker-demo docs
+.PHONY: help install install-dev install-train install-app install-all \
+       test test-fast lint format typecheck type-check check all \
+       demo inference data pairs train evaluate \
+       docker docker-cpu docker-demo docker-train \
+       docs paper clean
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -36,10 +40,18 @@ format: ## Auto-format code
 	ruff format landmarkdiff/ scripts/ tests/
 	ruff check --fix landmarkdiff/ scripts/ tests/
 
+typecheck: type-check ## Alias for type-check
 type-check: ## Run type checker
 	mypy landmarkdiff/ --ignore-missing-imports
 
 check: lint type-check test ## Run all quality checks
+
+all: install-dev lint type-check test ## Install dev deps, then lint + typecheck + test
+
+# ── Documentation ────────────────────────────────────────────
+
+docs: ## Build Sphinx documentation
+	sphinx-build -b html docs/ docs/_build/html
 
 # ── Demo & Inference ──────────────────────────────────────────
 
@@ -65,14 +77,17 @@ evaluate: ## Run evaluation
 
 # ── Docker ────────────────────────────────────────────────────
 
-docker: ## Build Docker image
+docker: ## Build Docker image (GPU)
 	docker build -t landmarkdiff .
 
-docker-demo: ## Run Gradio demo in Docker
-	docker compose up landmarkdiff
+docker-cpu: ## Build Docker image (CPU-only, smaller)
+	docker build -t landmarkdiff:cpu -f Dockerfile.cpu .
 
-docker-train: ## Run training in Docker
-	docker compose run train
+docker-demo: ## Run Gradio demo in Docker (CPU)
+	docker compose up app
+
+docker-train: ## Run training in Docker (GPU)
+	docker compose --profile training run train
 
 # ── Paper ─────────────────────────────────────────────────────
 
@@ -83,5 +98,6 @@ paper: ## Build MICCAI paper PDF
 
 clean: ## Remove build artifacts
 	rm -rf build/ dist/ *.egg-info .pytest_cache .mypy_cache .ruff_cache
+	rm -rf docs/_build
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete 2>/dev/null || true

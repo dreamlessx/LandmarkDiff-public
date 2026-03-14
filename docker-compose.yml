@@ -1,8 +1,49 @@
-version: "3.8"
+# LandmarkDiff Docker Compose configuration
+#
+# Services:
+#   app       - Main LandmarkDiff Gradio demo (CPU-only, lightweight)
+#   app-gpu   - GPU-accelerated variant using nvidia runtime
+#   docs      - Sphinx documentation builder
+#   train     - Training service (GPU required, use with: docker compose run train)
+#
+# Usage:
+#   docker compose up app           # CPU demo on :7860
+#   docker compose up app-gpu       # GPU demo on :7860
+#   docker compose run docs         # Build Sphinx docs into docs/_build/
+#   docker compose --profile training run train  # Run training
 
 services:
-  landmarkdiff:
-    build: .
+  # ── CPU app (default) ─────────────────────────────────────────
+  # Runs the Gradio demo in TPS (CPU) mode. No GPU required.
+  # Access at http://localhost:7860
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.cpu
+    ports:
+      - "7860:7860"
+    volumes:
+      - ./data:/app/data
+      - ./checkpoints:/app/checkpoints
+      - model-cache:/root/.cache
+    environment:
+      - LANDMARKDIFF_MODE=tps
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ── GPU app ───────────────────────────────────────────────────
+  # Full GPU-accelerated demo with ControlNet inference.
+  # Requires nvidia-container-toolkit installed on the host.
+  # Access at http://localhost:7860
+  app-gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "7860:7860"
     volumes:
@@ -18,10 +59,28 @@ services:
               capabilities: [gpu]
     environment:
       - CUDA_VISIBLE_DEVICES=0
+    restart: unless-stopped
 
-  # Training service (optional, use with: docker compose run train)
+  # ── Docs builder ──────────────────────────────────────────────
+  # Builds Sphinx documentation into docs/_build/html/.
+  # Usage: docker compose run docs
+  docs:
+    image: python:3.11-slim
+    working_dir: /app
+    volumes:
+      - .:/app:ro
+      - ./docs/_build:/app/docs/_build
+    command: >
+      sh -c "pip install --quiet -r docs/requirements.txt &&
+             sphinx-build -b html docs/ docs/_build/html"
+
+  # ── Training (optional) ──────────────────────────────────────
+  # Runs ControlNet fine-tuning. Requires GPU.
+  # Usage: docker compose --profile training run train
   train:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     volumes:
       - ./data:/app/data
       - ./checkpoints:/app/checkpoints
