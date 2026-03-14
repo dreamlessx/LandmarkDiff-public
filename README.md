@@ -928,7 +928,9 @@ make clean           # remove build artifacts
 
 ## Roadmap
 
-### Released (v0.2.0)
+See [docs/ROADMAP.md](docs/ROADMAP.md) for the detailed roadmap with full milestone descriptions.
+
+### Released (v0.2.x)
 - [x] Core pipeline: landmark extraction, RBF deformation, ControlNet conditioning, mask compositing
 - [x] 6 procedure presets (rhinoplasty, blepharoplasty, rhytidectomy, orthognathic, brow lift, mentoplasty)
 - [x] Synthetic training pair generation via TPS warps
@@ -942,18 +944,27 @@ make clean           # remove build artifacts
 - [ ] ControlNet fine-tuning on 50K+ synthetic pairs (in progress)
 - [ ] Populate results tables in paper
 
-### Next (v0.3.0)
-- [ ] FLUX.1-dev backbone upgrade (higher quality generation at 1024x1024)
-- [ ] IP-Adapter FaceID for stronger identity preservation
+### Next (v0.3.0) -- Data-Driven Training
+- [ ] Data-driven displacement model fitted from clinical before/after pairs
+- [ ] ControlNet fine-tuning on 50K+ synthetic pairs (Phase A)
+- [ ] Combined loss training on clinical pairs (Phase B)
 - [ ] Additional procedure presets (otoplasty, genioplasty)
 - [ ] Clinical validation with board-certified plastic surgeons
-- [ ] arXiv preprint
+- [ ] MICCAI 2026 workshop paper and arXiv preprint
 
-### Future (v1.0)
+### v0.4.0 -- 3D Face Reconstruction
 - [ ] Phone video capture -- rotate head, reconstruct full 3D face from frames
 - [ ] FLAME 3D morphable model fitting from monocular video
+- [ ] FLUX.1-dev or SDXL backbone upgrade (higher quality generation at 1024x1024)
+- [ ] IP-Adapter FaceID v2 for stronger identity preservation
+
+### v0.5.0 -- Interactive 3D Surgical Preview
 - [ ] 3D surgical deformation -- procedure-specific warps in 3D space
 - [ ] Interactive 3D preview -- rotate the predicted result from any angle
+- [ ] Mobile-optimized capture and preview workflow
+
+### Future (v1.0.0) -- Clinical Validation
+- [ ] IRB-approved prospective clinical validation study
 - [ ] Multi-view consistency loss across frontal/profile predictions
 - [ ] Physics-informed tissue simulation (FEM for soft tissue response)
 - [ ] Mobile capture app with guided head-rotation scan
@@ -976,7 +987,7 @@ If you use LandmarkDiff in your research, please cite it. Machine-readable citat
   author = {dreamlessx},
   year = {2026},
   url = {https://github.com/dreamlessx/LandmarkDiff-public},
-  version = {0.2.0}
+  version = {0.2.2}
 }
 ```
 
@@ -988,7 +999,7 @@ We track all contributions and contributors will be acknowledged in the MICCAI 2
 
 | Contribution Level | Recognition |
 |---|---|
-| Bug fix or typo | Acknowledged in README |
+| Bug fix or typo | Listed in [CONTRIBUTORS.md](CONTRIBUTORS.md) |
 | New procedure preset | Acknowledged in paper and README |
 | Feature module (new loss, metric, clinical handler) | Co-author on paper |
 | Clinical validation data | Co-author on paper |
