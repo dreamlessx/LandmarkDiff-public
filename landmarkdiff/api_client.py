@@ -34,6 +34,11 @@ import cv2
 import numpy as np
 
 
+class LandmarkDiffAPIError(Exception):
+    """Base exception for LandmarkDiff API errors."""
+    pass
+
+
 @dataclass
 class PredictionResult:
     """Result from a single prediction."""
@@ -107,22 +112,56 @@ class LandmarkDiffClient:
 
         Returns:
             Dict with status and version info.
+        
+        Raises:
+            LandmarkDiffAPIError: If server is unreachable or returns an error.
         """
         session = self._get_session()
-        resp = session.get(f"{self.base_url}/health")
-        resp.raise_for_status()
-        return resp.json()
+        try:
+            resp = session.get(f"{self.base_url}/health")
+            resp.raise_for_status()
+            return resp.json()
+        except Exception as e:
+            import requests
+            if isinstance(e, requests.ConnectionError):
+                raise LandmarkDiffAPIError(
+                    f"Cannot connect to LandmarkDiff server at {self.base_url}. "
+                    f"Make sure the server is running (python -m landmarkdiff serve)."
+                ) from None
+            elif isinstance(e, requests.HTTPError):
+                raise LandmarkDiffAPIError(
+                    f"Server returned error {e.response.status_code}: {e.response.text[:200]}"
+                ) from None
+            else:
+                raise
 
     def procedures(self) -> list[str]:
         """List available surgical procedures.
 
         Returns:
             List of procedure names.
+        
+        Raises:
+            LandmarkDiffAPIError: If server is unreachable or returns an error.
         """
         session = self._get_session()
-        resp = session.get(f"{self.base_url}/procedures")
-        resp.raise_for_status()
-        return resp.json().get("procedures", [])
+        try:
+            resp = session.get(f"{self.base_url}/procedures")
+            resp.raise_for_status()
+            return resp.json().get("procedures", [])
+        except Exception as e:
+            import requests
+            if isinstance(e, requests.ConnectionError):
+                raise LandmarkDiffAPIError(
+                    f"Cannot connect to LandmarkDiff server at {self.base_url}. "
+                    f"Make sure the server is running (python -m landmarkdiff serve)."
+                ) from None
+            elif isinstance(e, requests.HTTPError):
+                raise LandmarkDiffAPIError(
+                    f"Server returned error {e.response.status_code}: {e.response.text[:200]}"
+                ) from None
+            else:
+                raise
 
     def predict(
         self,
@@ -153,20 +192,34 @@ class LandmarkDiffClient:
         }
 
         resp = session.post(f"{self.base_url}/predict", files=files, data=data)
-        resp.raise_for_status()
-        result = resp.json()
+        try:
+            resp.raise_for_status()
+            result = resp.json()
 
-        # Decode output image
-        output_img = self._decode_base64_image(result["output_image"])
+            # Decode output image
+            output_img = self._decode_base64_image(result["output_image"])
 
-        return PredictionResult(
-            output_image=output_img,
-            procedure=procedure,
-            intensity=intensity,
-            confidence=result.get("confidence", 0.0),
-            metrics=result.get("metrics", {}),
-            metadata=result.get("metadata", {}),
-        )
+            return PredictionResult(
+                output_image=output_img,
+                procedure=procedure,
+                intensity=intensity,
+                confidence=result.get("confidence", 0.0),
+                metrics=result.get("metrics", {}),
+                metadata=result.get("metadata", {}),
+            )
+        except Exception as e:
+            import requests
+            if isinstance(e, requests.ConnectionError):
+                raise LandmarkDiffAPIError(
+                    f"Cannot connect to LandmarkDiff server at {self.base_url}. "
+                    f"Make sure the server is running (python -m landmarkdiff serve)."
+                ) from None
+            elif isinstance(e, requests.HTTPError):
+                raise LandmarkDiffAPIError(
+                    f"Server returned error {e.response.status_code}: {e.response.text[:200]}"
+                ) from None
+            else:
+                raise
 
     def analyze(self, image_path: str | Path) -> dict[str, Any]:
         """Analyze a face image without generating a prediction.
@@ -178,14 +231,31 @@ class LandmarkDiffClient:
 
         Returns:
             Dict with analysis results.
+        
+        Raises:
+            LandmarkDiffAPIError: If server is unreachable or returns an error.
         """
         session = self._get_session()
         image_bytes = self._read_image(image_path)
 
         files = {"image": ("image.png", image_bytes, "image/png")}
-        resp = session.post(f"{self.base_url}/analyze", files=files)
-        resp.raise_for_status()
-        return resp.json()
+        try:
+            resp = session.post(f"{self.base_url}/analyze", files=files)
+            resp.raise_for_status()
+            return resp.json()
+        except Exception as e:
+            import requests
+            if isinstance(e, requests.ConnectionError):
+                raise LandmarkDiffAPIError(
+                    f"Cannot connect to LandmarkDiff server at {self.base_url}. "
+                    f"Make sure the server is running (python -m landmarkdiff serve)."
+                ) from None
+            elif isinstance(e, requests.HTTPError):
+                raise LandmarkDiffAPIError(
+                    f"Server returned error {e.response.status_code}: {e.response.text[:200]}"
+                ) from None
+            else:
+                raise
 
     def batch_predict(
         self,
