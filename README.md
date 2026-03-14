@@ -842,18 +842,17 @@ make clean           # remove build artifacts
 
 ## Citation
 
+If you use LandmarkDiff in your research, please cite it. Machine-readable citation metadata is available in [CITATION.cff](CITATION.cff).
+
 ```bibtex
-@inproceedings{landmarkdiff2026,
-  title={LandmarkDiff: Anatomically-Conditioned Latent Diffusion for
-         Photorealistic Facial Surgery Outcome Prediction},
-  booktitle={Medical Image Computing and Computer Assisted Intervention
-             -- MICCAI},
-  year={2026},
-  publisher={Springer}
+@software{landmarkdiff2026,
+  title = {LandmarkDiff: Anatomically-Conditioned Facial Surgery Outcome Prediction},
+  author = {dreamlessx},
+  year = {2026},
+  url = {https://github.com/dreamlessx/LandmarkDiff-public},
+  version = {0.2.0}
 }
 ```
-
-Machine-readable citation metadata is also available in [CITATION.cff](CITATION.cff).
 
 ---
 

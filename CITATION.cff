@@ -1,20 +1,18 @@
 cff-version: 1.2.0
-title: "LandmarkDiff: Anatomically-Conditioned Latent Diffusion for Facial Surgery Outcome Prediction"
-message: "If you use this software, please cite it using the metadata from this file."
+title: "LandmarkDiff: Anatomically-Conditioned Facial Surgery Outcome Prediction"
+message: "If you use this software, please cite it as below."
 type: software
 authors:
   - alias: dreamlessx
 repository-code: "https://github.com/dreamlessx/LandmarkDiff-public"
 url: "https://github.com/dreamlessx/LandmarkDiff-public"
 license: MIT
-version: 0.1.0
-date-released: "2026-03-13"
+version: 0.2.0
+date-released: "2026-03-14"
 keywords:
   - facial-surgery
-  - diffusion-models
+  - landmark-deformation
   - controlnet
-  - medical-imaging
-  - landmark-detection
+  - thin-plate-spline
   - mediapipe
-  - surgical-prediction
-  - deep-learning
+  - stable-diffusion
