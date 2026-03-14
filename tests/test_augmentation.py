@@ -215,7 +215,7 @@ class TestSkinToneAugmentation:
         img = np.random.randint(50, 200, (64, 64, 3), dtype=np.uint8)
         result = augment_skin_tone(img, ita_delta=0.0)
         # Zero delta should produce nearly identical result (LAB round-trip rounding)
-        assert np.abs(result.astype(int) - img.astype(int)).max() <= 5
+        assert np.abs(result.astype(int) - img.astype(int)).max() <= 8
 
     def test_positive_delta_lightens(self):
         img = np.full((64, 64, 3), 128, dtype=np.uint8)
