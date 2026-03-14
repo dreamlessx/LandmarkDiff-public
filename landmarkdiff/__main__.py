@@ -17,7 +17,7 @@ def main():
     infer = subparsers.add_parser("infer", help="Run inference on an image")
     infer.add_argument("image", type=str, help="Path to input face image")
     infer.add_argument("--procedure", type=str, default="rhinoplasty",
-                       choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift"])
+                       choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"])
     infer.add_argument("--intensity", type=float, default=60.0,
                        help="Deformation intensity (0-100)")
     infer.add_argument("--mode", type=str, default="tps",

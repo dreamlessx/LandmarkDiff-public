@@ -7,10 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Brow lift procedure preset (contributed by [@Deepak8858](https://github.com/Deepak8858))
+- Mentoplasty (chin surgery) procedure preset (contributed by [@P-r-e-m-i-u-m](https://github.com/P-r-e-m-i-u-m))
+- Rathgeb et al. plastic surgery database for evaluation benchmarking
+- CONTRIBUTORS.md with contribution log
+
+### Fixed
+- All example scripts updated to use correct API names and intensity scale (0-100)
+- Batch inference script rewritten to use correct pipeline initialization
+- CLI demo command now imports correct function from Gradio app
+- API documentation aligned with actual code (DeformationHandle, PROCEDURE_LANDMARKS, render_wireframe)
+
 ### Planned
 - FLUX.1-dev backbone upgrade
 - IP-Adapter FaceID integration
-- Additional procedure presets (mentoplasty, brow lift, otoplasty)
+- Additional procedure presets (otoplasty)
 - Hugging Face Spaces demo
 - Clinical validation study results
 

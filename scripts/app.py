@@ -232,7 +232,7 @@ def build_app():
                         height=350,
                     )
                     procedure = gr.Radio(
-                        choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift"],
+                        choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"],
                         value="rhinoplasty",
                         label="Surgical Procedure",
                     )
@@ -324,7 +324,7 @@ def build_app():
                 with gr.Column(scale=1):
                     input_image_sweep = gr.Image(label="Upload Face Photo", type="numpy", height=300)
                     sweep_procedure = gr.Radio(
-                        choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift"],
+                        choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"],
                         value="rhinoplasty", label="Procedure",
                     )
                     sweep_steps = gr.Slider(3, 10, 5, step=1, label="Number of steps")
@@ -439,7 +439,7 @@ def build_app():
 
                     gr.Markdown("### Step 2: Configure")
                     ma_procedure = gr.Radio(
-                        choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift"],
+                        choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"],
                         value="rhinoplasty", label="Procedure",
                     )
                     ma_intensity = gr.Slider(
