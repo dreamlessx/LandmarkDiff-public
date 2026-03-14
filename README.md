@@ -6,8 +6,9 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch 2.1+](https://img.shields.io/badge/pytorch-2.1+-ee4c2c.svg)](https://pytorch.org/)
 [![Hugging Face Space](https://img.shields.io/badge/%F0%9F%A4%97-Demo-yellow)](https://huggingface.co/spaces/dreamlessx/LandmarkDiff)
+[![Downloads](https://img.shields.io/pypi/dm/landmarkdiff.svg)](https://pypi.org/project/landmarkdiff/)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
-[![Docs](https://img.shields.io/badge/docs-latest-green.svg)](docs/)
+[![Docs](https://img.shields.io/badge/docs-latest-green.svg)](https://landmarkdiff.readthedocs.io)
 
 Photorealistic facial surgery outcome prediction from standard clinical photography, powered by anatomically-conditioned latent diffusion.
 
@@ -33,6 +34,8 @@ Photorealistic facial surgery outcome prediction from standard clinical photogra
 LandmarkDiff extracts MediaPipe's 478-point face mesh from the input photo, applies procedure-specific Gaussian RBF deformations calibrated from anthropometric surgical data, renders the deformed mesh as a tessellation wireframe, and feeds that wireframe into a ControlNet-conditioned Stable Diffusion 1.5 backbone to synthesize the predicted face. The output is composited back onto the original image using Laplacian pyramid blending with feathered surgical masks, then refined through neural face restoration and identity verification.
 
 > **Paper:** "LandmarkDiff: Anatomically-Conditioned Latent Diffusion for Photorealistic Facial Surgery Outcome Prediction," targeting MICCAI 2026.
+>
+> **Live demo:** [huggingface.co/spaces/dreamlessx/LandmarkDiff](https://huggingface.co/spaces/dreamlessx/LandmarkDiff) (runs on CPU, no GPU needed)
 
 ```bash
 # Quick install
@@ -836,7 +839,7 @@ make clean           # remove build artifacts
 
 ## Roadmap
 
-### Current (v0.1 - Spring 2026)
+### Released (v0.2.0)
 - [x] Core pipeline: landmark extraction, RBF deformation, ControlNet conditioning, mask compositing
 - [x] 6 procedure presets (rhinoplasty, blepharoplasty, rhytidectomy, orthognathic, brow lift, mentoplasty)
 - [x] Synthetic training pair generation via TPS warps
@@ -845,16 +848,17 @@ make clean           # remove build artifacts
 - [x] Gradio demo with multi-angle capture
 - [x] Fitzpatrick-stratified evaluation protocol
 - [x] Docker and Apptainer container support
+- [x] Hugging Face Spaces interactive demo ([live](https://huggingface.co/spaces/dreamlessx/LandmarkDiff))
+- [x] Data-driven displacement model fitted from real surgical pairs
 - [ ] ControlNet fine-tuning on 50K+ synthetic pairs (in progress)
 - [ ] Populate results tables in paper
 
-### Next (v0.2 - Summer 2026)
+### Next (v0.3.0)
 - [ ] FLUX.1-dev backbone upgrade (higher quality generation at 1024x1024)
 - [ ] IP-Adapter FaceID for stronger identity preservation
 - [ ] Additional procedure presets (otoplasty, genioplasty)
 - [ ] Clinical validation with board-certified plastic surgeons
-- [ ] Hugging Face Spaces interactive demo
-- [ ] arXiv preprint (target: April 2026)
+- [ ] arXiv preprint
 
 ### Future (v1.0)
 - [ ] FLAME 3D morphable model integration for depth-aware deformation
