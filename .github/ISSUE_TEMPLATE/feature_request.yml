@@ -1,0 +1,69 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+title: "[FEATURE] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea for LandmarkDiff? We'd like to hear it. Please describe the problem you're trying to solve and how you think it should work.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the use case or pain point. What are you trying to do that you currently can't?
+      placeholder: "I want to preview multiple intensity levels side by side without running inference separately for each one."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How do you think this should work? Code examples, UI mockups, or plain descriptions are all fine.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any other approaches you thought about and why they might not work as well.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area of the project
+      description: Which part of LandmarkDiff does this relate to?
+      options:
+        - Inference pipeline
+        - Training
+        - Procedure presets / deformation
+        - Clinical flags
+        - Post-processing
+        - Evaluation / metrics
+        - Gradio demo
+        - CLI / scripts
+        - Documentation
+        - Docker / deployment
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: willing_to_implement
+    attributes:
+      label: Would you be willing to implement this?
+      options:
+        - "Yes, I'd like to submit a PR"
+        - "Maybe, with some guidance"
+        - "No, just suggesting"
+    validations:
+      required: true
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Any relevant papers, existing implementations, or examples that might help.

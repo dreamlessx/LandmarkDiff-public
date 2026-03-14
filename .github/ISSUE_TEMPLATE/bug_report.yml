@@ -1,0 +1,106 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. Please fill out the sections below so we can reproduce and fix the issue.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug description
+      description: A clear description of what went wrong.
+      placeholder: "When I run inference with --mode controlnet, the output image is entirely black."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Exact commands or code to trigger the bug.
+      placeholder: |
+        1. Install with `pip install -e ".[dev]"`
+        2. Run `python scripts/run_inference.py photo.jpg --procedure rhinoplasty --mode controlnet`
+        3. Output saved to output/result.png is a black image
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What you expected to happen instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: error_output
+    attributes:
+      label: Error output / traceback
+      description: Paste the full error message or traceback if applicable.
+      render: shell
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "e.g., Ubuntu 22.04, macOS 14.3, Windows 11"
+    validations:
+      required: true
+
+  - type: input
+    id: python_version
+    attributes:
+      label: Python version
+      placeholder: "e.g., 3.11.7"
+    validations:
+      required: true
+
+  - type: input
+    id: pytorch_version
+    attributes:
+      label: PyTorch version
+      placeholder: "e.g., 2.2.0+cu121"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: gpu
+    attributes:
+      label: GPU
+      options:
+        - CPU only
+        - NVIDIA (specify in additional context)
+        - Apple Silicon (MPS)
+        - Other (specify in additional context)
+    validations:
+      required: true
+
+  - type: input
+    id: landmarkdiff_version
+    attributes:
+      label: LandmarkDiff version or commit hash
+      placeholder: "e.g., v0.1.0 or abc1234"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: inference_mode
+    attributes:
+      label: Inference mode (if applicable)
+      options:
+        - Not applicable
+        - tps
+        - img2img
+        - controlnet
+        - controlnet_ip
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Anything else that might help -- screenshots, input images, config files, GPU model, etc.
