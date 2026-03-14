@@ -1,7 +1,10 @@
-"""Clinical edge cases: vitiligo, Bell's palsy, keloid, Ehlers-Danlos.
+"""Clinical edge case handling for pathological conditions.
 
-Each condition modifies the pipeline differently (mask exclusion,
-asymmetric deformation, wider radii, etc).
+Implements special-case logic for:
+- Vitiligo: preserve depigmented patches (don't blend over them)
+- Bell's palsy: disable bilateral symmetry in deformation vectors
+- Keloid: flag keloid-prone areas to reduce aggressive compositing
+- Ehlers-Danlos: wider influence radii for hypermobile tissue
 """
 
 from __future__ import annotations
@@ -16,7 +19,10 @@ from landmarkdiff.landmarks import FaceLandmarks
 
 @dataclass
 class ClinicalFlags:
-    """Flags that change how the pipeline handles this patient."""
+    """Clinical condition flags that modify pipeline behavior.
+
+    Set flags to True to enable condition-specific handling.
+    """
 
     vitiligo: bool = False
     bells_palsy: bool = False
@@ -35,7 +41,20 @@ def detect_vitiligo_patches(
     l_threshold: float = 85.0,
     min_patch_area: int = 200,
 ) -> np.ndarray:
-    """Detect depigmented (vitiligo) patches on face using LAB luminance."""
+    """Detect depigmented (vitiligo) patches on face using LAB luminance.
+
+    Vitiligo patches appear as high-L, low-saturation regions that deviate
+    significantly from surrounding skin tone.
+
+    Args:
+        image: BGR face image.
+        face: Extracted landmarks for face ROI.
+        l_threshold: Luminance threshold (patches brighter than surrounding skin).
+        min_patch_area: Minimum contour area in pixels to count as a patch.
+
+    Returns:
+        Binary mask (uint8, 0/255) of detected vitiligo patches.
+    """
     h, w = image.shape[:2]
     lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB).astype(np.float32)
 
@@ -83,7 +102,19 @@ def adjust_mask_for_vitiligo(
     vitiligo_patches: np.ndarray,
     preservation_factor: float = 0.3,
 ) -> np.ndarray:
-    """Reduce mask intensity over vitiligo patches to preserve them."""
+    """Reduce mask intensity over vitiligo patches to preserve them.
+
+    Instead of full blending over depigmented patches, we reduce the
+    mask weight so the original vitiligo pattern shows through.
+
+    Args:
+        mask: Float32 surgical mask [0-1].
+        vitiligo_patches: Binary mask of vitiligo regions (0/255 uint8).
+        preservation_factor: How much to reduce blending (0=full blend, 1=fully preserve).
+
+    Returns:
+        Modified mask with reduced intensity over vitiligo patches.
+    """
     patches_f = vitiligo_patches.astype(np.float32) / 255.0
     reduction = patches_f * preservation_factor
     return np.clip(mask - reduction, 0.0, 1.0)
@@ -92,7 +123,14 @@ def adjust_mask_for_vitiligo(
 def get_bells_palsy_side_indices(
     side: str,
 ) -> dict[str, list[int]]:
-    """Get landmark indices for the affected side in Bell's palsy."""
+    """Get landmark indices for the affected side in Bell's palsy.
+
+    In Bell's palsy, one side of the face is paralyzed. We should NOT
+    apply bilateral symmetric deformations — only deform the healthy side.
+
+    Returns:
+        Dict mapping region names to landmark indices on the affected side.
+    """
     if side == "left":
         return {
             "eye": [33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246],
@@ -116,7 +154,21 @@ def get_keloid_exclusion_mask(
     height: int,
     margin_px: int = 10,
 ) -> np.ndarray:
-    """Generate mask of keloid-prone regions to exclude from aggressive compositing."""
+    """Generate mask of keloid-prone regions to exclude from aggressive compositing.
+
+    Keloid patients should have reduced blending intensity and no sharp
+    boundary transitions in prone areas (typically jawline, ears, chest).
+
+    Args:
+        face: Extracted landmarks.
+        regions: List of region names prone to keloids.
+        width: Image width.
+        height: Image height.
+        margin_px: Extra margin around keloid regions.
+
+    Returns:
+        Float32 mask [0-1] where 1 = keloid-prone area.
+    """
     from landmarkdiff.landmarks import LANDMARK_REGIONS
 
     mask = np.zeros((height, width), dtype=np.float32)
@@ -145,7 +197,19 @@ def adjust_mask_for_keloid(
     keloid_mask: np.ndarray,
     reduction_factor: float = 0.5,
 ) -> np.ndarray:
-    """Soften mask transitions in keloid-prone areas."""
+    """Soften mask transitions in keloid-prone areas.
+
+    Reduces the mask gradient steepness to prevent hard boundaries
+    that could trigger keloid formation in real surgical planning.
+
+    Args:
+        mask: Float32 surgical mask [0-1].
+        keloid_mask: Float32 keloid region mask [0-1].
+        reduction_factor: How much to reduce mask intensity in keloid areas.
+
+    Returns:
+        Modified mask with gentler transitions in keloid regions.
+    """
     # Reduce mask intensity in keloid-prone areas
     keloid_reduction = keloid_mask * reduction_factor
     modified = mask * (1.0 - keloid_reduction)

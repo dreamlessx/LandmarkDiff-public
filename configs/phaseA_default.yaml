@@ -1,0 +1,67 @@
+# Phase A: Standard ControlNet training (diffusion loss only)
+# Target: learn faithful landmark-conditioned face generation
+
+experiment_name: phaseA_default
+description: "Phase A ControlNet training with MSE diffusion loss"
+version: "0.2.0"
+
+model:
+  base_model: runwayml/stable-diffusion-v1-5
+  controlnet_conditioning_channels: 3
+  controlnet_conditioning_scale: 1.0
+  use_ema: true
+  ema_decay: 0.9999
+  gradient_checkpointing: true
+
+training:
+  phase: A
+  learning_rate: 1.0e-5
+  batch_size: 4
+  gradient_accumulation_steps: 4
+  max_train_steps: 50000
+  warmup_steps: 500
+  mixed_precision: fp16
+  seed: 42
+  optimizer: adamw
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  lr_scheduler: cosine
+  save_every_n_steps: 5000
+  validate_every_n_steps: 2500
+  num_validation_samples: 4
+
+data:
+  train_dir: data/training
+  val_dir: data/validation
+  image_size: 512
+  num_workers: 4
+  random_flip: true
+  random_rotation: 5.0
+  color_jitter: 0.1
+  procedures:
+    - rhinoplasty
+    - blepharoplasty
+    - rhytidectomy
+    - orthognathic
+  intensity_range: [30.0, 100.0]
+
+inference:
+  num_inference_steps: 30
+  guidance_scale: 7.5
+  scheduler: "dpmsolver++"
+
+evaluation:
+  compute_fid: true
+  compute_lpips: true
+  compute_nme: true
+  compute_identity: true
+  stratify_fitzpatrick: true
+
+wandb:
+  enabled: true
+  project: landmarkdiff
+  tags: [phase-a, controlnet]
+
+output_dir: outputs/phaseA_default

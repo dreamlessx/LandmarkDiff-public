@@ -95,15 +95,39 @@ def apply_procedure_preset(
     intensity: float = 50.0,
     image_size: int = 512,
     clinical_flags: Optional["ClinicalFlags"] = None,
+    displacement_model_path: Optional[str] = None,
+    noise_scale: float = 0.0,
 ) -> FaceLandmarks:
-    """Apply a named procedure preset at given intensity (0-100)."""
+    """Apply a surgical procedure preset to landmarks.
+
+    Args:
+        face: Input face landmarks.
+        procedure: Procedure name (rhinoplasty, blepharoplasty, etc.).
+        intensity: Relative intensity 0-100 (mild=33, moderate=66, aggressive=100).
+        image_size: Reference image size for displacement scaling.
+        clinical_flags: Optional clinical condition flags.
+        displacement_model_path: Path to a fitted DisplacementModel (.npz).
+            When provided, uses data-driven displacements from real surgery pairs
+            instead of hand-tuned RBF vectors.
+        noise_scale: Variation noise scale for data-driven mode (0=deterministic).
+
+    Returns:
+        New FaceLandmarks with manipulated landmarks.
+    """
     if procedure not in PROCEDURE_LANDMARKS:
         raise ValueError(f"Unknown procedure: {procedure}. Choose from {list(PROCEDURE_LANDMARKS)}")
 
     landmarks = face.landmarks.copy()
+    scale = intensity / 100.0
+
+    # Data-driven displacement mode
+    if displacement_model_path is not None:
+        return _apply_data_driven(
+            face, procedure, scale, displacement_model_path, noise_scale,
+        )
+
     indices = PROCEDURE_LANDMARKS[procedure]
     radius = PROCEDURE_RADIUS[procedure]
-    scale = intensity / 100.0
 
     # Ehlers-Danlos: wider influence radii for hypermobile tissue
     if clinical_flags and clinical_flags.ehlers_danlos:
@@ -137,6 +161,43 @@ def apply_procedure_preset(
 
     return FaceLandmarks(
         landmarks=result,
+        image_width=face.image_width,
+        image_height=face.image_height,
+        confidence=face.confidence,
+    )
+
+
+def _apply_data_driven(
+    face: FaceLandmarks,
+    procedure: str,
+    scale: float,
+    model_path: str,
+    noise_scale: float = 0.0,
+) -> FaceLandmarks:
+    """Apply data-driven displacements from a fitted DisplacementModel.
+
+    The model provides mean displacement vectors learned from real surgery pairs,
+    applied directly to all 478 landmarks (not just procedure-specific subset).
+    """
+    from landmarkdiff.displacement_model import DisplacementModel
+
+    model = DisplacementModel.load(model_path)
+    field = model.get_displacement_field(
+        procedure=procedure,
+        intensity=scale,
+        noise_scale=noise_scale,
+    )
+
+    # field is (478, 2) in normalized coordinates
+    landmarks = face.landmarks.copy()
+    n_lm = min(landmarks.shape[0], field.shape[0])
+    landmarks[:n_lm, :2] += field[:n_lm]
+
+    # Clamp to [0, 1]
+    landmarks = np.clip(landmarks, 0.0, 1.0)
+
+    return FaceLandmarks(
+        landmarks=landmarks,
         image_width=face.image_width,
         image_height=face.image_height,
         confidence=face.confidence,

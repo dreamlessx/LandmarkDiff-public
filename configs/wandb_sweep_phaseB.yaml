@@ -1,0 +1,74 @@
+# WandB Hyperparameter Sweep — Phase B (Identity-Aware Fine-Tuning)
+#
+# Bayesian optimization for identity and perceptual loss weights.
+# Requires a Phase A checkpoint to initialize from.
+#
+# Launch:
+#   wandb sweep configs/wandb_sweep_phaseB.yaml
+#   wandb agent <SWEEP_ID>
+
+program: scripts/train_controlnet.py
+method: bayes
+metric:
+  name: val/ssim
+  goal: maximize
+
+parameters:
+  learning_rate:
+    distribution: log_uniform_values
+    min: 1.0e-6
+    max: 2.0e-5
+
+  train_batch_size:
+    values: [1, 2]
+
+  gradient_accumulation_steps:
+    values: [4, 8, 16]
+
+  ema_decay:
+    values: [0.9995, 0.9999]
+
+  # Identity loss weight (lambda_id in paper)
+  identity_weight:
+    distribution: uniform
+    min: 0.01
+    max: 0.15
+
+  # Perceptual loss weight (lambda_perc in paper)
+  perceptual_weight:
+    distribution: uniform
+    min: 0.02
+    max: 0.2
+
+command:
+  - ${env}
+  - python
+  - ${program}
+  - --data_dir
+  - data/training_combined
+  - --output_dir
+  - outputs/sweep_phaseB/${env:WANDB_RUN_ID}
+  - --phase
+  - B
+  - --resume_phaseA
+  - checkpoints_phaseA/final
+  - --clinical_augment
+  - --num_train_steps
+  - "10000"
+  - --checkpoint_every
+  - "5000"
+  - --sample_every
+  - "2000"
+  - --log_every
+  - "25"
+  - --seed
+  - "42"
+  - --wandb_dir
+  - outputs/wandb_offline
+  - ${args}
+
+early_terminate:
+  type: hyperband
+  min_iter: 2000
+  eta: 3
+  s: 2

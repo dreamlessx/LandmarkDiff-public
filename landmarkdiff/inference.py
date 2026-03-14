@@ -1,12 +1,12 @@
 """Inference pipeline for surgical outcome prediction.
 
-Modes:
-1. ControlNet: CrucibleAI/ControlNetMediaPipeFace + SD1.5 (HF auth + GPU)
-2. ControlNet + IP-Adapter: ControlNet w/ identity preservation
-3. Img2Img: SD1.5 img2img with mask compositing (MPS ok, no auth)
-4. TPS-only: geometric warp, no diffusion, instant
+Four modes:
+1. ControlNet: CrucibleAI/ControlNetMediaPipeFace + SD1.5 (requires HF auth + GPU)
+2. ControlNet + IP-Adapter: ControlNet with identity preservation via face embeddings
+3. Img2Img: SD1.5 img2img with mask compositing (runs on MPS, no auth needed)
+4. TPS-only: Pure geometric warp — no diffusion model, instant results
 
-Works on MPS (Apple Silicon), CUDA, and CPU.
+Supports MPS (Apple Silicon), CUDA, and CPU backends.
 """
 
 from __future__ import annotations
@@ -38,7 +38,7 @@ def get_device() -> torch.device:
 def numpy_to_pil(arr: np.ndarray) -> Image.Image:
     if len(arr.shape) == 2:
         return Image.fromarray(arr, mode="L")
-    return Image.fromarray(arr[:, :, ::-1])
+    return Image.fromarray(arr[:, :, ::-1].copy())
 
 
 def pil_to_numpy(img: Image.Image) -> np.ndarray:
@@ -86,7 +86,12 @@ def mask_composite(
     mask: np.ndarray,
     use_laplacian: bool = True,
 ) -> np.ndarray:
-    """Blend warped region into original via Laplacian pyramid + LAB skin-tone match."""
+    """Composite warped image into original using ONLY the mask region.
+
+    Uses Laplacian pyramid blending by default for seamless transitions.
+    Falls back to simple alpha blend if Laplacian unavailable.
+    Matches skin tone in LAB space to prevent any color shift.
+    """
     mask_f = mask.astype(np.float32)
     if mask_f.max() > 1.0:
         mask_f = mask_f / 255.0
@@ -112,7 +117,11 @@ def mask_composite(
 
 
 def _match_skin_tone(source: np.ndarray, target: np.ndarray, mask: np.ndarray) -> np.ndarray:
-    """LAB-space color transfer so warped region matches original skin tone."""
+    """Match source skin tone to target within mask, preserving structure.
+
+    Works in LAB space: transfers L (luminance) and AB (color) statistics
+    from the original to the warped image so skin tone is preserved exactly.
+    """
     mask_bool = mask > 0.3
     if not np.any(mask_bool):
         return source
@@ -120,7 +129,7 @@ def _match_skin_tone(source: np.ndarray, target: np.ndarray, mask: np.ndarray) -
     src_lab = cv2.cvtColor(source, cv2.COLOR_BGR2LAB).astype(np.float32)
     tgt_lab = cv2.cvtColor(target, cv2.COLOR_BGR2LAB).astype(np.float32)
 
-    # match per-channel stats in masked region
+    # Match each LAB channel's statistics in the mask region
     for ch in range(3):
         src_vals = src_lab[:, :, ch][mask_bool]
         tgt_vals = tgt_lab[:, :, ch][mask_bool]
@@ -128,7 +137,7 @@ def _match_skin_tone(source: np.ndarray, target: np.ndarray, mask: np.ndarray) -
         src_mean, src_std = np.mean(src_vals), np.std(src_vals) + 1e-6
         tgt_mean, tgt_std = np.mean(tgt_vals), np.std(tgt_vals) + 1e-6
 
-        # shift+scale to match target distribution
+        # Normalize source to match target's distribution
         src_lab[:, :, ch] = np.where(
             mask_bool,
             (src_lab[:, :, ch] - src_mean) * (tgt_std / src_std) + tgt_mean,
@@ -139,13 +148,15 @@ def _match_skin_tone(source: np.ndarray, target: np.ndarray, mask: np.ndarray) -
     return cv2.cvtColor(src_lab.astype(np.uint8), cv2.COLOR_LAB2BGR)
 
 
-def poisson_blend(source: np.ndarray, target: np.ndarray, mask: np.ndarray) -> np.ndarray:
-    """Poisson blend - just delegates to mask_composite (more reliable)."""
-    return mask_composite(source, target, mask)
-
-
 class LandmarkDiffPipeline:
-    """Image -> landmarks -> manipulate -> generate."""
+    """End-to-end pipeline: image -> landmarks -> manipulate -> generate.
+
+    Modes:
+    - 'controlnet': CrucibleAI/ControlNetMediaPipeFace + SD1.5
+    - 'controlnet_ip': ControlNet + IP-Adapter for identity preservation
+    - 'img2img': SD1.5 img2img with mask compositing
+    - 'tps': Pure geometric TPS warp (no diffusion, instant)
+    """
 
     # Default IP-Adapter model for SD1.5 face identity
     IP_ADAPTER_REPO = "h94/IP-Adapter"
@@ -157,16 +168,29 @@ class LandmarkDiffPipeline:
         self,
         mode: str = "img2img",
         controlnet_id: str = "CrucibleAI/ControlNetMediaPipeFace",
+        controlnet_checkpoint: str | None = None,
         base_model_id: str | None = None,
         device: Optional[torch.device] = None,
         dtype: Optional[torch.dtype] = None,
         ip_adapter_scale: float = 0.6,
         clinical_flags: Optional["ClinicalFlags"] = None,
+        displacement_model_path: str | None = None,
     ):
         self.mode = mode
         self.device = device or get_device()
         self.ip_adapter_scale = ip_adapter_scale
         self.clinical_flags = clinical_flags
+        self.controlnet_checkpoint = controlnet_checkpoint
+
+        # Load displacement model for data-driven manipulation
+        self._displacement_model = None
+        if displacement_model_path:
+            try:
+                from landmarkdiff.displacement_model import DisplacementModel
+                self._displacement_model = DisplacementModel.load(displacement_model_path)
+                print(f"Displacement model loaded: {self._displacement_model.procedures}")
+            except Exception as e:
+                print(f"WARNING: Failed to load displacement model: {e}")
 
         if self.device.type == "mps":
             self.dtype = torch.float32
@@ -188,7 +212,7 @@ class LandmarkDiffPipeline:
 
     def load(self) -> None:
         if self.mode == "tps":
-            print("TPS mode - no model to load")
+            print("TPS mode — no model to load")
             return
         if self.mode in ("controlnet", "controlnet_ip"):
             self._load_controlnet()
@@ -204,10 +228,21 @@ class LandmarkDiffPipeline:
             DPMSolverMultistepScheduler,
         )
 
-        print(f"Loading ControlNet from {self.controlnet_id}...")
-        controlnet = ControlNetModel.from_pretrained(
-            self.controlnet_id, subfolder="diffusion_sd15", torch_dtype=self.dtype,
-        )
+        if self.controlnet_checkpoint:
+            # Load fine-tuned ControlNet from local checkpoint
+            ckpt_path = Path(self.controlnet_checkpoint)
+            # Support both direct path and training checkpoint structure
+            if (ckpt_path / "controlnet_ema").exists():
+                ckpt_path = ckpt_path / "controlnet_ema"
+            print(f"Loading fine-tuned ControlNet from {ckpt_path}...")
+            controlnet = ControlNetModel.from_pretrained(
+                str(ckpt_path), torch_dtype=self.dtype,
+            )
+        else:
+            print(f"Loading ControlNet from {self.controlnet_id}...")
+            controlnet = ControlNetModel.from_pretrained(
+                self.controlnet_id, subfolder="diffusion_sd15", torch_dtype=self.dtype,
+            )
         print(f"Loading base model from {self.base_model_id}...")
         self._pipe = StableDiffusionControlNetPipeline.from_pretrained(
             self.base_model_id,
@@ -216,19 +251,23 @@ class LandmarkDiffPipeline:
             safety_checker=None,
             requires_safety_checker=False,
         )
-        # DPM++ 2M Karras - better skin than UniPC
+        # DPM++ 2M Karras — produces more photorealistic output than UniPC
         self._pipe.scheduler = DPMSolverMultistepScheduler.from_config(
             self._pipe.scheduler.config,
             algorithm_type="dpmsolver++",
             use_karras_sigmas=True,
         )
-        # FP32 VAE decode - prevents color banding on skin
+        # FP32 VAE decode — prevents color banding artifacts on skin tones
         if hasattr(self._pipe, "vae") and self._pipe.vae is not None:
             self._pipe.vae.config.force_upcast = True
         self._apply_device_optimizations()
 
     def _load_ip_adapter(self) -> None:
-        """Load IP-Adapter for identity preservation."""
+        """Load IP-Adapter for identity-preserving generation.
+
+        Uses h94/IP-Adapter-FaceID with CLIP image encoder to condition
+        generation on the input face identity.
+        """
         if self._pipe is None:
             raise RuntimeError("Base pipeline must be loaded before IP-Adapter")
         try:
@@ -305,12 +344,41 @@ class LandmarkDiffPipeline:
         if face is None:
             raise ValueError("No face detected in image.")
 
-        # face view angle for multi-view awareness
+        # Estimate face view angle for multi-view awareness
         view_info = estimate_face_view(face)
 
-        manipulated = apply_procedure_preset(
-            face, procedure, intensity, image_size=512, clinical_flags=flags,
-        )
+        # Use displacement model for data-driven manipulation if available
+        manipulation_mode = "preset"
+        if self._displacement_model and procedure in self._displacement_model.procedures:
+            try:
+                from landmarkdiff.displacement_model import DisplacementModel
+                rng = np.random.default_rng(seed) if seed is not None else np.random.default_rng()
+                # Map UI intensity (0-100) to displacement model intensity (0-2)
+                dm_intensity = intensity / 50.0  # 50 -> 1.0x mean displacement
+                displacement = self._displacement_model.get_displacement_field(
+                    procedure, intensity=dm_intensity, noise_scale=0.3, rng=rng,
+                )
+                # Apply displacement to landmarks
+                new_lm = face.landmarks.copy()
+                n = min(len(new_lm), len(displacement))
+                new_lm[:n, 0] += displacement[:n, 0]
+                new_lm[:n, 1] += displacement[:n, 1]
+                new_lm[:, 0] = np.clip(new_lm[:, 0], 0.01, 0.99)
+                new_lm[:, 1] = np.clip(new_lm[:, 1], 0.01, 0.99)
+                manipulated = FaceLandmarks(
+                    landmarks=new_lm,
+                    image_width=512, image_height=512,
+                    confidence=face.confidence,
+                )
+                manipulation_mode = "displacement_model"
+            except Exception:
+                manipulated = apply_procedure_preset(
+                    face, procedure, intensity, image_size=512, clinical_flags=flags,
+                )
+        else:
+            manipulated = apply_procedure_preset(
+                face, procedure, intensity, image_size=512, clinical_flags=flags,
+            )
         landmark_img = render_landmark_image(manipulated, 512, 512)
         mask = generate_surgical_mask(
             face, procedure, 512, 512, clinical_flags=flags,
@@ -322,7 +390,7 @@ class LandmarkDiffPipeline:
 
         prompt = PROCEDURE_PROMPTS.get(procedure, "a photo of a person's face")
 
-        # TPS warp is always the geometric baseline
+        # Step 1: TPS geometric warp (always computed — the geometric baseline)
         tps_warped = warp_image_tps(image_512, face.pixel_coords, manipulated.pixel_coords)
 
         if self.mode == "tps":
@@ -340,7 +408,7 @@ class LandmarkDiffPipeline:
                 guidance_scale, strength, generator,
             )
 
-        # postprocess for photorealism
+        # Step 2: Post-processing for photorealism (neural + classical pipeline)
         identity_check = None
         restore_used = "none"
         if postprocess and self.mode != "tps":
@@ -378,6 +446,7 @@ class LandmarkDiffPipeline:
             "ip_adapter_active": self._ip_adapter_loaded,
             "identity_check": identity_check,
             "restore_used": restore_used,
+            "manipulation_mode": manipulation_mode,
         }
 
     def _generate_controlnet(
@@ -418,7 +487,13 @@ class LandmarkDiffPipeline:
 
 
 def estimate_face_view(face: FaceLandmarks) -> dict:
-    """Yaw/pitch from nose-ear and forehead-chin distances. Returns view dict."""
+    """Estimate face orientation from landmarks for multi-view awareness.
+
+    Uses the nose tip (idx 1), left ear (idx 234), and right ear (idx 454) to
+    estimate yaw angle. Pitch from forehead (idx 10) and chin (idx 152).
+
+    Returns dict with yaw, pitch (degrees), and view classification.
+    """
     coords = face.pixel_coords
     nose_tip = coords[1]
     left_ear = coords[234]
@@ -471,6 +546,8 @@ def run_inference(
     seed: int = 42,
     mode: str = "img2img",
     ip_adapter_scale: float = 0.6,
+    controlnet_checkpoint: str | None = None,
+    displacement_model_path: str | None = None,
 ) -> None:
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -480,7 +557,11 @@ def run_inference(
         print(f"ERROR: Could not load {image_path}")
         sys.exit(1)
 
-    pipe = LandmarkDiffPipeline(mode=mode, ip_adapter_scale=ip_adapter_scale)
+    pipe = LandmarkDiffPipeline(
+        mode=mode, ip_adapter_scale=ip_adapter_scale,
+        controlnet_checkpoint=controlnet_checkpoint,
+        displacement_model_path=displacement_model_path,
+    )
     pipe.load()
 
     print(f"\nGenerating {procedure} prediction (intensity={intensity}, mode={mode})...")
@@ -517,9 +598,14 @@ if __name__ == "__main__":
         choices=["img2img", "controlnet", "controlnet_ip", "tps"],
     )
     parser.add_argument("--ip-adapter-scale", type=float, default=0.6)
+    parser.add_argument("--checkpoint", default=None,
+                        help="Path to fine-tuned ControlNet checkpoint")
+    parser.add_argument("--displacement-model", default=None,
+                        help="Path to displacement_model.npz for data-driven manipulation")
     args = parser.parse_args()
 
     run_inference(
         args.image, args.procedure, args.intensity, args.output,
-        args.seed, args.mode, args.ip_adapter_scale,
+        args.seed, args.mode, args.ip_adapter_scale, args.checkpoint,
+        args.displacement_model,
     )

@@ -1,4 +1,4 @@
-"""MediaPipe Face Mesh v2 landmark extraction."""
+"""Facial landmark extraction using MediaPipe Face Mesh v2."""
 
 from __future__ import annotations
 
@@ -21,7 +21,6 @@ REGION_COLORS: dict[str, tuple[int, int, int]] = {
     "lips": (0, 0, 255),            # red
     "iris_left": (255, 0, 255),     # magenta
     "iris_right": (255, 0, 255),
-    "face_oval": (200, 200, 200),   # light gray
 }
 
 # MediaPipe landmark index groups by anatomical region
@@ -54,7 +53,7 @@ LANDMARK_REGIONS: dict[str, list[int]] = {
 
 @dataclass(frozen=True)
 class FaceLandmarks:
-    """478 face landmarks + image size + detection confidence."""
+    """Extracted facial landmarks with metadata."""
 
     landmarks: np.ndarray  # (478, 3) normalized (x, y, z)
     image_width: int
@@ -63,14 +62,14 @@ class FaceLandmarks:
 
     @property
     def pixel_coords(self) -> np.ndarray:
-        """Normalized -> pixel coords, shape (478, 2)."""
+        """Convert normalized landmarks to pixel coordinates (478, 2)."""
         coords = self.landmarks[:, :2].copy()
         coords[:, 0] *= self.image_width
         coords[:, 1] *= self.image_height
         return coords
 
     def get_region(self, region: str) -> np.ndarray:
-        """Return landmarks for the given region name."""
+        """Get landmark indices for a named region."""
         indices = LANDMARK_REGIONS.get(region, [])
         return self.landmarks[indices]
 
@@ -80,11 +79,20 @@ def extract_landmarks(
     min_detection_confidence: float = 0.5,
     min_tracking_confidence: float = 0.5,
 ) -> Optional[FaceLandmarks]:
-    """Run MediaPipe Face Mesh on a BGR image, return FaceLandmarks or None."""
+    """Extract 478 facial landmarks from an image using MediaPipe Face Mesh.
+
+    Args:
+        image: BGR image as numpy array.
+        min_detection_confidence: Minimum face detection confidence.
+        min_tracking_confidence: Minimum landmark tracking confidence.
+
+    Returns:
+        FaceLandmarks if a face is detected, None otherwise.
+    """
     h, w = image.shape[:2]
     rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    # Tasks API first, fall back to legacy solutions API
+    # Try new Tasks API first (mediapipe >= 0.10.20), fall back to legacy solutions API
     try:
         landmarks, confidence = _extract_tasks_api(rgb, min_detection_confidence)
     except Exception:
@@ -108,7 +116,7 @@ def _extract_tasks_api(
     rgb: np.ndarray,
     min_confidence: float,
 ) -> tuple[Optional[np.ndarray], float]:
-    """Tasks API path (mediapipe >= 0.10.20)."""
+    """Extract landmarks using MediaPipe Tasks API (>= 0.10.20)."""
     FaceLandmarker = mp.tasks.vision.FaceLandmarker
     FaceLandmarkerOptions = mp.tasks.vision.FaceLandmarkerOptions
     RunningMode = mp.tasks.vision.RunningMode
@@ -144,7 +152,9 @@ def _extract_tasks_api(
         dtype=np.float32,
     )
 
-    return landmarks, min_confidence
+    # MediaPipe Tasks API doesn't expose per-landmark detection confidence;
+    # return 1.0 to indicate successful detection
+    return landmarks, 1.0
 
 
 def _extract_solutions_api(
@@ -152,7 +162,7 @@ def _extract_solutions_api(
     min_detection_confidence: float,
     min_tracking_confidence: float,
 ) -> tuple[Optional[np.ndarray], float]:
-    """Legacy solutions API fallback."""
+    """Extract landmarks using legacy MediaPipe Solutions API."""
     with mp.solutions.face_mesh.FaceMesh(
         static_image_mode=True,
         max_num_faces=1,
@@ -170,7 +180,8 @@ def _extract_solutions_api(
         [(lm.x, lm.y, lm.z) for lm in face.landmark],
         dtype=np.float32,
     )
-    return landmarks, min(min_detection_confidence, min_tracking_confidence)
+    # Legacy API doesn't expose detection confidence; return 1.0 for success
+    return landmarks, 1.0
 
 
 def visualize_landmarks(
@@ -179,7 +190,17 @@ def visualize_landmarks(
     radius: int = 1,
     draw_regions: bool = True,
 ) -> np.ndarray:
-    """Draw colored landmark dots on a copy of the image."""
+    """Draw colored landmark dots on image by anatomical region.
+
+    Args:
+        image: BGR image to draw on (will be copied).
+        face: Extracted face landmarks.
+        radius: Dot radius in pixels.
+        draw_regions: If True, color by region. Otherwise all white.
+
+    Returns:
+        Annotated image copy.
+    """
     canvas = image.copy()
     coords = face.pixel_coords
 
@@ -207,7 +228,23 @@ def render_landmark_image(
     height: Optional[int] = None,
     radius: int = 2,
 ) -> np.ndarray:
-    """Render tessellation mesh on black canvas. Falls back to dots if no connections."""
+    """Render MediaPipe face mesh tessellation on black canvas.
+
+    Draws the full 2556-edge tessellation mesh that CrucibleAI/ControlNetMediaPipeFace
+    was pre-trained on. This is critical — the ControlNet expects dense triangulated
+    wireframes, not sparse dots.
+
+    Falls back to colored dots if tessellation connections aren't available.
+
+    Args:
+        face: Extracted face landmarks.
+        width: Canvas width (defaults to face.image_width).
+        height: Canvas height (defaults to face.image_height).
+        radius: Dot radius (used for key landmark dots overlay).
+
+    Returns:
+        BGR image with face mesh on black background.
+    """
     w = width or face.image_width
     h = height or face.image_height
     canvas = np.zeros((h, w, 3), dtype=np.uint8)
@@ -251,7 +288,7 @@ def render_landmark_image(
 
 
 def load_image(path: str | Path) -> np.ndarray:
-    """Load image as BGR numpy array, raises FileNotFoundError on failure."""
+    """Load an image from disk as BGR numpy array."""
     img = cv2.imread(str(path))
     if img is None:
         raise FileNotFoundError(f"Could not load image: {path}")

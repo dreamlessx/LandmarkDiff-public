@@ -1,7 +1,8 @@
-"""Surgical mask gen - morphological dilation + Gaussian feather.
+"""Surgical mask generation with morphological dilation and Gaussian feathering.
 
-Procedural (not SAM2), deterministic, no model dependency.
-Feathered edges prevent visible seams during inpainting.
+Procedural masks (not SAM2) — deterministic, no model dependency.
+Feathered boundaries prevent visible seams in ControlNet inpainting.
+Supports clinical edge cases (vitiligo preservation, keloid softening).
 """
 
 from __future__ import annotations
@@ -64,7 +65,23 @@ def generate_surgical_mask(
     clinical_flags: "ClinicalFlags | None" = None,
     image: np.ndarray | None = None,
 ) -> np.ndarray:
-    """Convex hull -> dilate -> noise at boundary -> Gaussian feather. Returns float32 [0-1]."""
+    """Generate a feathered surgical mask for a procedure.
+
+    Pipeline:
+    1. Create convex hull from procedure-specific landmarks
+    2. Morphological dilation by N pixels
+    3. Gaussian feathering for smooth alpha gradient
+    4. Add Perlin-style noise at boundary to prevent visible seams
+
+    Args:
+        face: Extracted facial landmarks.
+        procedure: Procedure name.
+        width: Mask width.
+        height: Mask height.
+
+    Returns:
+        Float32 mask array [0.0-1.0] with feathered boundaries.
+    """
     if procedure not in MASK_CONFIG:
         raise ValueError(f"Unknown procedure: {procedure}. Choose from {list(MASK_CONFIG)}")
 

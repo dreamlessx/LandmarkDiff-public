@@ -1,0 +1,32 @@
+# Inference configuration for LandmarkDiff
+# Usage: landmarkdiff infer --config configs/inference.yaml
+
+experiment_name: clinical_inference
+description: Production inference settings for clinical deployment
+version: "0.3.0"
+
+inference:
+  num_inference_steps: 30
+  guidance_scale: 9.0
+  scheduler: dpmsolver++
+  controlnet_conditioning_scale: 0.9
+  use_neural_postprocess: true
+  restore_mode: codeformer
+  codeformer_fidelity: 0.7
+  use_realesrgan: true
+  use_laplacian_blend: true
+  sharpen_strength: 0.25
+  verify_identity: true
+  identity_threshold: 0.6
+
+safety:
+  identity_threshold: 0.6
+  max_displacement_fraction: 0.05
+  watermark_enabled: true
+  watermark_text: "AI-GENERATED PREDICTION"
+  ood_detection_enabled: true
+  ood_confidence_threshold: 0.3
+  min_face_confidence: 0.5
+  max_yaw_degrees: 45.0
+
+output_dir: inference_output

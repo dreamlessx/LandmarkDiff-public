@@ -11,7 +11,7 @@ from landmarkdiff.landmarks import (
 
 
 def _make_fake_face(n_landmarks: int = 478) -> FaceLandmarks:
-    """Fake landmarks for testing (no MediaPipe needed)."""
+    """Create synthetic landmarks for testing without MediaPipe."""
     rng = np.random.default_rng(42)
     landmarks = rng.uniform(0.2, 0.8, size=(n_landmarks, 3)).astype(np.float32)
     return FaceLandmarks(

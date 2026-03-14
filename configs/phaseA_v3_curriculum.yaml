@@ -1,0 +1,72 @@
+# Phase A v3: ControlNet training with curriculum learning + displacement data
+# Uses wave 1-3 synthetic data with progressive difficulty scheduling
+
+experiment_name: phaseA_v3_curriculum
+description: "Phase A with curriculum learning, wave 1-3 data, displacement model"
+version: "0.3.0"
+
+model:
+  base_model: runwayml/stable-diffusion-v1-5
+  controlnet_conditioning_channels: 3
+  controlnet_conditioning_scale: 1.0
+  use_ema: true
+  ema_decay: 0.9999
+  gradient_checkpointing: true
+
+training:
+  phase: A
+  learning_rate: 1.0e-5
+  batch_size: 4
+  gradient_accumulation_steps: 4
+  max_train_steps: 100000
+  warmup_steps: 1000
+  mixed_precision: fp16
+  seed: 42
+  optimizer: adamw
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  lr_scheduler: cosine
+  save_every_n_steps: 10000
+  resume_from_checkpoint: auto
+  validate_every_n_steps: 5000
+  num_validation_samples: 8
+
+data:
+  train_dir: data/training_combined
+  val_dir: data/validation
+  image_size: 512
+  num_workers: 8
+  random_flip: true
+  random_rotation: 5.0
+  color_jitter: 0.1
+  procedures:
+    - rhinoplasty
+    - blepharoplasty
+    - rhytidectomy
+    - orthognathic
+  displacement_model_path: data/displacement_model.npz
+
+inference:
+  num_inference_steps: 30
+  guidance_scale: 7.5
+  scheduler: "dpmsolver++"
+  controlnet_conditioning_scale: 1.0
+  use_laplacian_blend: true
+
+evaluation:
+  compute_fid: true
+  compute_lpips: true
+  compute_nme: true
+  compute_identity: true
+  compute_ssim: true
+  stratify_fitzpatrick: true
+  stratify_procedure: true
+
+wandb:
+  enabled: true
+  project: landmarkdiff
+  tags: [phase-a, curriculum, v3-data, displacement-model]
+
+output_dir: outputs/phaseA_v3_curriculum

@@ -1,0 +1,62 @@
+# WandB Hyperparameter Sweep — Phase A (ControlNet Conditioning)
+#
+# Bayesian optimization to find optimal Phase A training configuration.
+# Key parameters: learning rate, batch size, EMA decay.
+#
+# Launch:
+#   wandb sweep configs/wandb_sweep_phaseA.yaml
+#   wandb agent <SWEEP_ID>  # on each GPU node
+
+program: scripts/train_controlnet.py
+method: bayes
+metric:
+  name: val/ssim
+  goal: maximize
+
+parameters:
+  learning_rate:
+    distribution: log_uniform_values
+    min: 1.0e-6
+    max: 5.0e-5
+
+  train_batch_size:
+    values: [2, 4, 8]
+
+  gradient_accumulation_steps:
+    values: [2, 4, 8]
+
+  ema_decay:
+    values: [0.999, 0.9995, 0.9999]
+
+  lr_scheduler:
+    values: ["cosine", "constant_with_warmup"]
+
+command:
+  - ${env}
+  - python
+  - ${program}
+  - --data_dir
+  - data/training_combined
+  - --output_dir
+  - outputs/sweep_phaseA/${env:WANDB_RUN_ID}
+  - --phase
+  - A
+  - --num_train_steps
+  - "15000"
+  - --checkpoint_every
+  - "5000"
+  - --sample_every
+  - "2500"
+  - --log_every
+  - "25"
+  - --seed
+  - "42"
+  - --wandb_dir
+  - outputs/wandb_offline
+  - ${args}
+
+early_terminate:
+  type: hyperband
+  min_iter: 3000
+  eta: 3
+  s: 2

@@ -1,6 +1,8 @@
-"""Evaluation metrics: FID, LPIPS, NME, ArcFace sim, SSIM.
+"""Evaluation metrics suite.
 
-Stratified by Fitzpatrick skin type (I-VI) via ITA thresholding.
+All metrics stratified by Fitzpatrick skin type (I-VI) using ITA-based thresholding.
+Primary metrics: FID, LPIPS, NME, ArcFace identity similarity.
+Secondary: SSIM (relaxed target >0.80).
 """
 
 from __future__ import annotations
@@ -90,7 +92,19 @@ class EvalMetrics:
 
 
 def classify_fitzpatrick_ita(image: np.ndarray) -> str:
-    """Fitzpatrick I-VI from ITA angle (Chardon et al. 1991 thresholds)."""
+    """Classify Fitzpatrick skin type using Individual Typology Angle (ITA).
+
+    ITA = arctan((L - 50) / b) * (180 / pi)
+    where L, b are from CIE L*a*b* color space.
+
+    Thresholds from Chardon et al. (1991):
+    - ITA > 55: Type I (very light)
+    - 41 < ITA <= 55: Type II (light)
+    - 28 < ITA <= 41: Type III (intermediate)
+    - 10 < ITA <= 28: Type IV (tan)
+    - -30 < ITA <= 10: Type V (brown)
+    - ITA <= -30: Type VI (dark)
+    """
     if cv2 is None:
         raise ImportError("opencv-python is required for Fitzpatrick classification")
     lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB).astype(np.float32)
@@ -127,7 +141,19 @@ def compute_nme(
     left_eye_idx: int = 33,
     right_eye_idx: int = 263,
 ) -> float:
-    """Compute Normalized Mean Error for landmarks."""
+    """Compute Normalized Mean Error for landmarks.
+
+    Normalized by inter-ocular distance.
+
+    Args:
+        pred_landmarks: (N, 2) predicted landmark positions.
+        target_landmarks: (N, 2) ground truth positions.
+        left_eye_idx: MediaPipe index for left eye center.
+        right_eye_idx: MediaPipe index for right eye center.
+
+    Returns:
+        NME value (lower is better).
+    """
     iod = np.linalg.norm(
         target_landmarks[left_eye_idx] - target_landmarks[right_eye_idx]
     )
@@ -142,7 +168,11 @@ def compute_ssim(
     pred: np.ndarray,
     target: np.ndarray,
 ) -> float:
-    """SSIM via skimage, falls back to global SSIM if not installed."""
+    """Compute Structural Similarity Index (SSIM).
+
+    Uses scikit-image's windowed SSIM (Wang et al. 2004) for proper
+    per-window computation with 11x11 Gaussian kernel.
+    """
     try:
         from skimage.metrics import structural_similarity
         # Convert to grayscale if color, or compute per-channel
@@ -173,6 +203,7 @@ def compute_ssim(
 
 
 _LPIPS_FN = None
+_ARCFACE_APP = None
 
 
 def _get_lpips_fn():
@@ -189,12 +220,15 @@ def compute_lpips(
     pred: np.ndarray,
     target: np.ndarray,
 ) -> float:
-    """LPIPS perceptual distance (lower = more similar)."""
+    """Compute LPIPS perceptual distance between two images.
+
+    Returns LPIPS score (lower = more similar).
+    """
     try:
         import lpips
         import torch
     except ImportError:
-        return 0.0
+        return float("nan")
 
     _lpips_fn = _get_lpips_fn()
 
@@ -211,7 +245,17 @@ def compute_fid(
     real_dir: str,
     generated_dir: str,
 ) -> float:
-    """Compute FID between directories of real and generated images."""
+    """Compute FID between directories of real and generated images.
+
+    Uses torch-fidelity for GPU-accelerated computation.
+
+    Args:
+        real_dir: Path to directory of real images.
+        generated_dir: Path to directory of generated images.
+
+    Returns:
+        FID score (lower = more similar distributions).
+    """
     try:
         from torch_fidelity import calculate_metrics
     except ImportError:
@@ -219,10 +263,11 @@ def compute_fid(
             "torch-fidelity is required for FID. Install with: pip install torch-fidelity"
         )
 
+    import torch
     metrics = calculate_metrics(
         input1=generated_dir,
         input2=real_dir,
-        cuda=True,
+        cuda=torch.cuda.is_available(),
         fid=True,
         verbose=False,
     )
@@ -233,14 +278,21 @@ def compute_identity_similarity(
     pred: np.ndarray,
     target: np.ndarray,
 ) -> float:
-    """ArcFace cosine sim [0,1]. Falls back to SSIM if no InsightFace."""
+    """Compute ArcFace identity cosine similarity between two face images.
+
+    Returns cosine similarity [0, 1] where 1 = identical identity.
+    Falls back to SSIM-based proxy if InsightFace unavailable.
+    """
     try:
         from insightface.app import FaceAnalysis
-        app = FaceAnalysis(
-            name="buffalo_l",
-            providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
-        )
-        app.prepare(ctx_id=-1, det_size=(320, 320))
+        global _ARCFACE_APP
+        if _ARCFACE_APP is None:
+            _ARCFACE_APP = FaceAnalysis(
+                name="buffalo_l",
+                providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
+            )
+            _ARCFACE_APP.prepare(ctx_id=-1, det_size=(320, 320))
+        app = _ARCFACE_APP
 
         pred_bgr = pred if pred.shape[2] == 3 else cv2.cvtColor(pred, cv2.COLOR_RGB2BGR)
         target_bgr = target if target.shape[2] == 3 else cv2.cvtColor(target, cv2.COLOR_RGB2BGR)
@@ -270,7 +322,21 @@ def evaluate_batch(
     procedures: list[str] | None = None,
     compute_identity: bool = False,
 ) -> EvalMetrics:
-    """Evaluate a batch of predicted vs target images."""
+    """Evaluate a batch of predicted vs target images.
+
+    Computes all metrics and stratifies by Fitzpatrick skin type and procedure.
+
+    Args:
+        predictions: List of predicted BGR images.
+        targets: List of target BGR images.
+        pred_landmarks: Optional list of (N, 2) predicted landmark arrays.
+        target_landmarks: Optional list of (N, 2) target landmark arrays.
+        procedures: Optional list of procedure names for per-procedure breakdown.
+        compute_identity: Whether to compute ArcFace identity similarity (slow).
+
+    Returns:
+        EvalMetrics with all computed values.
+    """
     n = len(predictions)
     ssim_scores = []
     lpips_scores = []
@@ -302,10 +368,10 @@ def evaluate_batch(
             proc_groups.setdefault(procedures[i], []).append(i)
 
     metrics = EvalMetrics(
-        ssim=float(np.mean(ssim_scores)) if ssim_scores else 0.0,
-        lpips=float(np.mean(lpips_scores)) if lpips_scores else 0.0,
-        nme=float(np.mean(nme_scores)) if nme_scores else 0.0,
-        identity_sim=float(np.mean(identity_scores)) if identity_scores else 0.0,
+        ssim=float(np.nanmean(ssim_scores)) if ssim_scores else 0.0,
+        lpips=float(np.nanmean(lpips_scores)) if lpips_scores else 0.0,
+        nme=float(np.nanmean(nme_scores)) if nme_scores else 0.0,
+        identity_sim=float(np.nanmean(identity_scores)) if identity_scores else 0.0,
     )
 
     # Full Fitzpatrick stratification for ALL metrics
@@ -314,35 +380,35 @@ def evaluate_batch(
 
         group_lpips = [lpips_scores[i] for i in indices]
         if group_lpips:
-            metrics.lpips_by_fitzpatrick[ftype] = float(np.mean(group_lpips))
+            metrics.lpips_by_fitzpatrick[ftype] = float(np.nanmean(group_lpips))
 
         group_ssim = [ssim_scores[i] for i in indices]
         if group_ssim:
-            metrics.ssim_by_fitzpatrick[ftype] = float(np.mean(group_ssim))
+            metrics.ssim_by_fitzpatrick[ftype] = float(np.nanmean(group_ssim))
 
         if nme_scores:
             group_nme = [nme_scores[i] for i in indices if i < len(nme_scores)]
             if group_nme:
-                metrics.nme_by_fitzpatrick[ftype] = float(np.mean(group_nme))
+                metrics.nme_by_fitzpatrick[ftype] = float(np.nanmean(group_nme))
 
         if identity_scores:
             group_id = [identity_scores[i] for i in indices if i < len(identity_scores)]
             if group_id:
-                metrics.identity_sim_by_fitzpatrick[ftype] = float(np.mean(group_id))
+                metrics.identity_sim_by_fitzpatrick[ftype] = float(np.nanmean(group_id))
 
     # Per-procedure breakdown
     for proc, indices in proc_groups.items():
         group_lpips = [lpips_scores[i] for i in indices]
         if group_lpips:
-            metrics.lpips_by_procedure[proc] = float(np.mean(group_lpips))
+            metrics.lpips_by_procedure[proc] = float(np.nanmean(group_lpips))
 
         group_ssim = [ssim_scores[i] for i in indices]
         if group_ssim:
-            metrics.ssim_by_procedure[proc] = float(np.mean(group_ssim))
+            metrics.ssim_by_procedure[proc] = float(np.nanmean(group_ssim))
 
         if nme_scores:
             group_nme = [nme_scores[i] for i in indices if i < len(nme_scores)]
             if group_nme:
-                metrics.nme_by_procedure[proc] = float(np.mean(group_nme))
+                metrics.nme_by_procedure[proc] = float(np.nanmean(group_nme))
 
     return metrics

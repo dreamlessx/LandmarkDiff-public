@@ -1,0 +1,43 @@
+# Evaluation configuration for LandmarkDiff
+# Usage: landmarkdiff evaluate --config configs/evaluation.yaml
+
+experiment_name: eval_baseline
+description: Full evaluation on test set with all metrics and stratification
+version: "0.3.0"
+
+inference:
+  num_inference_steps: 30
+  guidance_scale: 7.5
+  scheduler: dpmsolver++
+  controlnet_conditioning_scale: 1.0
+  use_neural_postprocess: false
+  restore_mode: codeformer
+  codeformer_fidelity: 0.7
+  use_realesrgan: false
+  use_laplacian_blend: true
+  sharpen_strength: 0.25
+  verify_identity: true
+  identity_threshold: 0.6
+
+evaluation:
+  compute_fid: true
+  compute_lpips: true
+  compute_nme: true
+  compute_identity: true
+  compute_ssim: true
+  stratify_fitzpatrick: true
+  stratify_procedure: true
+  max_eval_samples: 0  # 0 = all
+
+data:
+  test_dir: data/test
+  image_size: 512
+
+safety:
+  identity_threshold: 0.6
+  max_displacement_fraction: 0.05
+  watermark_enabled: false
+  ood_detection_enabled: true
+  min_face_confidence: 0.5
+
+output_dir: eval_results

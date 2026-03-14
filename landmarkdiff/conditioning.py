@@ -1,7 +1,8 @@
-"""Conditioning signal: static adjacency wireframe + auto-Canny.
+"""Conditioning signal generation: static adjacency wireframe + auto-Canny.
 
-Static adjacency (not Delaunay) to avoid triangle inversion on big displacements.
-Auto-Canny adapts thresholds to skin tone (Fitzpatrick I-VI safe).
+Uses a pre-defined anatomical adjacency matrix (NOT dynamic Delaunay) to prevent
+triangle inversion on drastic landmark displacements. Auto-Canny adapts thresholds
+to skin tone (Fitzpatrick I-VI safe).
 """
 
 from __future__ import annotations
@@ -35,7 +36,7 @@ RIGHT_EYEBROW = [300, 293, 334, 296, 336, 285, 295, 282, 283, 276]
 
 NOSE_BRIDGE = [168, 6, 197, 195, 5, 4, 1]
 NOSE_TIP = [94, 2, 326, 327, 294, 278, 279, 275, 274, 460, 456, 363, 370]
-NOSE_BOTTOM = [19, 1, 274, 275, 440, 344, 278, 294, 460, 305, 289, 392, 289, 305, 460]
+NOSE_BOTTOM = [19, 1, 274, 275, 440, 344, 278, 294, 460, 305, 289, 392]
 
 OUTER_LIPS = [
     61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291,
@@ -47,12 +48,6 @@ INNER_LIPS = [
     324, 318, 402, 317, 14, 87, 178, 88, 95, 78,
 ]
 
-FACE_OVAL = [
-    10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288,
-    397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136,
-    172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109, 10,
-]
-
 ALL_CONTOURS = [
     JAWLINE_CONTOUR,
     LEFT_EYE_CONTOUR,
@@ -61,6 +56,7 @@ ALL_CONTOURS = [
     RIGHT_EYEBROW,
     NOSE_BRIDGE,
     NOSE_TIP,
+    NOSE_BOTTOM,
     OUTER_LIPS,
     INNER_LIPS,
 ]
@@ -72,7 +68,17 @@ def render_wireframe(
     height: int | None = None,
     thickness: int = 1,
 ) -> np.ndarray:
-    """Render static anatomical adjacency wireframe on black canvas."""
+    """Render static anatomical adjacency wireframe on black canvas.
+
+    Args:
+        face: Facial landmarks (normalized coordinates).
+        width: Canvas width.
+        height: Canvas height.
+        thickness: Line thickness in pixels.
+
+    Returns:
+        Grayscale wireframe image.
+    """
     w = width or face.image_width
     h = height or face.image_height
     canvas = np.zeros((h, w), dtype=np.uint8)
@@ -92,7 +98,18 @@ def render_wireframe(
 
 
 def auto_canny(image: np.ndarray) -> np.ndarray:
-    """Auto-Canny edge detection with adaptive thresholds."""
+    """Auto-Canny edge detection with adaptive thresholds.
+
+    Uses median-based thresholds (0.66*median, 1.33*median) instead of
+    hardcoded 50/150 to handle all Fitzpatrick skin types.
+    Post-processes with morphological skeletonization for 1-pixel edges.
+
+    Args:
+        image: Grayscale input image.
+
+    Returns:
+        Binary edge map (uint8, 0 or 255).
+    """
     median = np.median(image[image > 0]) if np.any(image > 0) else 128.0
     low = int(max(0, 0.66 * median))
     high = int(min(255, 1.33 * median))
@@ -105,7 +122,8 @@ def auto_canny(image: np.ndarray) -> np.ndarray:
     element = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
     temp = edges.copy()
 
-    while True:
+    max_iterations = max(edges.shape[0], edges.shape[1])
+    for _ in range(max_iterations):
         eroded = cv2.erode(temp, element)
         dilated = cv2.dilate(eroded, element)
         diff = cv2.subtract(temp, dilated)
@@ -122,7 +140,21 @@ def generate_conditioning(
     width: int | None = None,
     height: int | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Generate full conditioning signal for ControlNet."""
+    """Generate full conditioning signal for ControlNet.
+
+    Returns three channels per the spec:
+    1. Rendered landmark dots (colored, BGR)
+    2. Canny edge map from static wireframe (grayscale)
+    3. Wireframe rendering (grayscale)
+
+    Args:
+        face: Extracted facial landmarks.
+        width: Output width.
+        height: Output height.
+
+    Returns:
+        Tuple of (landmark_image, canny_edges, wireframe).
+    """
     from landmarkdiff.landmarks import render_landmark_image
 
     w = width or face.image_width

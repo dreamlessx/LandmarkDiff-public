@@ -1,3 +1,39 @@
-"""LandmarkDiff - anatomically-conditioned latent diffusion for facial surgery sim."""
+"""LandmarkDiff: Anatomically-conditioned latent diffusion for facial surgery simulation."""
 
-__version__ = "0.1.0"
+__version__ = "0.3.0"
+
+__all__ = [
+    "api_client",
+    "arcface_torch",
+    "audit",
+    "augmentation",
+    "benchmark",
+    "checkpoint_manager",
+    "cli",
+    "clinical",
+    "conditioning",
+    "config",
+    "curriculum",
+    "data",
+    "data_version",
+    "displacement_model",
+    "ensemble",
+    "evaluation",
+    "experiment_tracker",
+    "face_verifier",
+    "fid",
+    "hyperparam",
+    "inference",
+    "landmarks",
+    "log",
+    "losses",
+    "manipulation",
+    "masking",
+    "metrics_agg",
+    "metrics_viz",
+    "model_registry",
+    "postprocess",
+    "safety",
+    "synthetic",
+    "validation",
+]

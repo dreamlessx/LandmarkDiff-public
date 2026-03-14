@@ -1,0 +1,80 @@
+# Phase B: Identity-aware fine-tuning with differentiable ArcFace
+# Resume from Phase A checkpoint, add x0-prediction auxiliary losses
+
+experiment_name: phaseB_identity
+description: "Phase B with differentiable ArcFace identity + LPIPS perceptual loss"
+version: "0.2.0"
+
+model:
+  base_model: runwayml/stable-diffusion-v1-5
+  controlnet_conditioning_channels: 3
+  controlnet_conditioning_scale: 1.0
+  use_ema: true
+  ema_decay: 0.9999
+  gradient_checkpointing: true
+
+training:
+  phase: B
+  learning_rate: 5.0e-6
+  batch_size: 2
+  gradient_accumulation_steps: 8
+  max_train_steps: 25000
+  warmup_steps: 250
+  mixed_precision: fp16
+  seed: 42
+  optimizer: adamw
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  lr_scheduler: cosine
+
+  # Phase B auxiliary losses
+  identity_loss_weight: 0.1
+  perceptual_loss_weight: 0.05
+  use_differentiable_arcface: true
+  arcface_weights_path: null  # auto-downloads
+
+  # Resume from Phase A
+  resume_from_checkpoint: outputs/phaseA_default/checkpoint-50000
+
+  save_every_n_steps: 2500
+  validate_every_n_steps: 1000
+  num_validation_samples: 4
+
+data:
+  train_dir: data/training
+  val_dir: data/validation
+  image_size: 512
+  num_workers: 4
+  random_flip: true
+  random_rotation: 3.0
+  color_jitter: 0.05
+  procedures:
+    - rhinoplasty
+    - blepharoplasty
+    - rhytidectomy
+    - orthognathic
+  intensity_range: [30.0, 100.0]
+
+inference:
+  num_inference_steps: 30
+  guidance_scale: 7.5
+  scheduler: "dpmsolver++"
+  use_neural_postprocess: true
+  restore_mode: codeformer
+  codeformer_fidelity: 0.7
+  verify_identity: true
+  identity_threshold: 0.6
+
+evaluation:
+  compute_fid: true
+  compute_lpips: true
+  compute_nme: true
+  compute_identity: true
+  stratify_fitzpatrick: true
+
+wandb:
+  enabled: true
+  project: landmarkdiff
+  tags: [phase-b, identity-loss, arcface]
+
+output_dir: outputs/phaseB_identity

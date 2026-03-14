@@ -1,10 +1,11 @@
-"""4-term loss for ControlNet fine-tuning.
+"""4-term loss function module for ControlNet fine-tuning.
 
-L_total = L_diff + w_lm * L_landmark + w_id * L_identity + w_perc * L_perceptual
+L_total = L_diffusion + w_landmark * L_landmark + w_identity * L_identity + w_perceptual * L_perceptual
 
-Phase A (synthetic TPS data): diffusion loss only. No perceptual against
-rubbery TPS warps - it would penalize realism.
-Phase B (FEM/clinical data): all 4 terms.
+Phase A (synthetic TPS data): L_diffusion ONLY. No perceptual loss against
+rubbery TPS warps — it would penalize realism.
+
+Phase B (FEM/clinical data): All 4 terms enabled.
 """
 
 from __future__ import annotations
@@ -26,7 +27,7 @@ class LossWeights:
 
 
 class DiffusionLoss:
-    """Epsilon-prediction MSE."""
+    """Standard epsilon-prediction MSE loss (primary training signal)."""
 
     def __call__(
         self,
@@ -37,9 +38,10 @@ class DiffusionLoss:
 
 
 class LandmarkLoss:
-    """L2 landmark distance, IOD-normalized, inside surgical mask only.
+    """L2 landmark distance normalized by inter-ocular distance.
 
-    Requires re-extraction from generated image (eval only, too slow per step).
+    Computed INSIDE surgical mask only. Requires MediaPipe re-extraction
+    from generated image (done at eval, not every training step for speed).
     """
 
     def __call__(
@@ -66,10 +68,17 @@ class LandmarkLoss:
 
 
 class IdentityLoss:
-    """ArcFace cosine sim loss, procedure-dependent crop.
+    """ArcFace cosine similarity loss with procedure-dependent masking.
 
-    buffalo_l 512-dim embeddings, falls back to pixel cosine if unavailable.
-    Disabled for orthognathic. Images MUST be [-1,1] at 112x112 for ArcFace.
+    Uses InsightFace ArcFace model (buffalo_l) for 512-dim identity embeddings.
+    Falls back to pixel-level cosine similarity if InsightFace is unavailable.
+
+    - Full face for blepharoplasty
+    - Upper-face crop for rhinoplasty
+    - Disabled for orthognathic
+
+    Input images MUST be normalized to [-1, 1] and cropped to 112x112
+    before passing to ArcFace (AdaFace outputs garbage for 1024x1024).
     """
 
     def __init__(self, device: torch.device | None = None):
@@ -78,7 +87,7 @@ class IdentityLoss:
         self._has_arcface = None  # None = not checked yet
 
     def _ensure_loaded(self, device: torch.device) -> None:
-        """Lazy-load ArcFace on first call."""
+        """Lazy-load ArcFace model on first use."""
         if self._has_arcface is not None:
             return
         try:
@@ -95,7 +104,14 @@ class IdentityLoss:
 
     @torch.no_grad()
     def _extract_embedding(self, image_tensor: torch.Tensor) -> torch.Tensor:
-        """(B,3,112,112) in [-1,1] -> (B,512) embeddings (or pixel fallback)."""
+        """Extract ArcFace embedding from a batch of images.
+
+        Args:
+            image_tensor: (B, 3, 112, 112) in [-1, 1]
+
+        Returns:
+            (B, 512) identity embeddings, or (B, D) pixel-level if fallback.
+        """
         if self._has_arcface:
             import numpy as np
             embeddings = []
@@ -151,23 +167,26 @@ class IdentityLoss:
         if not any(valid):
             return torch.tensor(0.0, device=pred_image.device)
 
-        valid_t = torch.tensor(valid, device=pred_image.device)
+        valid_indices = [i for i, v in enumerate(valid) if v]
+        valid_idx_t = torch.tensor(valid_indices, device=pred_image.device, dtype=torch.long)
 
-        # L2 normalize (safe, only valid embeddings have nonzero norm)
-        pred_emb = F.normalize(pred_emb.float(), dim=1)
-        target_emb = F.normalize(target_emb.float(), dim=1)
+        # Select ONLY valid embeddings before normalization to avoid 0/0 NaN
+        pred_valid_emb = pred_emb[valid_idx_t].float()
+        target_valid_emb = target_emb[valid_idx_t].float()
 
-        cosine_sim = (pred_emb * target_emb).sum(dim=1)
-        # Zero out invalid entries before averaging
-        cosine_sim = cosine_sim * valid_t.float()
-        return (1 - cosine_sim).sum() / valid_t.float().sum()
+        # L2 normalize (safe — zero vectors excluded above)
+        pred_valid_emb = F.normalize(pred_valid_emb, dim=1)
+        target_valid_emb = F.normalize(target_valid_emb, dim=1)
+
+        cosine_sim = (pred_valid_emb * target_valid_emb).sum(dim=1)
+        return (1 - cosine_sim).mean()
 
     def _procedure_crop(
         self,
         image: torch.Tensor,
         procedure: str,
     ) -> torch.Tensor:
-        """Procedure-specific crop for identity comparison."""
+        """Crop image based on procedure for identity comparison."""
         _, _, h, w = image.shape
 
         if procedure == "rhinoplasty":
@@ -184,7 +203,11 @@ class IdentityLoss:
 
 
 class PerceptualLoss:
-    """LPIPS outside surgical mask only. Remember: LPIPS wants [-1,1], VAE gives [0,1]."""
+    """LPIPS perceptual loss on regions OUTSIDE surgical mask only.
+
+    LPIPS expects [-1, 1] input. VAE outputs [0, 1].
+    Must apply (x * 2) - 1 before every call.
+    """
 
     def __init__(self):
         self._lpips = None
@@ -211,8 +234,8 @@ class PerceptualLoss:
         # Invert mask: we want loss OUTSIDE surgical region
         outside_mask = 1 - mask
 
-        # Erode outside_mask by a few pixels to avoid artificial edge features
-        # at the mask boundary (LPIPS VGG detects the hard 0->value transition)
+        # Erode outside_mask to exclude boundary pixels — avoids artificial
+        # edge features where masked (0) meets unmasked (non-zero) values
         erode_kernel = 5
         if outside_mask.shape[-1] >= erode_kernel and outside_mask.shape[-2] >= erode_kernel:
             outside_mask = -F.max_pool2d(
@@ -238,19 +261,37 @@ class PerceptualLoss:
 
 
 class CombinedLoss:
-    """4-term combined loss. phase='A' = diffusion only, phase='B' = all terms."""
+    """Combined 4-term loss with configurable weights.
+
+    Use phase='A' for Phase A training (diffusion only).
+    Use phase='B' for Phase B training (all terms).
+
+    For Phase B, set ``use_differentiable_arcface=True`` to use the
+    PyTorch-native ArcFace backbone (``arcface_torch.py``) that provides
+    actual gradient signal. The default ONNX-based IdentityLoss produces
+    zero gradients (DA2-03).
+    """
 
     def __init__(
         self,
         weights: LossWeights | None = None,
         phase: str = "A",
+        use_differentiable_arcface: bool = False,
+        arcface_weights_path: str | None = None,
     ):
         self.weights = weights or LossWeights()
         self.phase = phase
         self.diffusion_loss = DiffusionLoss()
         self.landmark_loss = LandmarkLoss()
-        self.identity_loss = IdentityLoss()
         self.perceptual_loss = PerceptualLoss()
+
+        # Identity loss: differentiable PyTorch ArcFace for Phase B,
+        # or ONNX-based fallback
+        if use_differentiable_arcface:
+            from landmarkdiff.arcface_torch import ArcFaceLoss
+            self.identity_loss = ArcFaceLoss(weights_path=arcface_weights_path)
+        else:
+            self.identity_loss = IdentityLoss()
 
     def __call__(
         self,

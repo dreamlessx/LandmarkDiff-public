@@ -1,0 +1,38 @@
+# Phase A Production Config — Full training on 27K+ synthetic pairs
+# Target: 50K optimizer steps with 4-GPU DDP
+#
+# Usage:
+#   python scripts/train_controlnet.py --config configs/phaseA_production.yaml
+#   torchrun --nproc_per_node=4 scripts/train_controlnet.py --config configs/phaseA_production.yaml
+experiment_name: "phaseA_production_v1"
+
+model:
+  base_model: "runwayml/stable-diffusion-v1-5"
+  ema_decay: 0.9999
+
+training:
+  phase: "A"
+  learning_rate: 1.0e-5
+  batch_size: 4
+  gradient_accumulation_steps: 4
+  max_train_steps: 50000
+  lr_scheduler: "cosine"
+  mixed_precision: "bf16"
+  seed: 42
+  save_every_n_steps: 10000
+  validate_every_n_steps: 5000
+  num_validation_samples: 8
+  resume_from_checkpoint: "auto"
+
+data:
+  train_dir: "data/training_combined"
+  val_dir: "data/splits/val"
+  image_size: 512
+  num_workers: 8
+
+wandb:
+  enabled: true
+  project: "landmarkdiff"
+  mode: "offline"
+
+output_dir: "checkpoints_phaseA"

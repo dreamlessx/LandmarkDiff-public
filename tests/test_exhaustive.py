@@ -1,5 +1,7 @@
-"""Exhaustive tests - every function, every edge case.
-Heavy parameterization, targeting 1000+ test cases.
+"""Exhaustive test suite for LandmarkDiff — DIRAC verification.
+
+Covers every function, every edge case, every branch across all modules.
+Target: 1000+ individual test cases via parameterization.
 """
 
 import math
@@ -24,7 +26,6 @@ from landmarkdiff.landmarks import (
 )
 from landmarkdiff.conditioning import (
     ALL_CONTOURS,
-    FACE_OVAL,
     JAWLINE_CONTOUR,
     LEFT_EYE_CONTOUR,
     LEFT_EYEBROW,
@@ -57,7 +58,6 @@ from landmarkdiff.inference import (
     mask_composite,
     numpy_to_pil,
     pil_to_numpy,
-    poisson_blend,
     LandmarkDiffPipeline,
     PROCEDURE_PROMPTS,
     NEGATIVE_PROMPT,
@@ -122,7 +122,7 @@ def rng():
 
 
 def _make_face(w=512, h=512, seed=0):
-    """Fake face with random coords."""
+    """Create a synthetic FaceLandmarks with realistic normalized coordinates."""
     rng = np.random.default_rng(seed)
     landmarks = rng.uniform(0.1, 0.9, size=(478, 3)).astype(np.float32)
     # Make landmarks roughly centered like a face
@@ -295,10 +295,10 @@ class TestRegionColors:
         for c in color:
             assert 0 <= c <= 255
 
-    def test_face_oval_has_no_matching_region(self):
-        """face_oval is in REGION_COLORS but NOT in LANDMARK_REGIONS - dead data."""
-        assert "face_oval" in REGION_COLORS
-        assert "face_oval" not in LANDMARK_REGIONS
+    def test_region_colors_match_landmark_regions(self):
+        """Every REGION_COLORS key should have a matching LANDMARK_REGIONS entry."""
+        for key in REGION_COLORS:
+            assert key in LANDMARK_REGIONS, f"REGION_COLORS has '{key}' with no LANDMARK_REGIONS entry"
 
 
 class TestRenderLandmarkImage:
@@ -410,20 +410,16 @@ class TestContourData:
         assert LEFT_EYEBROW[0] != LEFT_EYEBROW[-1]
         assert RIGHT_EYEBROW[0] != RIGHT_EYEBROW[-1]
 
-    def test_face_oval_equals_jawline(self):
-        """Known issue: FACE_OVAL is identical to JAWLINE_CONTOUR."""
-        assert FACE_OVAL == JAWLINE_CONTOUR
+    def test_nose_bottom_no_duplicates(self):
+        """NOSE_BOTTOM should have no duplicate indices after cleanup."""
+        assert len(NOSE_BOTTOM) == len(set(NOSE_BOTTOM))
 
-    def test_nose_bottom_has_duplicates(self):
-        """Known issue: NOSE_BOTTOM has duplicate indices."""
-        assert len(NOSE_BOTTOM) != len(set(NOSE_BOTTOM))
-
-    def test_nose_bottom_not_in_all_contours(self):
-        """Known issue: NOSE_BOTTOM excluded from ALL_CONTOURS."""
-        assert NOSE_BOTTOM not in ALL_CONTOURS
+    def test_nose_bottom_in_all_contours(self):
+        """NOSE_BOTTOM should be included in ALL_CONTOURS."""
+        assert NOSE_BOTTOM in ALL_CONTOURS
 
     def test_all_contours_count(self):
-        assert len(ALL_CONTOURS) == 9
+        assert len(ALL_CONTOURS) == 10
 
     @pytest.mark.parametrize("contour", ALL_CONTOURS)
     def test_contour_indices_valid(self, contour):
@@ -931,7 +927,7 @@ class TestMaskComposite:
         mask[:256, :] = 1.0  # top half
         # use_laplacian=False for predictable alpha blending behavior
         result = mask_composite(warped, sample_image, mask, use_laplacian=False)
-        # Bottom half should be original (mask=0 -> 100% original)
+        # Bottom half should be original (mask=0 → 100% original)
         np.testing.assert_array_equal(result[256:, :], sample_image[256:, :])
 
 
@@ -950,15 +946,6 @@ class TestMatchSkinTone:
         mask = np.ones((512, 512), dtype=np.float32)
         result = _match_skin_tone(sample_image, sample_image, mask)
         assert result.dtype == np.uint8
-
-
-class TestPoissonBlend:
-    def test_delegates_to_mask_composite(self, sample_image):
-        """poisson_blend is dead code - just calls mask_composite."""
-        mask = np.zeros((512, 512), dtype=np.float32)
-        result = poisson_blend(sample_image, sample_image, mask)
-        expected = mask_composite(sample_image, sample_image, mask)
-        np.testing.assert_array_equal(result, expected)
 
 
 class TestEstimateFaceView:
@@ -1016,7 +1003,7 @@ class TestEstimateFaceView:
         landmarks[152] = [0.8, 0.9, 0.0]  # chin
         f = FaceLandmarks(landmarks=landmarks, image_width=512, image_height=512, confidence=1.0)
         view = estimate_face_view(f)
-        # nose-to-left_ear >> nose-to-right_ear -> strong yaw
+        # nose-to-left_ear >> nose-to-right_ear → strong yaw
         assert abs(view["yaw"]) > 15 or view["view"] != "frontal"
 
 
@@ -1880,7 +1867,7 @@ class TestJpegCompression:
 
     def test_modifies_image(self, sample_image_small, rng):
         result = jpeg_compression(sample_image_small, rng)
-        # JPEG is lossy - should differ
+        # JPEG is lossy — should differ
         assert not np.array_equal(result, sample_image_small)
 
 
@@ -2231,7 +2218,7 @@ class TestMotionBlurEdgeCases:
 
 
 class TestMaskingSeedIssue:
-    """Test masking noise behavior - uses unseeded default_rng()."""
+    """Test masking noise behavior — uses unseeded default_rng()."""
 
     def test_different_noise_across_calls(self, face):
         """Masks use np.random.default_rng() (unseeded) so noise differs each call."""
@@ -2263,7 +2250,7 @@ class TestIdentityLossZeroEmbedding:
         assert torch.all(torch.isfinite(normalized))
 
     def test_cosine_sim_with_zero_embedding_is_zero(self):
-        """Zero embedding -> cosine similarity = 0 (handled by valid_mask in IdentityLoss)."""
+        """Zero embedding → cosine similarity = 0 (handled by valid_mask in IdentityLoss)."""
         good = F.normalize(torch.randn(1, 512), dim=1)
         bad = F.normalize(torch.zeros(1, 512), dim=1)  # stays zero
         sim = (good * bad).sum(dim=1)
@@ -2283,7 +2270,7 @@ class TestPerceptualLossMaskingBug:
     """Test the masking order bug in PerceptualLoss."""
 
     def test_masked_pixels_become_minus_one(self):
-        """BUG: masked pixels -> 0 -> *2-1 -> -1, not ignored."""
+        """BUG: masked pixels → 0 → *2-1 → -1, not ignored."""
         pred = torch.rand(1, 3, 64, 64)
         outside_mask = torch.zeros(1, 1, 64, 64)  # surgical mask covers everything
         pred_masked = pred * outside_mask  # all zeros

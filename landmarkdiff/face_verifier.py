@@ -1,7 +1,16 @@
-"""Face distortion detection, neural restoration, and identity verification.
+"""Neural face verification, distortion detection, and restoration pipeline.
 
-Used for cleaning scraped data, post-diffusion QA, and beauty filter removal.
-Cascades: CodeFormer -> GFPGAN -> Real-ESRGAN, with ArcFace identity gate.
+End-to-end system that:
+1. Detects face distortions (blur, beauty filters, compression, warping, etc.)
+2. Classifies distortion type and severity using no-reference quality metrics
+3. Restores faces using cascaded neural networks (CodeFormer → GFPGAN → Real-ESRGAN)
+4. Verifies output identity matches input via ArcFace embeddings
+5. Scores output realism using learned perceptual metrics
+
+Designed for:
+- Cleaning scraped training data (reject/fix bad images before pair generation)
+- Post-diffusion quality gate (ensure generated faces pass realism threshold)
+- Filter removal (undo Snapchat/Instagram beauty filters for clinical use)
 """
 
 from __future__ import annotations
@@ -21,7 +30,7 @@ import numpy as np
 
 @dataclass
 class DistortionReport:
-    """Distortion analysis for a face image."""
+    """Analysis of detected distortions in a face image."""
 
     # Overall quality score (0-100, higher = better)
     quality_score: float = 0.0
@@ -63,7 +72,7 @@ class DistortionReport:
 
 @dataclass
 class RestorationResult:
-    """What came out of the restoration pipeline."""
+    """Result of neural face restoration pipeline."""
 
     restored: np.ndarray                    # Restored BGR image
     original: np.ndarray                    # Original BGR image
@@ -81,14 +90,14 @@ class RestorationResult:
             f"Improvement:      +{self.improvement:.1f}",
             f"Identity Sim:     {self.identity_similarity:.3f}",
             f"Identity OK:      {self.identity_preserved}",
-            f"Stages Used:      {' -> '.join(self.restoration_stages) or 'none'}",
+            f"Stages Used:      {' → '.join(self.restoration_stages) or 'none'}",
         ]
         return "\n".join(lines)
 
 
 @dataclass
 class BatchVerificationReport:
-    """Batch verification stats."""
+    """Summary of batch face verification/restoration."""
 
     total: int = 0
     passed: int = 0           # Good quality, no fix needed
@@ -125,7 +134,11 @@ class BatchVerificationReport:
 # ---------------------------------------------------------------------------
 
 def detect_blur(image: np.ndarray) -> float:
-    """Laplacian variance + gradient magnitude blur score (0-1, 1=blurry)."""
+    """Detect blur using Laplacian variance.
+
+    Low variance = blurry. We normalize to 0-1 where 1 = very blurry.
+    Uses both Laplacian variance and gradient magnitude for robustness.
+    """
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if image.ndim == 3 else image
 
     # Laplacian variance (primary metric)
@@ -144,19 +157,27 @@ def detect_blur(image: np.ndarray) -> float:
 
 
 def detect_noise(image: np.ndarray) -> float:
-    """Noise estimate via MAD of Laplacian (0-1, 1=noisy)."""
+    """Detect image noise level.
+
+    Estimates noise by measuring high-frequency energy in smooth regions.
+    Uses the median absolute deviation of the Laplacian (robust estimator).
+    """
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if image.ndim == 3 else image
 
     # Robust noise estimation via MAD of Laplacian
     lap = cv2.Laplacian(gray.astype(np.float64), cv2.CV_64F)
-    sigma_est = np.median(np.abs(lap)) * 1.4826  # MAD -> std conversion
+    sigma_est = np.median(np.abs(lap)) * 1.4826  # MAD → std conversion
 
     # Normalize: sigma > 20 is very noisy
     return float(np.clip(sigma_est / 25.0, 0, 1))
 
 
 def detect_compression_artifacts(image: np.ndarray) -> float:
-    """JPEG 8x8 block boundary energy ratio (0-1, 1=heavy artifacts)."""
+    """Detect JPEG compression block artifacts.
+
+    Measures energy at 8x8 block boundaries (JPEG DCT block size).
+    High boundary energy relative to interior = compression artifacts.
+    """
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if image.ndim == 3 else image
     h, w = gray.shape
 
@@ -188,11 +209,18 @@ def detect_compression_artifacts(image: np.ndarray) -> float:
 
 
 def detect_oversmoothing(image: np.ndarray) -> float:
-    """Catch beauty filters: low texture energy but edges still there."""
+    """Detect beauty filter / airbrushed skin (oversmoothing).
+
+    Beauty filters remove skin texture while preserving edges. We detect
+    this by measuring the ratio of edge energy to texture energy.
+    High edge / low texture = beauty filtered.
+    """
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if image.ndim == 3 else image
     h, w = gray.shape
 
     # Focus on face center region (avoid background)
+    if h < 8 or w < 8:
+        return 0.0  # Too small to analyze
     roi = gray[h // 4:3 * h // 4, w // 4:3 * w // 4]
 
     # Texture energy: variance of high-pass filtered image
@@ -216,7 +244,12 @@ def detect_oversmoothing(image: np.ndarray) -> float:
 
 
 def detect_color_cast(image: np.ndarray) -> float:
-    """LAB A/B channel deviation from neutral - catches Instagram filters."""
+    """Detect unnatural color cast (Instagram-style filters).
+
+    Measures deviation of average A/B channels in LAB space from
+    neutral. Natural skin has consistent LAB distributions; filtered
+    images shift these channels.
+    """
     lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB).astype(np.float32)
     h, w = image.shape[:2]
 
@@ -242,7 +275,11 @@ def detect_color_cast(image: np.ndarray) -> float:
 
 
 def detect_geometric_distortion(image: np.ndarray) -> float:
-    """Check face proportions against anatomical norms via landmarks."""
+    """Detect geometric face distortion (warping filters, lens distortion).
+
+    Uses MediaPipe landmarks to check face proportions against anatomical
+    norms. Distorted faces have abnormal inter-ocular / face-width ratios.
+    """
     try:
         from landmarkdiff.landmarks import extract_landmarks
     except ImportError:
@@ -254,6 +291,9 @@ def detect_geometric_distortion(image: np.ndarray) -> float:
 
     coords = face.pixel_coords
     h, w = image.shape[:2]
+
+    if len(coords) < 478:
+        return 0.5  # Incomplete landmark set
 
     # Key ratios that should be anatomically consistent
     left_eye = coords[33]
@@ -288,7 +328,10 @@ def detect_geometric_distortion(image: np.ndarray) -> float:
 
 
 def detect_lighting_issues(image: np.ndarray) -> float:
-    """Luminance histogram clipping and entropy check."""
+    """Detect over/under exposure and harsh lighting.
+
+    Checks luminance histogram for clipping and uneven distribution.
+    """
     lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
     l_channel = lab[:, :, 0]
 
@@ -298,7 +341,10 @@ def detect_lighting_issues(image: np.ndarray) -> float:
 
     # Check for bimodal distribution (harsh shadows)
     hist = cv2.calcHist([l_channel], [0], None, [256], [0, 256]).flatten()
-    hist = hist / hist.sum()
+    hist_sum = hist.sum()
+    if hist_sum < 1e-10:
+        return 0.0
+    hist = hist / hist_sum
     # Measure how spread out the histogram is
     entropy = -np.sum(hist[hist > 0] * np.log2(hist[hist > 0] + 1e-10))
     # Low entropy = concentrated = potentially problematic
@@ -309,7 +355,11 @@ def detect_lighting_issues(image: np.ndarray) -> float:
 
 
 def analyze_distortions(image: np.ndarray) -> DistortionReport:
-    """Run all detectors and return a DistortionReport."""
+    """Run full distortion analysis on a face image.
+
+    Combines all detection methods into a comprehensive report with
+    quality score, primary distortion classification, and severity.
+    """
     blur = detect_blur(image)
     noise = detect_noise(image)
     compression = detect_compression_artifacts(image)
@@ -318,7 +368,7 @@ def analyze_distortions(image: np.ndarray) -> DistortionReport:
     geometric = detect_geometric_distortion(image)
     lighting = detect_lighting_issues(image)
 
-    # weighted combination (inverted, 100 = perfect)
+    # Overall quality: weighted combination (inverted — 100 = perfect)
     weighted = (
         0.25 * blur
         + 0.15 * noise
@@ -380,7 +430,10 @@ _FACE_QUALITY_NET = None
 
 
 def _get_face_quality_scorer():
-    """Singleton FaceXLib quality model (or None if not installed)."""
+    """Get or create singleton face quality assessment model.
+
+    Uses FaceXLib's quality scorer or falls back to BRISQUE-style features.
+    """
     global _FACE_QUALITY_NET
     if _FACE_QUALITY_NET is not None:
         return _FACE_QUALITY_NET
@@ -396,7 +449,12 @@ def _get_face_quality_scorer():
 
 
 def neural_quality_score(image: np.ndarray) -> float:
-    """Face quality 0-100. FaceXLib if available, else classical fallback."""
+    """Score face quality using neural network (0-100, higher = better).
+
+    Tries FaceXLib quality assessment first, then falls back to
+    BRISQUE-style scoring using OpenCV's QualityBRISQUE if available,
+    or classical metrics as last resort.
+    """
     # Try neural scorer
     scorer = _get_face_quality_scorer()
     if scorer is not None:
@@ -429,14 +487,31 @@ def restore_face(
     mode: str = "auto",
     codeformer_fidelity: float = 0.7,
 ) -> tuple[np.ndarray, list[str]]:
-    """Cascaded neural face restoration."""
+    """Cascaded neural face restoration.
+
+    Selects and applies restoration networks based on detected distortions:
+    - Blur/oversmooth → CodeFormer (recovers texture from codebook)
+    - Noise/compression → GFPGAN (trained on degraded faces)
+    - Background → Real-ESRGAN (neural 4x upscale + downsample)
+    - Color cast → Classical LAB correction (no neural net needed)
+    - Geometric → Not fixable by restoration (flag and skip)
+
+    Args:
+        image: BGR face image to restore.
+        distortion: Pre-computed distortion report (computed if None).
+        mode: 'auto' (choose based on distortion), 'codeformer', 'gfpgan', 'all'.
+        codeformer_fidelity: CodeFormer quality-fidelity tradeoff.
+
+    Returns:
+        Tuple of (restored BGR image, list of stages applied).
+    """
     if distortion is None:
         distortion = analyze_distortions(image)
 
     result = image.copy()
     stages = []
 
-    # fix color cast first (classical, fast, doesn't affect identity)
+    # Step 0: Fix color cast first (classical — fast, doesn't affect identity)
     if distortion.color_cast_score > 0.25:
         result = _fix_color_cast(result)
         stages.append("color_correction")
@@ -518,6 +593,9 @@ def _try_gfpgan(image: np.ndarray) -> np.ndarray | None:
     return None
 
 
+_FV_REALESRGAN = None
+
+
 def _try_realesrgan(image: np.ndarray) -> np.ndarray | None:
     """Try Real-ESRGAN 2x upscale + downsample. Returns None if unavailable."""
     try:
@@ -525,20 +603,22 @@ def _try_realesrgan(image: np.ndarray) -> np.ndarray | None:
         from basicsr.archs.rrdbnet_arch import RRDBNet
         import torch
 
-        model = RRDBNet(
-            num_in_ch=3, num_out_ch=3, num_feat=64,
-            num_block=23, num_grow_ch=32, scale=4,
-        )
-        upsampler = RealESRGANer(
-            scale=4,
-            model_path="https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth",
-            model=model,
-            tile=400,
-            tile_pad=10,
-            pre_pad=0,
-            half=torch.cuda.is_available(),
-        )
-        enhanced, _ = upsampler.enhance(image, outscale=2)
+        global _FV_REALESRGAN
+        if _FV_REALESRGAN is None:
+            model = RRDBNet(
+                num_in_ch=3, num_out_ch=3, num_feat=64,
+                num_block=23, num_grow_ch=32, scale=4,
+            )
+            _FV_REALESRGAN = RealESRGANer(
+                scale=4,
+                model_path="https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth",
+                model=model,
+                tile=400,
+                tile_pad=10,
+                pre_pad=0,
+                half=torch.cuda.is_available(),
+            )
+        enhanced, _ = _FV_REALESRGAN.enhance(image, outscale=2)
 
         # Downsample to 512x512 for pipeline consistency
         enhanced = cv2.resize(enhanced, (512, 512), interpolation=cv2.INTER_LANCZOS4)
@@ -604,7 +684,10 @@ def _get_arcface():
 
 
 def get_face_embedding(image: np.ndarray) -> np.ndarray | None:
-    """ArcFace 512-d embedding, or None if no face / no InsightFace."""
+    """Extract ArcFace 512-d embedding from a face image.
+
+    Returns None if no face detected or InsightFace unavailable.
+    """
     app = _get_arcface()
     if app is None:
         return None
@@ -623,12 +706,16 @@ def verify_identity(
     restored: np.ndarray,
     threshold: float = 0.6,
 ) -> tuple[float, bool]:
-    """ArcFace cosine sim between original and restored. Returns (sim, passed)."""
+    """Compare identity between original and restored using ArcFace.
+
+    Returns (cosine_similarity, passed).
+    Similarity > threshold means same person (threshold=0.6 is conservative).
+    """
     emb_orig = get_face_embedding(original)
     emb_rest = get_face_embedding(restored)
 
     if emb_orig is None or emb_rest is None:
-        return -1.0, True  # can't verify, assume OK
+        return -1.0, True  # Can't verify — assume OK
 
     sim = float(np.dot(emb_orig, emb_rest) / (
         np.linalg.norm(emb_orig) * np.linalg.norm(emb_rest) + 1e-8
@@ -648,13 +735,30 @@ def verify_and_restore(
     restore_mode: str = "auto",
     codeformer_fidelity: float = 0.7,
 ) -> RestorationResult:
-    """Full pipeline: analyze -> restore -> verify identity."""
+    """Full pipeline: analyze → restore → verify identity.
+
+    This is the main entry point for the face verifier. It:
+    1. Analyzes the input for distortions
+    2. If quality is below threshold, applies neural restoration
+    3. Verifies the restored face preserves identity
+    4. Returns comprehensive result with metrics
+
+    Args:
+        image: BGR face image.
+        quality_threshold: Min quality to skip restoration (0-100).
+        identity_threshold: Min ArcFace similarity to pass (0-1).
+        restore_mode: 'auto', 'codeformer', 'gfpgan', 'all'.
+        codeformer_fidelity: CodeFormer quality-fidelity balance.
+
+    Returns:
+        RestorationResult with restored image and full metrics.
+    """
     # Step 1: Analyze distortions
     report = analyze_distortions(image)
 
     # Step 2: Decide if restoration needed
     if report.quality_score >= quality_threshold and report.severity in ("none", "mild"):
-        # image is good enough, skip restoration
+        # Image is good enough — no restoration needed
         return RestorationResult(
             restored=image.copy(),
             original=image.copy(),
@@ -718,7 +822,26 @@ def verify_batch(
     save_rejected: bool = False,
     extensions: tuple[str, ...] = (".jpg", ".jpeg", ".png", ".webp", ".bmp"),
 ) -> BatchVerificationReport:
-    """Process a directory of face images: analyze, restore, verify, sort."""
+    """Process a directory of face images: analyze, restore, verify, sort.
+
+    Outputs:
+    - {output_dir}/passed/     — good images (no fix needed)
+    - {output_dir}/restored/   — fixed images
+    - {output_dir}/rejected/   — too distorted to use (if save_rejected=True)
+    - {output_dir}/report.txt  — batch verification report
+
+    Args:
+        image_dir: Directory of face images to process.
+        output_dir: Where to save results (default: {image_dir}_verified/).
+        quality_threshold: Min quality to pass without restoration.
+        identity_threshold: Min identity similarity after restoration.
+        restore_mode: 'auto', 'codeformer', 'gfpgan', 'all'.
+        save_rejected: Whether to copy rejected images to rejected/ subdir.
+        extensions: File extensions to process.
+
+    Returns:
+        BatchVerificationReport with summary statistics.
+    """
     image_path = Path(image_dir)
     if output_dir is None:
         out_path = image_path.parent / f"{image_path.name}_verified"

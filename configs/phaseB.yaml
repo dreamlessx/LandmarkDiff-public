@@ -1,0 +1,61 @@
+# Phase B training configuration for LandmarkDiff
+# Clinical-like data, full 4-term loss with identity preservation
+# Usage: python scripts/train_controlnet.py --config configs/phaseB.yaml
+
+experiment_name: phaseB_v1
+description: Phase B ControlNet fine-tuning with multi-term loss
+version: "0.3.0"
+
+training:
+  phase: B
+  learning_rate: 5.0e-6
+  batch_size: 4
+  gradient_accumulation_steps: 4
+  max_steps: 25000
+  warmup_steps: 250
+  mixed_precision: bf16
+  ema_decay: 0.9999
+  max_grad_norm: 1.0
+  save_interval: 1000
+  log_interval: 50
+  sample_interval: 500
+
+  # Loss weights (Phase B: full 4-term loss)
+  loss_weights:
+    diffusion: 1.0
+    identity: 0.1
+    perceptual: 0.05
+    mask: 0.1
+
+  # Optimizer
+  optimizer: adamw
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  adam_weight_decay: 0.01
+
+  # Scheduler
+  lr_scheduler: cosine
+  lr_warmup_steps: 250
+
+  # Resume from Phase A
+  resume_from: checkpoints/phaseA/latest
+
+data:
+  train_dir: data/training_combined
+  image_size: 512
+  num_workers: 4
+  clinical_augment: true
+  geometric_augment: true
+
+inference:
+  num_inference_steps: 30
+  guidance_scale: 9.0
+  scheduler: dpmsolver++
+  controlnet_conditioning_scale: 0.9
+
+safety:
+  identity_threshold: 0.6
+  max_displacement_fraction: 0.05
+  watermark_enabled: false
+
+output_dir: checkpoints/phaseB

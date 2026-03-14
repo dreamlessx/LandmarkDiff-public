@@ -1,0 +1,37 @@
+# Phase B Production Config — Fine-tuning with full 4-term loss
+# Initializes from Phase A checkpoint
+#
+# Usage:
+#   python scripts/train_controlnet.py --config configs/phaseB_production.yaml
+experiment_name: "phaseB_production_v1"
+
+model:
+  base_model: "runwayml/stable-diffusion-v1-5"
+  ema_decay: 0.9999
+
+training:
+  phase: "B"
+  learning_rate: 5.0e-6
+  batch_size: 2
+  gradient_accumulation_steps: 8
+  max_train_steps: 20000
+  lr_scheduler: "cosine"
+  mixed_precision: "bf16"
+  seed: 42
+  save_every_n_steps: 5000
+  validate_every_n_steps: 2000
+  num_validation_samples: 8
+  resume_from_checkpoint: "auto"
+
+data:
+  train_dir: "data/training_combined"
+  val_dir: "data/splits/val"
+  image_size: 512
+  num_workers: 8
+
+wandb:
+  enabled: true
+  project: "landmarkdiff"
+  mode: "offline"
+
+output_dir: "checkpoints_phaseB"
