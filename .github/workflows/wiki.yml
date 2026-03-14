@@ -10,14 +10,18 @@ jobs:
       - uses: actions/checkout@v4
       - name: Create wiki pages
         env:
+          WIKI_TOKEN: ${{ secrets.WIKI_TOKEN }}
           GH_TOKEN: ${{ github.token }}
         run: |
+          # Use PAT if available, otherwise GITHUB_TOKEN
+          TOKEN="${WIKI_TOKEN:-${GH_TOKEN}}"
+          
           mkdir -p wiki-dir
           cd wiki-dir
           git init
-          git remote add origin https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.wiki.git
+          git remote add origin "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.wiki.git"
           
-          # Copy wiki pages from docs/wiki/ in the main repo
+          # Copy wiki pages
           cp ../docs/wiki/*.md .
           
           git config user.name "dreamlessx"
