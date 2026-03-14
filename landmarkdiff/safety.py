@@ -41,6 +41,26 @@ class SafetyResult:
     checks: dict[str, bool] = field(default_factory=dict)
     details: dict[str, object] = field(default_factory=dict)
 
+    def __repr__(self) -> str:
+        return (
+            f"SafetyResult(passed={self.passed}, "
+            f"failures={self.failures}, "
+            f"warnings={self.warnings}, "
+            f"checks={self.checks}, "
+            f"details={self.details})"
+        )
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, SafetyResult):
+            return NotImplemented
+        return (
+            self.passed == other.passed
+            and self.failures == other.failures
+            and self.warnings == other.warnings
+            and self.checks == other.checks
+            and self.details == other.details
+        )
+
     def add_failure(self, name: str, message: str) -> None:
         self.passed = False
         self.failures.append(message)
