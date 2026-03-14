@@ -52,4 +52,4 @@ GPU modes (ControlNet, img2img) with photorealistic rendering are available in t
 - [Wiki](https://github.com/dreamlessx/LandmarkDiff-public/wiki)
 - [Discussions](https://github.com/dreamlessx/LandmarkDiff-public/discussions)
 
-**Version:** v0.2.1
+**Version:** v0.2.2
