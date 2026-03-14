@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 import cv2
 import mediapipe as mp
@@ -12,39 +11,145 @@ import numpy as np
 
 # Region color map for visualization (BGR)
 REGION_COLORS: dict[str, tuple[int, int, int]] = {
-    "jawline": (255, 255, 255),     # white
-    "eyebrow_left": (0, 255, 0),    # green
+    "jawline": (255, 255, 255),  # white
+    "eyebrow_left": (0, 255, 0),  # green
     "eyebrow_right": (0, 255, 0),
-    "eye_left": (255, 255, 0),      # cyan
+    "eye_left": (255, 255, 0),  # cyan
     "eye_right": (255, 255, 0),
-    "nose": (0, 255, 255),          # yellow
-    "lips": (0, 0, 255),            # red
-    "iris_left": (255, 0, 255),     # magenta
+    "nose": (0, 255, 255),  # yellow
+    "lips": (0, 0, 255),  # red
+    "iris_left": (255, 0, 255),  # magenta
     "iris_right": (255, 0, 255),
 }
 
 # MediaPipe landmark index groups by anatomical region
 LANDMARK_REGIONS: dict[str, list[int]] = {
     "jawline": [
-        10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288,
-        397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136,
-        172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109,
+        10,
+        338,
+        297,
+        332,
+        284,
+        251,
+        389,
+        356,
+        454,
+        323,
+        361,
+        288,
+        397,
+        365,
+        379,
+        378,
+        400,
+        377,
+        152,
+        148,
+        176,
+        149,
+        150,
+        136,
+        172,
+        58,
+        132,
+        93,
+        234,
+        127,
+        162,
+        21,
+        54,
+        103,
+        67,
+        109,
     ],
     "eye_left": [
-        33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246,
+        33,
+        7,
+        163,
+        144,
+        145,
+        153,
+        154,
+        155,
+        133,
+        173,
+        157,
+        158,
+        159,
+        160,
+        161,
+        246,
     ],
     "eye_right": [
-        362, 382, 381, 380, 374, 373, 390, 249, 263, 466, 388, 387, 386, 385, 384, 398,
+        362,
+        382,
+        381,
+        380,
+        374,
+        373,
+        390,
+        249,
+        263,
+        466,
+        388,
+        387,
+        386,
+        385,
+        384,
+        398,
     ],
     "eyebrow_left": [70, 63, 105, 66, 107, 55, 65, 52, 53, 46],
     "eyebrow_right": [300, 293, 334, 296, 336, 285, 295, 282, 283, 276],
     "nose": [
-        1, 2, 4, 5, 6, 19, 94, 141, 168, 195, 197, 236, 240,
-        274, 275, 278, 279, 294, 326, 327, 360, 363, 370, 456, 460,
+        1,
+        2,
+        4,
+        5,
+        6,
+        19,
+        94,
+        141,
+        168,
+        195,
+        197,
+        236,
+        240,
+        274,
+        275,
+        278,
+        279,
+        294,
+        326,
+        327,
+        360,
+        363,
+        370,
+        456,
+        460,
     ],
     "lips": [
-        61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291,
-        308, 324, 318, 402, 317, 14, 87, 178, 88, 95, 78,
+        61,
+        146,
+        91,
+        181,
+        84,
+        17,
+        314,
+        405,
+        321,
+        375,
+        291,
+        308,
+        324,
+        318,
+        402,
+        317,
+        14,
+        87,
+        178,
+        88,
+        95,
+        78,
     ],
     "iris_left": [468, 469, 470, 471, 472],
     "iris_right": [473, 474, 475, 476, 477],
@@ -78,7 +183,7 @@ def extract_landmarks(
     image: np.ndarray,
     min_detection_confidence: float = 0.5,
     min_tracking_confidence: float = 0.5,
-) -> Optional[FaceLandmarks]:
+) -> FaceLandmarks | None:
     """Extract 478 facial landmarks from an image using MediaPipe Face Mesh.
 
     Args:
@@ -97,7 +202,9 @@ def extract_landmarks(
         landmarks, confidence = _extract_tasks_api(rgb, min_detection_confidence)
     except Exception:
         try:
-            landmarks, confidence = _extract_solutions_api(rgb, min_detection_confidence, min_tracking_confidence)
+            landmarks, confidence = _extract_solutions_api(
+                rgb, min_detection_confidence, min_tracking_confidence
+            )
         except Exception:
             return None
 
@@ -115,14 +222,14 @@ def extract_landmarks(
 def _extract_tasks_api(
     rgb: np.ndarray,
     min_confidence: float,
-) -> tuple[Optional[np.ndarray], float]:
+) -> tuple[np.ndarray | None, float]:
     """Extract landmarks using MediaPipe Tasks API (>= 0.10.20)."""
     FaceLandmarker = mp.tasks.vision.FaceLandmarker
     FaceLandmarkerOptions = mp.tasks.vision.FaceLandmarkerOptions
     RunningMode = mp.tasks.vision.RunningMode
     BaseOptions = mp.tasks.BaseOptions
-    import urllib.request
     import tempfile
+    import urllib.request
 
     # Download model if not cached
     model_path = Path(tempfile.gettempdir()) / "face_landmarker_v2_with_blendshapes.task"
@@ -161,7 +268,7 @@ def _extract_solutions_api(
     rgb: np.ndarray,
     min_detection_confidence: float,
     min_tracking_confidence: float,
-) -> tuple[Optional[np.ndarray], float]:
+) -> tuple[np.ndarray | None, float]:
     """Extract landmarks using legacy MediaPipe Solutions API."""
     with mp.solutions.face_mesh.FaceMesh(
         static_image_mode=True,
@@ -224,8 +331,8 @@ def visualize_landmarks(
 
 def render_landmark_image(
     face: FaceLandmarks,
-    width: Optional[int] = None,
-    height: Optional[int] = None,
+    width: int | None = None,
+    height: int | None = None,
     radius: int = 2,
 ) -> np.ndarray:
     """Render MediaPipe face mesh tessellation on black canvas.
@@ -257,6 +364,7 @@ def render_landmark_image(
     # Draw tessellation mesh (what CrucibleAI ControlNet expects)
     try:
         from mediapipe.tasks.python.vision.face_landmarker import FaceLandmarksConnections
+
         tessellation = FaceLandmarksConnections.FACE_LANDMARKS_TESSELATION
         contours = FaceLandmarksConnections.FACE_LANDMARKS_CONTOURS
 

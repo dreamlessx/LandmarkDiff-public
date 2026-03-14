@@ -47,6 +47,7 @@ def mock_landmarks_478():
 def mock_face_landmarks(mock_landmarks_478):
     """Create a FaceLandmarks object for testing."""
     from landmarkdiff.landmarks import FaceLandmarks
+
     return FaceLandmarks(
         landmarks=mock_landmarks_478,
         confidence=0.95,

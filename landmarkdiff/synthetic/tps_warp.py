@@ -156,7 +156,7 @@ def _solve_tps_weights(
 
     # Build kernel matrix K (vectorized)
     diff = control_pts[:, np.newaxis, :] - control_pts[np.newaxis, :, :]  # (n, n, 2)
-    r_mat = np.sqrt((diff ** 2).sum(axis=2))  # (n, n)
+    r_mat = np.sqrt((diff**2).sum(axis=2))  # (n, n)
     K = np.zeros((n, n))
     nz = r_mat > 0
     K[nz] = r_mat[nz] ** 2 * np.log(r_mat[nz])
@@ -205,7 +205,7 @@ def _evaluate_tps(
         # Compute all distances at once: (M, n)
         dx = batch[:, 0:1] - control_pts[:, 0]  # (M, n) via broadcasting
         dy = batch[:, 1:2] - control_pts[:, 1]  # (M, n)
-        r = np.sqrt(dx ** 2 + dy ** 2)
+        r = np.sqrt(dx**2 + dy**2)
 
         # TPS kernel: r^2 * log(r), with r=0 -> 0
         kernel = np.zeros_like(r)
@@ -230,9 +230,8 @@ def _compute_rigid_translation(
     inside = []
     for i, (x, y) in enumerate(src):
         ix, iy = int(x), int(y)
-        if 0 <= ix < width and 0 <= iy < height:
-            if mask[iy, ix] > 0:
-                inside.append(i)
+        if 0 <= ix < width and 0 <= iy < height and mask[iy, ix] > 0:
+            inside.append(i)
 
     if not inside:
         return np.array([0.0, 0.0])

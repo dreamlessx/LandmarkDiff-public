@@ -116,12 +116,10 @@ class AuditReporter:
             if case.identity_sim > 0:
                 by_proc[proc]["id_sims"].append(case.identity_sim)
 
-        for proc, stats in by_proc.items():
+        for _proc, stats in by_proc.items():
             stats["pass_rate"] = stats["passed"] / max(stats["total"], 1)
             stats["mean_identity_sim"] = (
-                sum(stats["id_sims"]) / len(stats["id_sims"])
-                if stats["id_sims"]
-                else 0.0
+                sum(stats["id_sims"]) / len(stats["id_sims"]) if stats["id_sims"] else 0.0
             )
             del stats["id_sims"]
 
@@ -137,12 +135,10 @@ class AuditReporter:
             if case.identity_sim > 0:
                 by_fitz[ft]["id_sims"].append(case.identity_sim)
 
-        for ft, stats in by_fitz.items():
+        for _ft, stats in by_fitz.items():
             stats["pass_rate"] = stats["passed"] / max(stats["total"], 1)
             stats["mean_identity_sim"] = (
-                sum(stats["id_sims"]) / len(stats["id_sims"])
-                if stats["id_sims"]
-                else 0.0
+                sum(stats["id_sims"]) / len(stats["id_sims"]) if stats["id_sims"] else 0.0
             )
             del stats["id_sims"]
 
@@ -268,7 +264,7 @@ class AuditReporter:
                 f"<td>{c.procedure.title()}</td>"
                 f"<td>{c.fitzpatrick_type}</td>"
                 f"<td>{c.identity_sim:.4f}</td>"
-                f'<td>{"WARN" if c.safety_passed else "FAIL"}</td>'
+                f"<td>{'WARN' if c.safety_passed else 'FAIL'}</td>"
                 f"<td>{issues}</td>"
                 f"</tr>\n"
             )

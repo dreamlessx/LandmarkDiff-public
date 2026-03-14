@@ -41,8 +41,12 @@ class MetricsAggregator:
     """
 
     HIGHER_BETTER = {
-        "ssim": True, "psnr": True, "identity_sim": True,
-        "lpips": False, "fid": False, "nme": False,
+        "ssim": True,
+        "psnr": True,
+        "identity_sim": True,
+        "lpips": False,
+        "fid": False,
+        "nme": False,
     }
 
     def __init__(self) -> None:
@@ -57,13 +61,15 @@ class MetricsAggregator:
         **metadata: Any,
     ) -> None:
         """Add a single evaluation record."""
-        self.records.append(MetricRecord(
-            experiment=experiment,
-            procedure=procedure,
-            metrics=metrics,
-            checkpoint_step=checkpoint_step,
-            metadata=metadata,
-        ))
+        self.records.append(
+            MetricRecord(
+                experiment=experiment,
+                procedure=procedure,
+                metrics=metrics,
+                checkpoint_step=checkpoint_step,
+                metadata=metadata,
+            )
+        )
 
     def add_batch(
         self,
@@ -76,7 +82,9 @@ class MetricsAggregator:
         """
         for rec in records:
             proc = rec.get("procedure", "all")
-            metrics = {k: v for k, v in rec.items() if k != "procedure" and isinstance(v, (int, float))}
+            metrics = {
+                k: v for k, v in rec.items() if k != "procedure" and isinstance(v, (int, float))
+            }
             self.add(experiment, proc, metrics)
 
     @property
@@ -211,10 +219,7 @@ class MetricsAggregator:
             val = self.mean(exp, metric, procedure)
             if math.isnan(val):
                 continue
-            if higher_better and val > best_val:
-                best_val = val
-                best_exp = exp
-            elif not higher_better and val < best_val:
+            if higher_better and val > best_val or not higher_better and val < best_val:
                 best_val = val
                 best_exp = exp
 

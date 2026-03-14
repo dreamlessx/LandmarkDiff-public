@@ -59,8 +59,8 @@ class TestEndToEndPipeline:
 
     def test_landmarks_to_conditioning(self, sample_face_image):
         """Landmark extraction feeds into conditioning generation."""
-        from landmarkdiff.landmarks import extract_landmarks
         from landmarkdiff.conditioning import generate_conditioning
+        from landmarkdiff.landmarks import extract_landmarks
 
         face = extract_landmarks(sample_face_image)
         if face is None:
@@ -87,11 +87,11 @@ class TestEndToEndPipeline:
 
     def test_full_tps_pipeline(self, sample_face_image):
         """Full TPS baseline: detect → manipulate → mask → warp → composite."""
+        from landmarkdiff.inference import mask_composite
         from landmarkdiff.landmarks import extract_landmarks
         from landmarkdiff.manipulation import apply_procedure_preset
         from landmarkdiff.masking import generate_surgical_mask
         from landmarkdiff.synthetic.tps_warp import warp_image_tps
-        from landmarkdiff.inference import mask_composite
 
         face = extract_landmarks(sample_face_image)
         if face is None:
@@ -112,8 +112,8 @@ class TestDatasetPipeline:
     def test_dataset_loads(self, mock_dataset_dir):
         """SyntheticPairDataset loads pairs from directory."""
         from scripts.train_controlnet import SyntheticPairDataset
-        ds = SyntheticPairDataset(str(mock_dataset_dir), resolution=256,
-                                  geometric_augment=False)
+
+        ds = SyntheticPairDataset(str(mock_dataset_dir), resolution=256, geometric_augment=False)
         assert len(ds) == 10  # 5 rhinoplasty + 5 blepharoplasty
         sample = ds[0]
         assert "input" in sample
@@ -126,8 +126,8 @@ class TestDatasetPipeline:
     def test_dataset_returns_valid_tensors(self, mock_dataset_dir):
         """Dataset returns properly normalized tensors."""
         from scripts.train_controlnet import SyntheticPairDataset
-        ds = SyntheticPairDataset(str(mock_dataset_dir), resolution=256,
-                                  geometric_augment=False)
+
+        ds = SyntheticPairDataset(str(mock_dataset_dir), resolution=256, geometric_augment=False)
         sample = ds[0]
         assert sample["input"].min() >= 0.0
         assert sample["input"].max() <= 1.0
@@ -137,9 +137,10 @@ class TestDatasetPipeline:
     def test_dataloader_batches(self, mock_dataset_dir):
         """DataLoader can create batches from dataset."""
         from torch.utils.data import DataLoader
+
         from scripts.train_controlnet import SyntheticPairDataset
-        ds = SyntheticPairDataset(str(mock_dataset_dir), resolution=256,
-                                  geometric_augment=False)
+
+        ds = SyntheticPairDataset(str(mock_dataset_dir), resolution=256, geometric_augment=False)
         dl = DataLoader(ds, batch_size=2, shuffle=False)
         batch = next(iter(dl))
         assert batch["input"].shape == (2, 3, 256, 256)
@@ -153,6 +154,7 @@ class TestLossPipeline:
     def test_diffusion_loss(self):
         """Diffusion loss computes on random tensors."""
         from landmarkdiff.losses import DiffusionLoss
+
         loss_fn = DiffusionLoss()
         pred = torch.randn(2, 4, 64, 64)
         target = torch.randn(2, 4, 64, 64)
@@ -163,6 +165,7 @@ class TestLossPipeline:
     def test_combined_loss_phase_a(self):
         """Phase A combined loss uses only diffusion."""
         from landmarkdiff.losses import CombinedLoss
+
         loss_fn = CombinedLoss(phase="A")
         pred = torch.randn(2, 4, 64, 64)
         target = torch.randn(2, 4, 64, 64)
@@ -175,6 +178,7 @@ class TestLossPipeline:
     def test_landmark_loss(self):
         """Landmark loss computes normalized distance."""
         from landmarkdiff.losses import LandmarkLoss
+
         loss_fn = LandmarkLoss()
         pred = torch.randn(2, 478, 2)
         target = pred + 0.01  # small displacement
@@ -190,8 +194,9 @@ class TestMetadataPipeline:
     def test_metadata_generation(self, mock_dataset_dir):
         """Metadata generator produces valid JSON."""
         from scripts.generate_metadata import generate_metadata
+
         out = str(mock_dataset_dir / "metadata.json")
-        meta = generate_metadata(str(mock_dataset_dir), output_path=out)
+        generate_metadata(str(mock_dataset_dir), output_path=out)
 
         assert Path(out).exists()
         with open(out) as f:
@@ -203,12 +208,14 @@ class TestMetadataPipeline:
     def test_metadata_enables_curriculum(self, mock_dataset_dir):
         """Generated metadata enables curriculum learning in dataset."""
         from scripts.generate_metadata import generate_metadata
-        generate_metadata(str(mock_dataset_dir),
-                         output_path=str(mock_dataset_dir / "metadata.json"))
+
+        generate_metadata(
+            str(mock_dataset_dir), output_path=str(mock_dataset_dir / "metadata.json")
+        )
 
         from scripts.train_controlnet import SyntheticPairDataset
-        ds = SyntheticPairDataset(str(mock_dataset_dir), resolution=256,
-                                  geometric_augment=False)
+
+        ds = SyntheticPairDataset(str(mock_dataset_dir), resolution=256, geometric_augment=False)
         # Should have loaded procedure info from metadata
         proc = ds.get_procedure(0)
         assert proc in ["rhinoplasty", "blepharoplasty", "unknown"]
@@ -220,6 +227,7 @@ class TestEvaluationMetrics:
     def test_ssim_identical_images(self):
         """SSIM of identical images should be ~1.0."""
         from landmarkdiff.evaluation import compute_ssim
+
         img = np.random.randint(50, 200, (256, 256, 3), dtype=np.uint8)
         ssim = compute_ssim(img, img)
         assert ssim > 0.99
@@ -227,6 +235,7 @@ class TestEvaluationMetrics:
     def test_ssim_different_images(self):
         """SSIM of very different images should be low."""
         from landmarkdiff.evaluation import compute_ssim
+
         img1 = np.zeros((256, 256, 3), dtype=np.uint8)
         img2 = np.full((256, 256, 3), 255, dtype=np.uint8)
         ssim = compute_ssim(img1, img2)
@@ -235,6 +244,7 @@ class TestEvaluationMetrics:
     def test_nme_zero_displacement(self):
         """NME with zero displacement should be 0."""
         from landmarkdiff.evaluation import compute_nme
+
         landmarks = np.random.rand(478, 2) * 512
         nme = compute_nme(landmarks, landmarks)
         assert nme < 1e-10
@@ -242,6 +252,7 @@ class TestEvaluationMetrics:
     def test_nme_small_displacement(self):
         """NME with small displacement should be small."""
         from landmarkdiff.evaluation import compute_nme
+
         landmarks = np.random.rand(478, 2) * 512
         displaced = landmarks + np.random.randn(478, 2) * 2  # 2px noise
         nme = compute_nme(landmarks, displaced)

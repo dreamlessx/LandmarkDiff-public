@@ -13,12 +13,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from landmarkdiff.augmentation import (
     AugmentationConfig,
-    augment_training_sample,
-    augment_skin_tone,
     FitzpatrickBalancer,
-    _transform_landmarks,
     _adjust_saturation,
     _shift_hue,
+    _transform_landmarks,
+    augment_skin_tone,
+    augment_training_sample,
 )
 
 
@@ -141,7 +141,9 @@ class TestAugmentTrainingSample:
             conditioning_dropout_prob=1.0,  # always dropout
             conditioning_noise_std=0.0,
         )
-        result = augment_training_sample(**sample_data, config=config, rng=np.random.default_rng(42))
+        result = augment_training_sample(
+            **sample_data, config=config, rng=np.random.default_rng(42)
+        )
         assert result["conditioning"].sum() == 0
 
 
@@ -238,7 +240,7 @@ class TestFitzpatrickBalancer:
         balancer = FitzpatrickBalancer()
         assert len(balancer.target) == 6
         for v in balancer.target.values():
-            assert abs(v - 1/6) < 1e-6
+            assert abs(v - 1 / 6) < 1e-6
 
     def test_register_and_weights(self):
         balancer = FitzpatrickBalancer()

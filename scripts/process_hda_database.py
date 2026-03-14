@@ -29,7 +29,8 @@ Output structure:
 Usage:
     python scripts/process_hda_database.py
     python scripts/process_hda_database.py --resolution 512 --min-quality 0.3
-    python scripts/process_hda_database.py --db-path data/plastic_surgery_db --output data/hda_processed
+    python scripts/process_hda_database.py \\
+        --db-path data/plastic_surgery_db --output data/hda_processed
 """
 
 from __future__ import annotations
@@ -47,16 +48,15 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from landmarkdiff.landmarks import extract_landmarks, render_landmark_image, FaceLandmarks
 from landmarkdiff.conditioning import generate_conditioning
-from landmarkdiff.masking import generate_surgical_mask, MASK_CONFIG
 from landmarkdiff.displacement_model import (
     DisplacementModel,
-    _normalized_coords_2d,
     _compute_alignment_quality,
+    _normalized_coords_2d,
     classify_procedure,
-    NUM_LANDMARKS,
 )
+from landmarkdiff.landmarks import FaceLandmarks, extract_landmarks
+from landmarkdiff.masking import MASK_CONFIG, generate_surgical_mask
 
 logging.basicConfig(
     level=logging.INFO,
@@ -113,13 +113,15 @@ def discover_pairs(db_path: Path) -> list[dict]:
                 logger.warning("No after image for %s/%s", category, pair_id)
                 continue
 
-            pairs.append({
-                "id": pair_id,
-                "before_path": before_path,
-                "after_path": after_path,
-                "hda_category": category,
-                "procedure": procedure,
-            })
+            pairs.append(
+                {
+                    "id": pair_id,
+                    "before_path": before_path,
+                    "after_path": after_path,
+                    "hda_category": category,
+                    "procedure": procedure,
+                }
+            )
 
     return pairs
 
@@ -190,7 +192,9 @@ def process_pair(
         confidence=face_after.confidence,
     )
 
-    landmark_img, canny, wireframe = generate_conditioning(face_after_scaled, resolution, resolution)
+    landmark_img, canny, wireframe = generate_conditioning(
+        face_after_scaled, resolution, resolution
+    )
 
     # Generate surgical mask using the BEFORE landmarks + known procedure
     face_before_scaled = FaceLandmarks(
@@ -235,19 +239,25 @@ def process_pair(
 def main():
     parser = argparse.ArgumentParser(description="Process HDA Plastic Surgery Database")
     parser.add_argument(
-        "--db-path", type=Path,
+        "--db-path",
+        type=Path,
         default=ROOT / "data" / "plastic_surgery_db",
         help="Path to HDA database root",
     )
     parser.add_argument(
-        "--output", type=Path,
+        "--output",
+        type=Path,
         default=ROOT / "data" / "hda_processed",
         help="Output directory for processed pairs",
     )
     parser.add_argument("--resolution", type=int, default=512, help="Target resolution")
     parser.add_argument("--min-quality", type=float, default=0.2, help="Min alignment quality")
-    parser.add_argument("--min-confidence", type=float, default=0.3, help="Min face detection confidence")
-    parser.add_argument("--fit-model", action="store_true", default=True, help="Fit displacement model")
+    parser.add_argument(
+        "--min-confidence", type=float, default=0.3, help="Min face detection confidence"
+    )
+    parser.add_argument(
+        "--fit-model", action="store_true", default=True, help="Fit displacement model"
+    )
     parser.add_argument("--no-fit-model", dest="fit_model", action="store_false")
     args = parser.parse_args()
 
@@ -282,7 +292,8 @@ def main():
 
     for i, pair in enumerate(pairs):
         result = process_pair(
-            pair, args.output,
+            pair,
+            args.output,
             resolution=args.resolution,
             min_quality=args.min_quality,
             min_confidence=args.min_confidence,
@@ -293,11 +304,13 @@ def main():
         else:
             results.append(result)
             # Collect displacement data for model fitting
-            displacement_data.append({
-                "displacements": np.array(result["displacements"]),
-                "procedure": result["procedure"],
-                "quality_score": result["quality_score"],
-            })
+            displacement_data.append(
+                {
+                    "displacements": np.array(result["displacements"]),
+                    "procedure": result["procedure"],
+                    "quality_score": result["quality_score"],
+                }
+            )
 
         if (i + 1) % 50 == 0:
             elapsed = time.time() - start_time
@@ -305,8 +318,13 @@ def main():
             eta = (len(pairs) - i - 1) / max(rate, 0.01)
             logger.info(
                 "Progress: %d/%d (%.0f%%) | %d ok, %d failed | %.1f pairs/s | ETA %.0fs",
-                i + 1, len(pairs), 100 * (i + 1) / len(pairs),
-                len(results), failed, rate, eta,
+                i + 1,
+                len(pairs),
+                100 * (i + 1) / len(pairs),
+                len(results),
+                failed,
+                rate,
+                eta,
             )
 
     elapsed = time.time() - start_time
@@ -334,7 +352,9 @@ def main():
     logger.info("")
     logger.info(
         "Auto-classification accuracy: %d/%d (%.1f%%)",
-        correct, len(results), 100 * correct / max(len(results), 1),
+        correct,
+        len(results),
+        100 * correct / max(len(results), 1),
     )
 
     # Save metadata
@@ -379,7 +399,8 @@ def main():
         for proc, stats in summary.get("procedures", {}).items():
             logger.info(
                 "  %s: %d samples, mean_mag=%.5f, max_mag=%.5f",
-                proc, stats["n_samples"],
+                proc,
+                stats["n_samples"],
                 stats["global_mean_magnitude"],
                 stats["global_max_magnitude"],
             )

@@ -6,33 +6,32 @@ Augmentations on INPUT only, never target.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterator
 
 import cv2
 import numpy as np
 
-from landmarkdiff.landmarks import FaceLandmarks, extract_landmarks, render_landmark_image
 from landmarkdiff.conditioning import generate_conditioning
+from landmarkdiff.landmarks import extract_landmarks, render_landmark_image
 from landmarkdiff.manipulation import (
-    PROCEDURE_LANDMARKS,
     apply_procedure_preset,
 )
 from landmarkdiff.masking import generate_surgical_mask
 from landmarkdiff.synthetic.augmentation import apply_clinical_augmentation
-from landmarkdiff.synthetic.tps_warp import warp_image_tps, generate_random_warp
+from landmarkdiff.synthetic.tps_warp import warp_image_tps
 
 
 @dataclass(frozen=True)
 class TrainingPair:
     """A single training sample for ControlNet fine-tuning."""
 
-    input_image: np.ndarray       # augmented input (512x512 BGR)
-    target_image: np.ndarray      # clean target (512x512 BGR) - TPS-warped original
-    conditioning: np.ndarray      # landmark rendering (512x512 BGR)
-    canny: np.ndarray             # canny edge map (512x512 grayscale)
-    mask: np.ndarray              # feathered surgical mask (512x512 float32)
+    input_image: np.ndarray  # augmented input (512x512 BGR)
+    target_image: np.ndarray  # clean target (512x512 BGR) - TPS-warped original
+    conditioning: np.ndarray  # landmark rendering (512x512 BGR)
+    canny: np.ndarray  # canny edge map (512x512 grayscale)
+    mask: np.ndarray  # feathered surgical mask (512x512 float32)
     procedure: str
     intensity: float
 
@@ -104,10 +103,7 @@ def generate_pairs_from_directory(
     image_dir = Path(image_dir)
 
     extensions = {".jpg", ".jpeg", ".png", ".webp"}
-    image_files = sorted(
-        f for f in image_dir.iterdir()
-        if f.suffix.lower() in extensions
-    )
+    image_files = sorted(f for f in image_dir.iterdir() if f.suffix.lower() in extensions)
 
     if not image_files:
         raise FileNotFoundError(f"No images found in {image_dir}")

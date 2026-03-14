@@ -4,7 +4,6 @@ import argparse
 import json
 import random
 from pathlib import Path
-from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import cv2
 import numpy as np
@@ -57,8 +56,8 @@ def process_single_image(
         target_path = out / f"{pair_idx:06d}_{procedure}_target.png"
         manip_mesh_path = out / f"{pair_idx:06d}_{procedure}_manip_mesh.png"
 
-        cv2.imwrite(str(input_path), original_mesh)   # conditioning = mesh
-        cv2.imwrite(str(target_path), img)             # target = real face
+        cv2.imwrite(str(input_path), original_mesh)  # conditioning = mesh
+        cv2.imwrite(str(target_path), img)  # target = real face
         cv2.imwrite(str(manip_mesh_path), manipulated_mesh)  # for inference
 
         # Compute displacement magnitude
@@ -78,21 +77,29 @@ def process_single_image(
             "mean_displacement": mean_disp,
         }
 
-    except Exception as e:
+    except Exception:
         return None
 
 
 def main():
     parser = argparse.ArgumentParser(description="Generate synthetic surgery training pairs")
-    parser.add_argument("--source_dir", type=str, required=True,
-                        help="Directory with source face images (CelebA, FFHQ, etc.)")
-    parser.add_argument("--output", type=str, default="data/synthetic_surgery_pairs",
-                        help="Output directory")
-    parser.add_argument("--procedure", type=str, required=True,
-                        choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"],
-                        help="Procedure to generate pairs for")
-    parser.add_argument("--target", type=int, default=50000,
-                        help="Target number of pairs")
+    parser.add_argument(
+        "--source_dir",
+        type=str,
+        required=True,
+        help="Directory with source face images (CelebA, FFHQ, etc.)",
+    )
+    parser.add_argument(
+        "--output", type=str, default="data/synthetic_surgery_pairs", help="Output directory"
+    )
+    parser.add_argument(
+        "--procedure",
+        type=str,
+        required=True,
+        choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"],
+        help="Procedure to generate pairs for",
+    )
+    parser.add_argument("--target", type=int, default=50000, help="Target number of pairs")
     parser.add_argument("--size", type=int, default=512, help="Image size")
     parser.add_argument("--workers", type=int, default=4, help="Number of parallel workers")
     parser.add_argument("--offset", type=int, default=0, help="Starting pair index offset")
@@ -104,10 +111,7 @@ def main():
 
     # Find all source images
     extensions = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
-    all_images = sorted([
-        str(f) for f in source_dir.rglob("*")
-        if f.suffix.lower() in extensions
-    ])
+    all_images = sorted([str(f) for f in source_dir.rglob("*") if f.suffix.lower() in extensions])
     print(f"Found {len(all_images)} source images in {source_dir}")
 
     if not all_images:
@@ -138,8 +142,7 @@ def main():
                 break
 
             result = process_single_image(
-                img_path, args.procedure, intensity,
-                str(output_dir), pair_idx, args.size
+                img_path, args.procedure, intensity, str(output_dir), pair_idx, args.size
             )
 
             if result is not None:
@@ -150,15 +153,14 @@ def main():
                 failed += 1
 
         if (img_i + 1) % 100 == 0:
-            print(f"  [{img_i + 1}/{len(all_images)}] "
-                  f"Generated {processed} pairs, {failed} failed")
+            print(f"  [{img_i + 1}/{len(all_images)}] Generated {processed} pairs, {failed} failed")
 
     # Save metadata
     metadata_path = Path(args.output) / f"{args.procedure}_metadata.json"
     with open(metadata_path, "w") as f:
         json.dump(all_pairs, f, indent=2)
 
-    print(f"\n=== Summary ===")
+    print("\n=== Summary ===")
     print(f"Procedure: {args.procedure}")
     print(f"Source images: {len(all_images)}")
     print(f"Generated pairs: {processed}")

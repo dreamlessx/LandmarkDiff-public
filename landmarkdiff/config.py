@@ -18,7 +18,7 @@ Usage:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -28,6 +28,7 @@ import yaml
 @dataclass
 class ModelConfig:
     """ControlNet and base model configuration."""
+
     base_model: str = "runwayml/stable-diffusion-v1-5"
     controlnet_conditioning_channels: int = 3
     controlnet_conditioning_scale: float = 1.0
@@ -39,6 +40,7 @@ class ModelConfig:
 @dataclass
 class TrainingConfig:
     """Training hyperparameters."""
+
     phase: str = "A"  # "A" or "B"
     learning_rate: float = 1e-5
     batch_size: int = 4
@@ -77,6 +79,7 @@ class TrainingConfig:
 @dataclass
 class DataConfig:
     """Dataset configuration."""
+
     train_dir: str = "data/training"
     val_dir: str = "data/validation"
     test_dir: str = "data/test"
@@ -90,9 +93,14 @@ class DataConfig:
     color_jitter: float = 0.1
 
     # Procedure filtering
-    procedures: list[str] = field(default_factory=lambda: [
-        "rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic",
-    ])
+    procedures: list[str] = field(
+        default_factory=lambda: [
+            "rhinoplasty",
+            "blepharoplasty",
+            "rhytidectomy",
+            "orthognathic",
+        ]
+    )
     intensity_range: tuple[float, float] = (30.0, 100.0)
 
     # Data-driven displacement
@@ -103,6 +111,7 @@ class DataConfig:
 @dataclass
 class InferenceConfig:
     """Inference / generation configuration."""
+
     num_inference_steps: int = 30
     guidance_scale: float = 7.5
     scheduler: str = "dpmsolver++"  # "ddpm", "ddim", "dpmsolver++"
@@ -124,6 +133,7 @@ class InferenceConfig:
 @dataclass
 class EvaluationConfig:
     """Evaluation configuration."""
+
     compute_fid: bool = True
     compute_lpips: bool = True
     compute_nme: bool = True
@@ -137,6 +147,7 @@ class EvaluationConfig:
 @dataclass
 class WandbConfig:
     """Weights & Biases logging configuration."""
+
     enabled: bool = True
     project: str = "landmarkdiff"
     entity: str | None = None
@@ -147,6 +158,7 @@ class WandbConfig:
 @dataclass
 class SlurmConfig:
     """SLURM job submission parameters."""
+
     partition: str = "batch_gpu"
     account: str = "csb_gpu_acc"
     gpu_type: str = "nvidia_rtx_a6000"
@@ -160,6 +172,7 @@ class SlurmConfig:
 @dataclass
 class SafetyConfig:
     """Clinical safety and responsible AI parameters."""
+
     identity_threshold: float = 0.6
     max_displacement_fraction: float = 0.05
     watermark_enabled: bool = True
@@ -173,6 +186,7 @@ class SafetyConfig:
 @dataclass
 class ExperimentConfig:
     """Top-level experiment configuration."""
+
     experiment_name: str = "default"
     description: str = ""
     version: str = "0.3.0"
@@ -230,6 +244,7 @@ class ExperimentConfig:
 def _from_dict(cls, d: dict):
     """Create a dataclass from a dict, ignoring unknown keys."""
     import dataclasses
+
     field_map = {f.name: f for f in dataclasses.fields(cls)}
     filtered = {}
     for k, v in d.items():
@@ -266,10 +281,7 @@ def load_config(
     Returns:
         ExperimentConfig with overrides applied.
     """
-    if config_path:
-        config = ExperimentConfig.from_yaml(config_path)
-    else:
-        config = ExperimentConfig()
+    config = ExperimentConfig.from_yaml(config_path) if config_path else ExperimentConfig()
 
     if overrides:
         for key, value in overrides.items():

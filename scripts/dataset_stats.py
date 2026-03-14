@@ -21,7 +21,7 @@ import argparse
 import json
 import sys
 import time
-from collections import Counter, defaultdict
+from collections import Counter
 from pathlib import Path
 
 import cv2
@@ -128,6 +128,7 @@ def analyze_dataset(
         if i % 10 == 0:
             try:
                 from landmarkdiff.evaluation import classify_fitzpatrick_ita
+
                 fitz = classify_fitzpatrick_ita(img)
                 fitzpatrick_counts[fitz] += 1
             except Exception:
@@ -167,7 +168,7 @@ def analyze_dataset(
                 procedure_counts["unknown"] += 1
 
         if (i + 1) % 500 == 0:
-            print(f"  Analyzed {i+1}/{len(samples_to_analyze)}")
+            print(f"  Analyzed {i + 1}/{len(samples_to_analyze)}")
 
     # Compile results
     results = {
@@ -246,9 +247,9 @@ def analyze_dataset(
         json.dump(results, f, indent=2)
 
     # Print summary
-    print(f"\n{'='*60}")
-    print(f"  Dataset Statistics Summary")
-    print(f"{'='*60}")
+    print(f"\n{'=' * 60}")
+    print("  Dataset Statistics Summary")
+    print(f"{'=' * 60}")
     print(f"  Total pairs: {n_inputs:,}")
     print(f"  Complete (all 4 files): {n_inputs - len(missing_targets) - len(missing_conds):,}")
     print(f"  Corrupted: {len(corrupted)}")
@@ -262,24 +263,30 @@ def analyze_dataset(
         print(f"    {proc:<20} {count:>6,} ({pct:5.1f}%) {bar}")
 
     if wave_counts:
-        print(f"\n  Wave distribution:")
+        print("\n  Wave distribution:")
         for wave, count in wave_counts.most_common():
             print(f"    Wave {wave}: {count:,}")
 
     if "intensity_stats" in results:
         s = results["intensity_stats"]
-        print(f"\n  Intensity: mean={s['mean']:.3f}, std={s['std']:.3f}, "
-              f"range=[{s['min']:.3f}, {s['max']:.3f}]")
+        print(
+            f"\n  Intensity: mean={s['mean']:.3f}, std={s['std']:.3f}, "
+            f"range=[{s['min']:.3f}, {s['max']:.3f}]"
+        )
 
     if "mask_stats" in results:
         s = results["mask_stats"]
-        print(f"  Mask coverage: mean={s['mean_coverage']:.3f}, "
-              f"range=[{s['min_coverage']:.3f}, {s['max_coverage']:.3f}]")
+        print(
+            f"  Mask coverage: mean={s['mean_coverage']:.3f}, "
+            f"range=[{s['min_coverage']:.3f}, {s['max_coverage']:.3f}]"
+        )
 
     if fitzpatrick_counts:
-        print(f"\n  Fitzpatrick distribution (estimated from subsample):")
+        print("\n  Fitzpatrick distribution (estimated from subsample):")
         for ftype, data in sorted(results.get("fitzpatrick_distribution", {}).items()):
-            print(f"    Type {ftype}: ~{data['estimated_total']:,} ({data['proportion']*100:.1f}%)")
+            print(
+                f"    Type {ftype}: ~{data['estimated_total']:,} ({data['proportion'] * 100:.1f}%)"
+            )
 
     print(f"\n  Analysis time: {elapsed:.1f}s")
     print(f"  Results saved: {results_path}")
@@ -291,8 +298,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Dataset statistics and analysis")
     parser.add_argument("--data_dir", required=True, help="Dataset directory")
     parser.add_argument("--output", default="dataset_stats", help="Output directory")
-    parser.add_argument("--max_samples", type=int, default=0,
-                        help="Max samples to analyze (0=all)")
+    parser.add_argument("--max_samples", type=int, default=0, help="Max samples to analyze (0=all)")
     args = parser.parse_args()
 
     analyze_dataset(args.data_dir, args.output, args.max_samples)

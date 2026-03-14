@@ -14,9 +14,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from landmarkdiff.fid import (
     ImageFolderDataset,
     NumpyArrayDataset,
-    _imagenet_normalize,
-    _compute_statistics,
     _calculate_fid,
+    _compute_statistics,
+    _imagenet_normalize,
 )
 
 
@@ -25,12 +25,14 @@ class TestImageNetNormalize:
 
     def test_output_shape(self):
         import torch
+
         t = torch.randn(3, 64, 64)
         out = _imagenet_normalize(t)
         assert out.shape == (3, 64, 64)
 
     def test_known_values(self):
         import torch
+
         # All zeros input
         t = torch.zeros(3, 1, 1)
         out = _imagenet_normalize(t)

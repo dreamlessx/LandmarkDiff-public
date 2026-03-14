@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import numpy as np
-import pytest
 import sys
 from pathlib import Path
+
+import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -108,7 +108,7 @@ class TestEnsembleInference:
         """Test that invalid strategy raises error."""
         from landmarkdiff.ensemble import EnsembleInference
 
-        ensemble = EnsembleInference(mode="tps", strategy="invalid")
+        EnsembleInference(mode="tps", strategy="invalid")
         # Strategy validation happens during generate(), not init
 
 
@@ -140,8 +140,8 @@ class TestSplitScript:
 
     def test_split_dry_run(self, tmp_path):
         """Test split in dry-run mode."""
-        from scripts.create_test_split import create_split
         import cv2
+        from scripts.create_test_split import create_split
 
         # Create mock dataset
         for proc in ["rhinoplasty", "blepharoplasty"]:

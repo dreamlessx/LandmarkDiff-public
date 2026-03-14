@@ -16,14 +16,14 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from landmarkdiff.postprocess import (
-    laplacian_pyramid_blend,
     _build_laplacian_pyramid,
     _reconstruct_from_laplacian,
     frequency_aware_sharpen,
-    histogram_match_skin,
     full_postprocess,
-    restore_face_gfpgan,
+    histogram_match_skin,
+    laplacian_pyramid_blend,
     restore_face_codeformer,
+    restore_face_gfpgan,
 )
 
 
@@ -189,7 +189,9 @@ class TestFullPostprocess:
     def test_output_keys(self, face_images):
         source, target, mask = face_images
         result = full_postprocess(
-            source, target, mask,
+            source,
+            target,
+            mask,
             restore_mode="none",
             use_realesrgan=False,
             verify_identity=False,
@@ -201,7 +203,9 @@ class TestFullPostprocess:
     def test_output_shape(self, face_images):
         source, target, mask = face_images
         result = full_postprocess(
-            source, target, mask,
+            source,
+            target,
+            mask,
             restore_mode="none",
             use_realesrgan=False,
             verify_identity=False,
@@ -212,7 +216,9 @@ class TestFullPostprocess:
     def test_no_restore(self, face_images):
         source, target, mask = face_images
         result = full_postprocess(
-            source, target, mask,
+            source,
+            target,
+            mask,
             restore_mode="none",
             use_realesrgan=False,
             verify_identity=False,
@@ -222,7 +228,9 @@ class TestFullPostprocess:
     def test_simple_blend_fallback(self, face_images):
         source, target, mask = face_images
         result = full_postprocess(
-            source, target, mask,
+            source,
+            target,
+            mask,
             restore_mode="none",
             use_realesrgan=False,
             use_laplacian_blend=False,
@@ -234,7 +242,9 @@ class TestFullPostprocess:
     def test_with_sharpening(self, face_images):
         source, target, mask = face_images
         r1 = full_postprocess(
-            source, target, mask,
+            source,
+            target,
+            mask,
             restore_mode="none",
             use_realesrgan=False,
             use_laplacian_blend=True,
@@ -242,7 +252,9 @@ class TestFullPostprocess:
             verify_identity=False,
         )
         r2 = full_postprocess(
-            source, target, mask,
+            source,
+            target,
+            mask,
             restore_mode="none",
             use_realesrgan=False,
             use_laplacian_blend=True,

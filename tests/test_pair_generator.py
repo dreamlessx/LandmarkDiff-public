@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import cv2
 import numpy as np
@@ -11,23 +10,26 @@ import pytest
 
 from landmarkdiff.landmarks import FaceLandmarks
 from landmarkdiff.synthetic.pair_generator import (
-    TrainingPair,
     PROCEDURES,
+    TrainingPair,
     generate_pair,
     save_pair,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_face(size: int = 512) -> FaceLandmarks:
     """Create a dummy FaceLandmarks for testing."""
     rng = np.random.default_rng(0)
     landmarks = rng.uniform(0.2, 0.8, (478, 3)).astype(np.float32)
     return FaceLandmarks(
-        landmarks=landmarks, image_width=size, image_height=size, confidence=0.95,
+        landmarks=landmarks,
+        image_width=size,
+        image_height=size,
+        confidence=0.95,
     )
 
 
@@ -38,6 +40,7 @@ def _make_image(size: int = 512) -> np.ndarray:
 # ---------------------------------------------------------------------------
 # TrainingPair dataclass
 # ---------------------------------------------------------------------------
+
 
 class TestTrainingPair:
     def test_fields(self):
@@ -78,6 +81,7 @@ class TestProcedures:
 # generate_pair
 # ---------------------------------------------------------------------------
 
+
 class TestGeneratePair:
     @patch("landmarkdiff.synthetic.pair_generator.extract_landmarks")
     @patch("landmarkdiff.synthetic.pair_generator.render_landmark_image")
@@ -87,8 +91,14 @@ class TestGeneratePair:
     @patch("landmarkdiff.synthetic.pair_generator.warp_image_tps")
     @patch("landmarkdiff.synthetic.pair_generator.apply_clinical_augmentation")
     def test_returns_pair(
-        self, mock_aug, mock_warp, mock_preset, mock_mask,
-        mock_cond, mock_render, mock_extract,
+        self,
+        mock_aug,
+        mock_warp,
+        mock_preset,
+        mock_mask,
+        mock_cond,
+        mock_render,
+        mock_extract,
     ):
         face = _make_face()
         mock_extract.return_value = face
@@ -126,8 +136,14 @@ class TestGeneratePair:
     @patch("landmarkdiff.synthetic.pair_generator.warp_image_tps")
     @patch("landmarkdiff.synthetic.pair_generator.apply_clinical_augmentation")
     def test_random_procedure(
-        self, mock_aug, mock_warp, mock_preset, mock_mask,
-        mock_cond, mock_render, mock_extract,
+        self,
+        mock_aug,
+        mock_warp,
+        mock_preset,
+        mock_mask,
+        mock_cond,
+        mock_render,
+        mock_extract,
     ):
         face = _make_face()
         mock_extract.return_value = face
@@ -157,8 +173,14 @@ class TestGeneratePair:
     @patch("landmarkdiff.synthetic.pair_generator.warp_image_tps")
     @patch("landmarkdiff.synthetic.pair_generator.apply_clinical_augmentation")
     def test_resizes_to_target(
-        self, mock_aug, mock_warp, mock_preset, mock_mask,
-        mock_cond, mock_render, mock_extract,
+        self,
+        mock_aug,
+        mock_warp,
+        mock_preset,
+        mock_mask,
+        mock_cond,
+        mock_render,
+        mock_extract,
     ):
         face = _make_face(256)
         mock_extract.return_value = face
@@ -182,6 +204,7 @@ class TestGeneratePair:
 # ---------------------------------------------------------------------------
 # save_pair
 # ---------------------------------------------------------------------------
+
 
 class TestSavePair:
     def test_saves_all_files(self, tmp_path):

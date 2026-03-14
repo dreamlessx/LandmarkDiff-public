@@ -23,6 +23,7 @@ try:
     import torch
     import torch.nn as nn
     from torch.utils.data import DataLoader, Dataset
+
     HAS_TORCH = True
 except ImportError:
     HAS_TORCH = False
@@ -30,7 +31,7 @@ except ImportError:
 
 def _load_inception_v3():
     """Load InceptionV3 with pool3 features (2048-dim)."""
-    from torchvision.models import inception_v3, Inception_V3_Weights
+    from torchvision.models import Inception_V3_Weights, inception_v3
 
     model = inception_v3(weights=Inception_V3_Weights.IMAGENET1K_V1)
     # We want features from the avg pool layer (2048-dim)
@@ -47,8 +48,7 @@ class ImageFolderDataset(Dataset):
         self.directory = Path(directory)
         exts = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
         self.files = sorted(
-            f for f in self.directory.iterdir()
-            if f.suffix.lower() in exts and f.is_file()
+            f for f in self.directory.iterdir() if f.suffix.lower() in exts and f.is_file()
         )
         self.image_size = image_size
 
@@ -57,6 +57,7 @@ class ImageFolderDataset(Dataset):
 
     def __getitem__(self, idx):
         import cv2
+
         img = cv2.imread(str(self.files[idx]))
         if img is None:
             # Return zeros if image can't be loaded
@@ -81,6 +82,7 @@ class NumpyArrayDataset(Dataset):
 
     def __getitem__(self, idx):
         import cv2
+
         img = self.images[idx]
         if img.shape[:2] != (self.image_size, self.image_size):
             img = cv2.resize(img, (self.image_size, self.image_size))
@@ -91,7 +93,7 @@ class NumpyArrayDataset(Dataset):
         return t
 
 
-def _imagenet_normalize(t: "torch.Tensor") -> "torch.Tensor":
+def _imagenet_normalize(t: torch.Tensor) -> torch.Tensor:
     """Apply ImageNet normalization."""
     mean = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
     std = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
@@ -123,8 +125,10 @@ def _compute_statistics(features: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
 
 def _calculate_fid(
-    mu1: np.ndarray, sigma1: np.ndarray,
-    mu2: np.ndarray, sigma2: np.ndarray,
+    mu1: np.ndarray,
+    sigma1: np.ndarray,
+    mu2: np.ndarray,
+    sigma2: np.ndarray,
 ) -> float:
     """Calculate FID given two sets of statistics.
 
@@ -177,10 +181,10 @@ def compute_fid_from_dirs(
     if len(real_ds) == 0 or len(gen_ds) == 0:
         raise ValueError("Need at least 1 image in each directory")
 
-    real_loader = DataLoader(real_ds, batch_size=batch_size,
-                              num_workers=num_workers, pin_memory=True)
-    gen_loader = DataLoader(gen_ds, batch_size=batch_size,
-                             num_workers=num_workers, pin_memory=True)
+    real_loader = DataLoader(
+        real_ds, batch_size=batch_size, num_workers=num_workers, pin_memory=True
+    )
+    gen_loader = DataLoader(gen_ds, batch_size=batch_size, num_workers=num_workers, pin_memory=True)
 
     real_features = _extract_features(model, real_loader, dev)
     gen_features = _extract_features(model, gen_loader, dev)

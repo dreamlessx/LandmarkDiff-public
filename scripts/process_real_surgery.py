@@ -7,7 +7,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from landmarkdiff.landmarks import extract_landmarks, render_landmark_image, FaceLandmarks
+from landmarkdiff.landmarks import FaceLandmarks, extract_landmarks, render_landmark_image
 
 
 def split_comparison_image(img: np.ndarray) -> list[tuple[np.ndarray, np.ndarray]]:
@@ -24,43 +24,49 @@ def split_comparison_image(img: np.ndarray) -> list[tuple[np.ndarray, np.ndarray
     if aspect > 1.2:
         mid = w // 2
         gap = max(2, w // 100)
-        left = img[:, :mid - gap]
-        right = img[:, mid + gap:]
+        left = img[:, : mid - gap]
+        right = img[:, mid + gap :]
         if left.shape[1] > 80 and right.shape[1] > 80:
             target_h = min(left.shape[0], right.shape[0])
             target_w = min(left.shape[1], right.shape[1])
-            candidates.append((
-                cv2.resize(left, (target_w, target_h)),
-                cv2.resize(right, (target_w, target_h)),
-            ))
+            candidates.append(
+                (
+                    cv2.resize(left, (target_w, target_h)),
+                    cv2.resize(right, (target_w, target_h)),
+                )
+            )
 
     # Strategy 2: Vertical split (top/bottom)
     if aspect < 0.85:
         mid = h // 2
         gap = max(2, h // 100)
-        top = img[:mid - gap, :]
-        bottom = img[mid + gap:, :]
+        top = img[: mid - gap, :]
+        bottom = img[mid + gap :, :]
         if top.shape[0] > 80 and bottom.shape[0] > 80:
             target_h = min(top.shape[0], bottom.shape[0])
             target_w = min(top.shape[1], bottom.shape[1])
-            candidates.append((
-                cv2.resize(top, (target_w, target_h)),
-                cv2.resize(bottom, (target_w, target_h)),
-            ))
+            candidates.append(
+                (
+                    cv2.resize(top, (target_w, target_h)),
+                    cv2.resize(bottom, (target_w, target_h)),
+                )
+            )
 
     # Strategy 3: For ~square images, try horizontal anyway
     if 0.85 <= aspect <= 1.2:
         mid = w // 2
         gap = max(2, w // 100)
-        left = img[:, :mid - gap]
-        right = img[:, mid + gap:]
+        left = img[:, : mid - gap]
+        right = img[:, mid + gap :]
         if left.shape[1] > 80 and right.shape[1] > 80:
             target_h = min(left.shape[0], right.shape[0])
             target_w = min(left.shape[1], right.shape[1])
-            candidates.append((
-                cv2.resize(left, (target_w, target_h)),
-                cv2.resize(right, (target_w, target_h)),
-            ))
+            candidates.append(
+                (
+                    cv2.resize(left, (target_w, target_h)),
+                    cv2.resize(right, (target_w, target_h)),
+                )
+            )
 
     return candidates
 
@@ -92,10 +98,18 @@ def compute_displacement(
 
 def main():
     parser = argparse.ArgumentParser(description="Process real surgery before/after images")
-    parser.add_argument("--raw_dir", type=str, default="data/real_surgery_pairs/raw",
-                        help="Directory with raw comparison images")
-    parser.add_argument("--output", type=str, default="data/real_surgery_pairs",
-                        help="Output directory for processed pairs")
+    parser.add_argument(
+        "--raw_dir",
+        type=str,
+        default="data/real_surgery_pairs/raw",
+        help="Directory with raw comparison images",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="data/real_surgery_pairs",
+        help="Output directory for processed pairs",
+    )
     parser.add_argument("--size", type=int, default=512, help="Target image size")
     args = parser.parse_args()
 
@@ -118,7 +132,9 @@ def main():
             continue
 
         images = sorted(proc_dir.glob("*"))
-        images = [f for f in images if f.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp", ".bmp"}]
+        images = [
+            f for f in images if f.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
+        ]
         print(f"\n=== {proc}: {len(images)} raw images ===")
 
         proc_displacements = []
@@ -134,9 +150,7 @@ def main():
                 continue
 
             for before, after in candidates:
-                face_before, face_after = validate_and_extract(
-                    before, after, args.size
-                )
+                face_before, face_after = validate_and_extract(before, after, args.size)
 
                 if face_before is None or face_after is None:
                     continue
@@ -164,17 +178,19 @@ def main():
                 cv2.imwrite(str(before_path), before_img)
                 cv2.imwrite(str(before_mesh_path), before_mesh)
 
-                all_pairs.append({
-                    "pair_id": pair_idx,
-                    "procedure": proc,
-                    "source_image": str(img_path),
-                    "input_path": str(input_path),
-                    "target_path": str(target_path),
-                    "before_path": str(before_path),
-                    "before_mesh_path": str(before_mesh_path),
-                    "mean_displacement": float(np.mean(np.abs(disp))),
-                    "max_displacement": float(np.max(np.abs(disp))),
-                })
+                all_pairs.append(
+                    {
+                        "pair_id": pair_idx,
+                        "procedure": proc,
+                        "source_image": str(img_path),
+                        "input_path": str(input_path),
+                        "target_path": str(target_path),
+                        "before_path": str(before_path),
+                        "before_mesh_path": str(before_mesh_path),
+                        "mean_displacement": float(np.mean(np.abs(disp))),
+                        "max_displacement": float(np.max(np.abs(disp))),
+                    }
+                )
 
                 pair_idx += 1
                 proc_valid += 1
@@ -208,7 +224,7 @@ def main():
     with open(output_dir / "displacement_stats.json", "w") as f:
         json.dump(displacement_stats, f, indent=2)
 
-    print(f"\n=== Summary ===")
+    print("\n=== Summary ===")
     print(f"Total valid pairs: {len(all_pairs)}")
     for proc in procedures:
         n = len([p for p in all_pairs if p["procedure"] == proc])

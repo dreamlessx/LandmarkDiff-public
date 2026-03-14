@@ -13,10 +13,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from landmarkdiff.inference import LandmarkDiffPipeline
-from landmarkdiff.landmarks import extract_landmarks, render_landmark_image
-from landmarkdiff.conditioning import generate_conditioning
-from landmarkdiff.manipulation import apply_procedure_preset
-from landmarkdiff.masking import generate_surgical_mask, mask_to_3channel
+from landmarkdiff.masking import mask_to_3channel
 
 
 def run_single(
@@ -49,6 +46,7 @@ def run_single(
     except Exception as e:
         print(f"  ERROR: {e}")
         import traceback
+
         traceback.print_exc()
         return False
     elapsed = time.time() - t0
@@ -127,7 +125,9 @@ def _build_master_grid(out: Path, images: list[str], procedures: list[str]) -> N
                 img = cv2.imread(str(result_path))
                 if img is not None:
                     img = cv2.resize(img, (200, 200))
-                    cv2.putText(img, proc[:8], (5, 190), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
+                    cv2.putText(
+                        img, proc[:8], (5, 190), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1
+                    )
                     panels.append(img)
 
         if len(panels) > 1:
@@ -148,7 +148,9 @@ def _build_master_grid(out: Path, images: list[str], procedures: list[str]) -> N
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run LandmarkDiff inference")
-    parser.add_argument("--image", default=None, help="Path to face image (or run on all FFHQ samples)")
+    parser.add_argument(
+        "--image", default=None, help="Path to face image (or run on all FFHQ samples)"
+    )
     parser.add_argument("--output", default="scripts/final_output/inference")
     args = parser.parse_args()
 

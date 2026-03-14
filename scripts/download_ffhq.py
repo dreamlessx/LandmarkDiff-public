@@ -19,6 +19,7 @@ def download_from_huggingface(
     except ImportError:
         print("Installing datasets library...")
         import subprocess
+
         subprocess.check_call([sys.executable, "-m", "pip", "install", "datasets"])
         from datasets import load_dataset
 
@@ -50,7 +51,7 @@ def download_from_huggingface(
         return
 
     count = 0
-    for i, sample in enumerate(dataset):
+    for _i, sample in enumerate(dataset):
         if count >= num_images:
             break
 

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import base64
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import cv2
@@ -12,10 +11,10 @@ import pytest
 
 from landmarkdiff.api_client import LandmarkDiffClient, PredictionResult
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def sample_image(tmp_path):
@@ -35,11 +34,14 @@ def _encode_to_b64(img: np.ndarray) -> str:
 # PredictionResult tests
 # ---------------------------------------------------------------------------
 
+
 class TestPredictionResult:
     def test_save(self, tmp_path):
         img = np.random.randint(0, 255, (256, 256, 3), dtype=np.uint8)
         result = PredictionResult(
-            output_image=img, procedure="rhinoplasty", intensity=65.0,
+            output_image=img,
+            procedure="rhinoplasty",
+            intensity=65.0,
         )
         out_path = tmp_path / "result.png"
         result.save(out_path)
@@ -50,7 +52,9 @@ class TestPredictionResult:
     def test_defaults(self):
         img = np.zeros((10, 10, 3), dtype=np.uint8)
         result = PredictionResult(
-            output_image=img, procedure="test", intensity=50.0,
+            output_image=img,
+            procedure="test",
+            intensity=50.0,
         )
         assert result.confidence == 0.0
         assert result.metrics == {}
@@ -61,6 +65,7 @@ class TestPredictionResult:
 # ---------------------------------------------------------------------------
 # Client initialization
 # ---------------------------------------------------------------------------
+
 
 class TestClientInit:
     def test_init(self):
@@ -84,6 +89,7 @@ class TestClientInit:
 # ---------------------------------------------------------------------------
 # API calls (mocked)
 # ---------------------------------------------------------------------------
+
 
 class TestHealth:
     @patch("landmarkdiff.api_client.LandmarkDiffClient._get_session")
@@ -136,7 +142,9 @@ class TestPredict:
 
         client = LandmarkDiffClient()
         result = client.predict(
-            sample_image, procedure="rhinoplasty", intensity=65.0,
+            sample_image,
+            procedure="rhinoplasty",
+            intensity=65.0,
         )
         assert isinstance(result, PredictionResult)
         assert result.output_image.shape == (512, 512, 3)
@@ -190,7 +198,8 @@ class TestBatchPredict:
         mock_predict.side_effect = [
             PredictionResult(
                 output_image=np.zeros((512, 512, 3), dtype=np.uint8),
-                procedure="rhinoplasty", intensity=65.0,
+                procedure="rhinoplasty",
+                intensity=65.0,
             ),
             ConnectionError("Server down"),
         ]
@@ -209,6 +218,7 @@ class TestBatchPredict:
 # Image encoding/decoding
 # ---------------------------------------------------------------------------
 
+
 class TestImageCodec:
     def test_decode_base64_image(self):
         client = LandmarkDiffClient()
@@ -219,7 +229,7 @@ class TestImageCodec:
 
     def test_decode_invalid_base64(self):
         client = LandmarkDiffClient()
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             client._decode_base64_image("not-valid-base64!!!")
 
     def test_read_image(self, sample_image):

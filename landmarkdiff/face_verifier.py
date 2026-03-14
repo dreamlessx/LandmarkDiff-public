@@ -15,18 +15,16 @@ Designed for:
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
 
 import cv2
 import numpy as np
 
-
 # ---------------------------------------------------------------------------
 # Data structures
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class DistortionReport:
@@ -36,13 +34,13 @@ class DistortionReport:
     quality_score: float = 0.0
 
     # Individual distortion scores (0-1, higher = more distorted)
-    blur_score: float = 0.0          # Laplacian variance-based
-    noise_score: float = 0.0         # High-freq energy ratio
-    compression_score: float = 0.0   # JPEG block artifact detection
-    oversmooth_score: float = 0.0    # Beauty filter / airbrushed detection
-    color_cast_score: float = 0.0    # Unnatural color shift
-    geometric_distort: float = 0.0   # Face proportion anomalies
-    lighting_score: float = 0.0      # Over/under exposure
+    blur_score: float = 0.0  # Laplacian variance-based
+    noise_score: float = 0.0  # High-freq energy ratio
+    compression_score: float = 0.0  # JPEG block artifact detection
+    oversmooth_score: float = 0.0  # Beauty filter / airbrushed detection
+    color_cast_score: float = 0.0  # Unnatural color shift
+    geometric_distort: float = 0.0  # Face proportion anomalies
+    lighting_score: float = 0.0  # Over/under exposure
 
     # Classification
     primary_distortion: str = "none"
@@ -74,14 +72,14 @@ class DistortionReport:
 class RestorationResult:
     """Result of neural face restoration pipeline."""
 
-    restored: np.ndarray                    # Restored BGR image
-    original: np.ndarray                    # Original BGR image
-    distortion_report: DistortionReport     # Pre-restoration analysis
-    post_quality_score: float = 0.0         # Quality after restoration
-    identity_similarity: float = 0.0        # ArcFace cosine sim (original vs restored)
-    identity_preserved: bool = True         # Whether identity check passed
+    restored: np.ndarray  # Restored BGR image
+    original: np.ndarray  # Original BGR image
+    distortion_report: DistortionReport  # Pre-restoration analysis
+    post_quality_score: float = 0.0  # Quality after restoration
+    identity_similarity: float = 0.0  # ArcFace cosine sim (original vs restored)
+    identity_preserved: bool = True  # Whether identity check passed
     restoration_stages: list[str] = field(default_factory=list)  # Which nets ran
-    improvement: float = 0.0               # quality_after - quality_before
+    improvement: float = 0.0  # quality_after - quality_before
 
     def summary(self) -> str:
         lines = [
@@ -100,9 +98,9 @@ class BatchVerificationReport:
     """Summary of batch face verification/restoration."""
 
     total: int = 0
-    passed: int = 0           # Good quality, no fix needed
-    restored: int = 0         # Fixed and now usable
-    rejected: int = 0         # Too distorted to salvage
+    passed: int = 0  # Good quality, no fix needed
+    restored: int = 0  # Fixed and now usable
+    rejected: int = 0  # Too distorted to salvage
     identity_failures: int = 0  # Restoration changed identity
     avg_quality_before: float = 0.0
     avg_quality_after: float = 0.0
@@ -123,7 +121,8 @@ class BatchVerificationReport:
             "Distortion Breakdown:",
         ]
         for dist_type, count in sorted(
-            self.distortion_counts.items(), key=lambda x: -x[1],
+            self.distortion_counts.items(),
+            key=lambda x: -x[1],
         ):
             lines.append(f"  {dist_type}: {count}")
         return "\n".join(lines)
@@ -132,6 +131,7 @@ class BatchVerificationReport:
 # ---------------------------------------------------------------------------
 # Distortion Detection (classical + neural)
 # ---------------------------------------------------------------------------
+
 
 def detect_blur(image: np.ndarray) -> float:
     """Detect blur using Laplacian variance.
@@ -147,7 +147,7 @@ def detect_blur(image: np.ndarray) -> float:
     # Gradient magnitude (secondary)
     gx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
     gy = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
-    grad_mag = np.sqrt(gx ** 2 + gy ** 2).mean()
+    grad_mag = np.sqrt(gx**2 + gy**2).mean()
 
     # Normalize: typical sharp face has lap_var > 500, grad_mag > 30
     blur_lap = 1.0 - min(lap_var / 800.0, 1.0)
@@ -221,7 +221,7 @@ def detect_oversmoothing(image: np.ndarray) -> float:
     # Focus on face center region (avoid background)
     if h < 8 or w < 8:
         return 0.0  # Too small to analyze
-    roi = gray[h // 4:3 * h // 4, w // 4:3 * w // 4]
+    roi = gray[h // 4 : 3 * h // 4, w // 4 : 3 * w // 4]
 
     # Texture energy: variance of high-pass filtered image
     blurred = cv2.GaussianBlur(roi.astype(np.float64), (0, 0), 2.0)
@@ -254,7 +254,7 @@ def detect_color_cast(image: np.ndarray) -> float:
     h, w = image.shape[:2]
 
     # Sample face center region
-    roi = lab[h // 4:3 * h // 4, w // 4:3 * w // 4]
+    roi = lab[h // 4 : 3 * h // 4, w // 4 : 3 * w // 4]
 
     # A channel: green-red axis (neutral ~128)
     # B channel: blue-yellow axis (neutral ~128)
@@ -337,7 +337,7 @@ def detect_lighting_issues(image: np.ndarray) -> float:
 
     # Check for clipping
     overexposed = np.mean(l_channel > 245) * 5  # Fraction near white
-    underexposed = np.mean(l_channel < 10) * 5   # Fraction near black
+    underexposed = np.mean(l_channel < 10) * 5  # Fraction near black
 
     # Check for bimodal distribution (harsh shadows)
     hist = cv2.calcHist([l_channel], [0], None, [256], [0, 256]).flatten()
@@ -440,6 +440,7 @@ def _get_face_quality_scorer():
 
     try:
         from facexlib.assessment import init_assessment_model
+
         _FACE_QUALITY_NET = init_assessment_model("hypernet")
         return _FACE_QUALITY_NET
     except Exception:
@@ -461,6 +462,7 @@ def neural_quality_score(image: np.ndarray) -> float:
         try:
             import torch
             from facexlib.utils import img2tensor
+
             img_t = img2tensor(image / 255.0, bgr2rgb=True, float32=True)
             img_t = img_t.unsqueeze(0)
             if torch.cuda.is_available():
@@ -480,6 +482,7 @@ def neural_quality_score(image: np.ndarray) -> float:
 # ---------------------------------------------------------------------------
 # Neural Face Restoration (cascaded)
 # ---------------------------------------------------------------------------
+
 
 def restore_face(
     image: np.ndarray,
@@ -563,6 +566,7 @@ def restore_face(
     post_blur = detect_blur(result)
     if post_blur > 0.3:
         from landmarkdiff.postprocess import frequency_aware_sharpen
+
         result = frequency_aware_sharpen(result, strength=0.3)
         stages.append("sharpen")
 
@@ -573,6 +577,7 @@ def _try_codeformer(image: np.ndarray, fidelity: float = 0.7) -> np.ndarray | No
     """Try CodeFormer restoration. Returns None if unavailable."""
     try:
         from landmarkdiff.postprocess import restore_face_codeformer
+
         restored = restore_face_codeformer(image, fidelity=fidelity)
         if restored is not image:
             return restored
@@ -585,6 +590,7 @@ def _try_gfpgan(image: np.ndarray) -> np.ndarray | None:
     """Try GFPGAN restoration. Returns None if unavailable."""
     try:
         from landmarkdiff.postprocess import restore_face_gfpgan
+
         restored = restore_face_gfpgan(image)
         if restored is not image:
             return restored
@@ -599,15 +605,19 @@ _FV_REALESRGAN = None
 def _try_realesrgan(image: np.ndarray) -> np.ndarray | None:
     """Try Real-ESRGAN 2x upscale + downsample. Returns None if unavailable."""
     try:
-        from realesrgan import RealESRGANer
-        from basicsr.archs.rrdbnet_arch import RRDBNet
         import torch
+        from basicsr.archs.rrdbnet_arch import RRDBNet
+        from realesrgan import RealESRGANer
 
         global _FV_REALESRGAN
         if _FV_REALESRGAN is None:
             model = RRDBNet(
-                num_in_ch=3, num_out_ch=3, num_feat=64,
-                num_block=23, num_grow_ch=32, scale=4,
+                num_in_ch=3,
+                num_out_ch=3,
+                num_feat=64,
+                num_block=23,
+                num_grow_ch=32,
+                scale=4,
             )
             _FV_REALESRGAN = RealESRGANer(
                 scale=4,
@@ -668,8 +678,8 @@ def _get_arcface():
         return _ARCFACE_APP
 
     try:
-        from insightface.app import FaceAnalysis
         import torch
+        from insightface.app import FaceAnalysis
 
         app = FaceAnalysis(
             name="buffalo_l",
@@ -717,9 +727,9 @@ def verify_identity(
     if emb_orig is None or emb_rest is None:
         return -1.0, True  # Can't verify — assume OK
 
-    sim = float(np.dot(emb_orig, emb_rest) / (
-        np.linalg.norm(emb_orig) * np.linalg.norm(emb_rest) + 1e-8
-    ))
+    sim = float(
+        np.dot(emb_orig, emb_rest) / (np.linalg.norm(emb_orig) * np.linalg.norm(emb_rest) + 1e-8)
+    )
     sim = float(np.clip(sim, -1, 1))
     return sim, sim >= threshold
 
@@ -727,6 +737,7 @@ def verify_identity(
 # ---------------------------------------------------------------------------
 # Full Verification + Restoration Pipeline
 # ---------------------------------------------------------------------------
+
 
 def verify_and_restore(
     image: np.ndarray,
@@ -813,6 +824,7 @@ def verify_and_restore(
 # Batch Processing
 # ---------------------------------------------------------------------------
 
+
 def verify_batch(
     image_dir: str,
     output_dir: str | None = None,
@@ -858,10 +870,9 @@ def verify_batch(
         rejected_dir.mkdir(parents=True, exist_ok=True)
 
     # Find all images
-    image_files = sorted([
-        f for f in image_path.iterdir()
-        if f.suffix.lower() in extensions and f.is_file()
-    ])
+    image_files = sorted(
+        [f for f in image_path.iterdir() if f.suffix.lower() in extensions and f.is_file()]
+    )
 
     report = BatchVerificationReport(total=len(image_files))
     quality_before = []

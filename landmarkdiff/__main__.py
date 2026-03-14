@@ -16,12 +16,25 @@ def main():
     # inference
     infer = subparsers.add_parser("infer", help="Run inference on an image")
     infer.add_argument("image", type=str, help="Path to input face image")
-    infer.add_argument("--procedure", type=str, default="rhinoplasty",
-                       choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"])
-    infer.add_argument("--intensity", type=float, default=60.0,
-                       help="Deformation intensity (0-100)")
-    infer.add_argument("--mode", type=str, default="tps",
-                       choices=["tps", "controlnet", "img2img", "controlnet_ip"])
+    infer.add_argument(
+        "--procedure",
+        type=str,
+        default="rhinoplasty",
+        choices=[
+            "rhinoplasty",
+            "blepharoplasty",
+            "rhytidectomy",
+            "orthognathic",
+            "brow_lift",
+            "mentoplasty",
+        ],
+    )
+    infer.add_argument(
+        "--intensity", type=float, default=60.0, help="Deformation intensity (0-100)"
+    )
+    infer.add_argument(
+        "--mode", type=str, default="tps", choices=["tps", "controlnet", "img2img", "controlnet_ip"]
+    )
     infer.add_argument("--output", type=str, default="output/")
     infer.add_argument("--steps", type=int, default=30)
     infer.add_argument("--seed", type=int, default=None)
@@ -38,6 +51,7 @@ def main():
 
     if args.version:
         from landmarkdiff import __version__
+
         print(f"landmarkdiff {__version__}")
         return
 
@@ -55,8 +69,10 @@ def main():
 
 def _run_inference(args):
     from pathlib import Path
+
     import numpy as np
     from PIL import Image
+
     from landmarkdiff.landmarks import extract_landmarks
     from landmarkdiff.manipulation import apply_procedure_preset
 
@@ -75,6 +91,7 @@ def _run_inference(args):
 
     if args.mode == "tps":
         from landmarkdiff.synthetic.tps_warp import warp_image_tps
+
         src = landmarks.pixel_coords[:, :2].copy()
         dst = deformed.pixel_coords[:, :2].copy()
         src[:, 0] *= 512 / landmarks.image_width
@@ -86,6 +103,7 @@ def _run_inference(args):
         print(f"saved tps result to {output_dir / 'prediction.png'}")
     else:
         from landmarkdiff.inference import LandmarkDiffPipeline
+
         pipeline = LandmarkDiffPipeline(mode=args.mode, device="cuda")
         pipeline.load()
         result = pipeline.generate(
@@ -101,8 +119,10 @@ def _run_inference(args):
 
 def _run_landmarks(args):
     from pathlib import Path
+
     import numpy as np
     from PIL import Image
+
     from landmarkdiff.landmarks import extract_landmarks, render_landmark_image
 
     img = np.array(Image.open(args.image).convert("RGB").resize((512, 512)))
@@ -117,6 +137,7 @@ def _run_landmarks(args):
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     from PIL import Image
+
     Image.fromarray(mesh).save(str(output_path))
     print(f"saved landmark mesh to {output_path}")
     print(f"detected {len(landmarks.landmarks)} landmarks, confidence {landmarks.confidence:.2f}")
@@ -125,6 +146,7 @@ def _run_landmarks(args):
 def _run_demo():
     try:
         from scripts.app import build_app
+
         demo = build_app()
         demo.launch()
     except ImportError:

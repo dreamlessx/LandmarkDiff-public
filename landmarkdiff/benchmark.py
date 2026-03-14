@@ -63,17 +63,19 @@ class InferenceBenchmark:
         if throughput_fps == 0.0 and latency_ms > 0:
             throughput_fps = 1000.0 / latency_ms * batch_size
 
-        self.results.append(BenchmarkResult(
-            config_name=config_name,
-            latency_ms=latency_ms,
-            throughput_fps=throughput_fps,
-            vram_gb=vram_gb,
-            batch_size=batch_size,
-            resolution=resolution,
-            num_inference_steps=num_inference_steps,
-            device=device,
-            metadata=metadata,
-        ))
+        self.results.append(
+            BenchmarkResult(
+                config_name=config_name,
+                latency_ms=latency_ms,
+                throughput_fps=throughput_fps,
+                vram_gb=vram_gb,
+                batch_size=batch_size,
+                resolution=resolution,
+                num_inference_steps=num_inference_steps,
+                device=device,
+                metadata=metadata,
+            )
+        )
 
     def mean_latency(self, config_name: str | None = None) -> float:
         """Mean latency in ms, optionally filtered by config."""
@@ -124,7 +126,10 @@ class InferenceBenchmark:
         if not configs:
             return "No benchmark results."
 
-        header = f"{'Config':>20s} | {'Mean(ms)':>10s} | {'P99(ms)':>10s} | {'FPS':>8s} | {'VRAM(GB)':>8s} | {'N':>4s}"
+        header = (
+            f"{'Config':>20s} | {'Mean(ms)':>10s} | {'P99(ms)':>10s}"
+            f" | {'FPS':>8s} | {'VRAM(GB)':>8s} | {'N':>4s}"
+        )
         lines = [
             f"Inference Benchmark: {self.model_name}",
             header,

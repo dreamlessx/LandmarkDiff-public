@@ -14,13 +14,11 @@ import json
 import time
 from pathlib import Path
 
-import cv2
 import numpy as np
 import torch
-import torch.nn.functional as F
 from PIL import Image
 
-from landmarkdiff.evaluation import compute_ssim, compute_lpips, compute_nme
+from landmarkdiff.evaluation import compute_lpips, compute_ssim
 
 
 class ValidationCallback:
@@ -116,13 +114,18 @@ class ValidationCallback:
 
                 # ControlNet
                 down_samples, mid_sample = controlnet(
-                    scaled, t, encoder_hidden_states=encoder_hidden_states,
-                    controlnet_cond=conditioning, return_dict=False,
+                    scaled,
+                    t,
+                    encoder_hidden_states=encoder_hidden_states,
+                    controlnet_cond=conditioning,
+                    return_dict=False,
                 )
 
                 # UNet with ControlNet residuals
                 noise_pred = unet(
-                    scaled, t, encoder_hidden_states=encoder_hidden_states,
+                    scaled,
+                    t,
+                    encoder_hidden_states=encoder_hidden_states,
                     down_block_additional_residuals=down_samples,
                     mid_block_additional_residual=mid_sample,
                 ).sample
@@ -136,7 +139,9 @@ class ValidationCallback:
             # Convert to numpy for metrics
             gen_np = (decoded[0].float().permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
             tgt_np = (target[0].float().permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
-            cond_np = (conditioning[0].float().permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
+            cond_np = (conditioning[0].float().permute(1, 2, 0).cpu().numpy() * 255).astype(
+                np.uint8
+            )
 
             # BGR for metrics (our metrics expect BGR)
             gen_bgr = gen_np[:, :, ::-1].copy()
@@ -177,7 +182,7 @@ class ValidationCallback:
         if generated_images:
             grid_rows = []
             for i in range(0, len(generated_images), 4):
-                row_imgs = generated_images[i:i+4]
+                row_imgs = generated_images[i : i + 4]
                 while len(row_imgs) < 4:
                     row_imgs.append(np.zeros_like(generated_images[0]))
                 grid_rows.append(np.hstack(row_imgs))
@@ -202,6 +207,7 @@ class ValidationCallback:
 
         try:
             import matplotlib
+
             matplotlib.use("Agg")
             import matplotlib.pyplot as plt
         except ImportError:

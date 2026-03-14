@@ -3,16 +3,15 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import pytest
 
 from landmarkdiff.data_version import DataManifest, FileEntry
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _create_dataset(tmp_path, n_files=5, proc="rhinoplasty"):
     """Create a fake dataset directory with images."""
@@ -26,6 +25,7 @@ def _create_dataset(tmp_path, n_files=5, proc="rhinoplasty"):
 # ---------------------------------------------------------------------------
 # FileEntry
 # ---------------------------------------------------------------------------
+
 
 class TestFileEntry:
     def test_from_path(self, tmp_path):
@@ -54,6 +54,7 @@ class TestFileEntry:
 # ---------------------------------------------------------------------------
 # DataManifest creation
 # ---------------------------------------------------------------------------
+
 
 class TestManifestCreation:
     def test_from_directory(self, tmp_path):
@@ -100,7 +101,8 @@ class TestManifestCreation:
         (tmp_path / "a_target.png").write_bytes(b"b")
         (tmp_path / "a_mask.png").write_bytes(b"c")
         manifest = DataManifest.from_directory(
-            tmp_path, include_patterns=["*_input.png"],
+            tmp_path,
+            include_patterns=["*_input.png"],
         )
         assert manifest.total_files == 1
 
@@ -108,6 +110,7 @@ class TestManifestCreation:
 # ---------------------------------------------------------------------------
 # Save and load
 # ---------------------------------------------------------------------------
+
 
 class TestSaveLoad:
     def test_roundtrip(self, tmp_path):
@@ -142,6 +145,7 @@ class TestSaveLoad:
 # ---------------------------------------------------------------------------
 # Verification
 # ---------------------------------------------------------------------------
+
 
 class TestVerify:
     def test_verify_intact(self, tmp_path):
@@ -183,6 +187,7 @@ class TestVerify:
 # ---------------------------------------------------------------------------
 # Diff
 # ---------------------------------------------------------------------------
+
 
 class TestDiff:
     def test_no_changes(self, tmp_path):
@@ -236,6 +241,7 @@ class TestDiff:
 # ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
+
 
 class TestSummary:
     def test_summary_text(self, tmp_path):

@@ -141,8 +141,8 @@ def make_intensity_sweep(
     intensities: list[float] | None = None,
 ) -> None:
     """Show effect of intensity parameter on a single procedure."""
-    from landmarkdiff.landmarks import extract_landmarks, render_landmark_image
     from landmarkdiff.conditioning import generate_conditioning
+    from landmarkdiff.landmarks import extract_landmarks
     from landmarkdiff.manipulation import apply_procedure_preset
     from landmarkdiff.masking import generate_surgical_mask
 
@@ -163,7 +163,11 @@ def make_intensity_sweep(
     _, _, orig_wf = generate_conditioning(face, 512, 512)
 
     panels = [add_label(resize_to_height(image, 256), "Original", 0.4)]
-    panels.append(add_label(resize_to_height(cv2.cvtColor(orig_wf, cv2.COLOR_GRAY2BGR), 256), "Wireframe", 0.4))
+    panels.append(
+        add_label(
+            resize_to_height(cv2.cvtColor(orig_wf, cv2.COLOR_GRAY2BGR), 256), "Wireframe", 0.4
+        )
+    )
 
     for intensity in intensities:
         manip = apply_procedure_preset(face, procedure, intensity, 512)
@@ -242,6 +246,8 @@ if __name__ == "__main__":
 
     # 4. Before/after grid from demo_pairs
     if Path("data/demo_pairs").exists():
-        make_training_pair_gallery("data/demo_pairs", str(out / "gallery_demo_pairs.png"), max_pairs=4)
+        make_training_pair_gallery(
+            "data/demo_pairs", str(out / "gallery_demo_pairs.png"), max_pairs=4
+        )
 
     print("\nAll galleries saved to scripts/final_output/")

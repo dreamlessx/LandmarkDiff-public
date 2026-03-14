@@ -139,9 +139,7 @@ class ModelRegistry:
             step = int(parts[-1])
 
         # Compute size
-        size_mb = sum(
-            f.stat().st_size for f in ckpt_dir.rglob("*") if f.is_file()
-        ) / (1024 * 1024)
+        size_mb = sum(f.stat().st_size for f in ckpt_dir.rglob("*") if f.is_file()) / (1024 * 1024)
 
         return ModelEntry(
             name=ckpt_dir.name,
@@ -195,16 +193,15 @@ class ModelRegistry:
         Returns:
             Best ModelEntry, or None if no models have the metric.
         """
-        candidates = [
-            m for m in self._models.values()
-            if metric in m.metrics
-        ]
+        candidates = [m for m in self._models.values() if metric in m.metrics]
         if not candidates:
             return None
 
-        return min(candidates, key=lambda m: m.metrics[metric])  \
-            if lower_is_better else \
-            max(candidates, key=lambda m: m.metrics[metric])
+        return (
+            min(candidates, key=lambda m: m.metrics[metric])
+            if lower_is_better
+            else max(candidates, key=lambda m: m.metrics[metric])
+        )
 
     def get_by_step(self, step: int) -> ModelEntry | None:
         """Get a model by its training step."""
@@ -266,9 +263,7 @@ class ModelRegistry:
             raise KeyError(f"Checkpoint '{name}' not found in registry")
 
         if use_ema and entry.has_ema:
-            return ControlNetModel.from_pretrained(
-                str(entry.path / "controlnet_ema")
-            )
+            return ControlNetModel.from_pretrained(str(entry.path / "controlnet_ema"))
 
         # Fallback: load from training state
         state = self.load(name)
@@ -356,9 +351,7 @@ class ModelRegistry:
         for metric in sorted(all_metrics):
             values = [m.metrics[metric] for m in models if metric in m.metrics]
             if values:
-                lines.append(
-                    f"  {metric}: {min(values):.4f} — {max(values):.4f}"
-                )
+                lines.append(f"  {metric}: {min(values):.4f} — {max(values):.4f}")
 
         return "\n".join(lines)
 

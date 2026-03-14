@@ -11,7 +11,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from landmarkdiff.safety import SafetyValidator, SafetyResult
+from landmarkdiff.safety import SafetyResult, SafetyValidator
 
 
 class TestSafetyResult:
@@ -165,6 +165,7 @@ class TestSafetyValidator:
         assert meta_path.exists()
 
         import json
+
         with open(meta_path) as f:
             meta = json.load(f)
         assert meta["procedure"] == "rhinoplasty"

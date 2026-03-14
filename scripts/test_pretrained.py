@@ -3,12 +3,13 @@
 Generates side-by-side comparisons to see if fine-tuning helps or hurts.
 """
 
-import torch
+from pathlib import Path
+
 import cv2
 import numpy as np
-from PIL import Image
-from pathlib import Path
+import torch
 from diffusers import ControlNetModel, StableDiffusionControlNetPipeline, UniPCMultistepScheduler
+from PIL import Image
 
 from landmarkdiff.landmarks import extract_landmarks, render_landmark_image
 
@@ -18,13 +19,19 @@ def test_model(controlnet, label, test_images, output_dir):
     print(f"\n=== Testing: {label} ===")
 
     pipe = StableDiffusionControlNetPipeline.from_pretrained(
-        "runwayml/stable-diffusion-v1-5", controlnet=controlnet,
-        torch_dtype=torch.float16, safety_checker=None, requires_safety_checker=False,
+        "runwayml/stable-diffusion-v1-5",
+        controlnet=controlnet,
+        torch_dtype=torch.float16,
+        safety_checker=None,
+        requires_safety_checker=False,
     )
     pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
     pipe.enable_model_cpu_offload()
 
-    prompt = "high quality professional photo of a person's face, natural skin texture, photorealistic, 8k"
+    prompt = (
+        "high quality professional photo of a person's face,"
+        " natural skin texture, photorealistic, 8k"
+    )
     neg = "blurry, distorted, deformed, bad anatomy, low quality, watermark, text"
 
     for i, img_path in enumerate(test_images):
@@ -42,9 +49,12 @@ def test_model(controlnet, label, test_images, output_dir):
 
         gen = torch.Generator(device="cpu").manual_seed(42)
         result = pipe(
-            prompt=prompt, negative_prompt=neg,
-            image=mesh_pil, num_inference_steps=30,
-            guidance_scale=7.5, controlnet_conditioning_scale=1.0,
+            prompt=prompt,
+            negative_prompt=neg,
+            image=mesh_pil,
+            num_inference_steps=30,
+            guidance_scale=7.5,
+            controlnet_conditioning_scale=1.0,
             generator=gen,
         ).images[0]
 
@@ -70,7 +80,8 @@ def main():
     # 1. Pre-trained CrucibleAI (no fine-tuning)
     print("Loading pre-trained CrucibleAI...")
     pretrained = ControlNetModel.from_pretrained(
-        "CrucibleAI/ControlNetMediaPipeFace", subfolder="diffusion_sd15",
+        "CrucibleAI/ControlNetMediaPipeFace",
+        subfolder="diffusion_sd15",
         torch_dtype=torch.float16,
     )
     test_model(pretrained, "pretrained", test_images, output_dir)
@@ -82,7 +93,8 @@ def main():
     if finetuned_path.exists():
         print("Loading fine-tuned model...")
         finetuned = ControlNetModel.from_pretrained(
-            str(finetuned_path), torch_dtype=torch.float16,
+            str(finetuned_path),
+            torch_dtype=torch.float16,
         )
         test_model(finetuned, "finetuned_50k", test_images, output_dir)
         del finetuned
@@ -93,7 +105,8 @@ def main():
     if early_path.exists():
         print("Loading early checkpoint (10K)...")
         early = ControlNetModel.from_pretrained(
-            str(early_path), torch_dtype=torch.float16,
+            str(early_path),
+            torch_dtype=torch.float16,
         )
         test_model(early, "finetuned_10k", test_images, output_dir)
 

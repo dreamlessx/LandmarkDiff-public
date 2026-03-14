@@ -10,8 +10,8 @@ import pytest
 import torch
 
 from landmarkdiff.landmarks import FaceLandmarks
-from landmarkdiff.manipulation import apply_procedure_preset, PROCEDURE_LANDMARKS
-from landmarkdiff.losses import CombinedLoss, LossWeights
+from landmarkdiff.losses import CombinedLoss
+from landmarkdiff.manipulation import apply_procedure_preset
 
 
 def _make_fake_face() -> FaceLandmarks:
@@ -25,6 +25,7 @@ class TestDisplacementModel:
 
     def test_import(self):
         from landmarkdiff.displacement_model import DisplacementModel
+
         model = DisplacementModel()
         assert not model._fitted
 
@@ -37,17 +38,21 @@ class TestDisplacementModel:
         # Create synthetic displacement data
         displacements = []
         for _ in range(10):
-            displacements.append({
-                "procedure": "rhinoplasty",
-                "displacements": rng.normal(0, 0.01, (478, 2)).astype(np.float32),
-                "quality_score": 0.8,
-            })
+            displacements.append(
+                {
+                    "procedure": "rhinoplasty",
+                    "displacements": rng.normal(0, 0.01, (478, 2)).astype(np.float32),
+                    "quality_score": 0.8,
+                }
+            )
         for _ in range(8):
-            displacements.append({
-                "procedure": "blepharoplasty",
-                "displacements": rng.normal(0, 0.005, (478, 2)).astype(np.float32),
-                "quality_score": 0.7,
-            })
+            displacements.append(
+                {
+                    "procedure": "blepharoplasty",
+                    "displacements": rng.normal(0, 0.005, (478, 2)).astype(np.float32),
+                    "quality_score": 0.7,
+                }
+            )
 
         model.fit(displacements)
         assert model._fitted
@@ -69,11 +74,14 @@ class TestDisplacementModel:
 
         rng = np.random.default_rng(42)
         model = DisplacementModel()
-        displacements = [{
-            "procedure": "rhinoplasty",
-            "displacements": rng.normal(0, 0.01, (478, 2)).astype(np.float32),
-            "quality_score": 0.8,
-        } for _ in range(5)]
+        displacements = [
+            {
+                "procedure": "rhinoplasty",
+                "displacements": rng.normal(0, 0.01, (478, 2)).astype(np.float32),
+                "quality_score": 0.8,
+            }
+            for _ in range(5)
+        ]
         model.fit(displacements)
 
         with tempfile.NamedTemporaryFile(suffix=".npz", delete=False) as f:
@@ -88,6 +96,7 @@ class TestDisplacementModel:
 
     def test_not_fitted_raises(self):
         from landmarkdiff.displacement_model import DisplacementModel
+
         model = DisplacementModel()
         with pytest.raises(RuntimeError, match="not been fitted"):
             model.get_displacement_field("rhinoplasty")
@@ -101,11 +110,14 @@ class TestDataDrivenManipulation:
 
         rng = np.random.default_rng(42)
         model = DisplacementModel()
-        displacements = [{
-            "procedure": "rhinoplasty",
-            "displacements": rng.normal(0, 0.01, (478, 2)).astype(np.float32),
-            "quality_score": 0.8,
-        } for _ in range(5)]
+        displacements = [
+            {
+                "procedure": "rhinoplasty",
+                "displacements": rng.normal(0, 0.01, (478, 2)).astype(np.float32),
+                "quality_score": 0.8,
+            }
+            for _ in range(5)
+        ]
         model.fit(displacements)
 
         with tempfile.NamedTemporaryFile(suffix=".npz", delete=False) as f:
@@ -114,7 +126,9 @@ class TestDataDrivenManipulation:
 
         face = _make_fake_face()
         result = apply_procedure_preset(
-            face, "rhinoplasty", intensity=50.0,
+            face,
+            "rhinoplasty",
+            intensity=50.0,
             displacement_model_path=model_path,
         )
         assert isinstance(result, FaceLandmarks)
@@ -127,12 +141,14 @@ class TestArcFaceTorch:
     """Test PyTorch-native ArcFace module."""
 
     def test_import(self):
-        from landmarkdiff.arcface_torch import ArcFaceLoss, ArcFaceBackbone
+        from landmarkdiff.arcface_torch import ArcFaceBackbone, ArcFaceLoss
+
         assert ArcFaceLoss is not None
         assert ArcFaceBackbone is not None
 
     def test_backbone_forward(self):
         from landmarkdiff.arcface_torch import ArcFaceBackbone
+
         backbone = ArcFaceBackbone()
         x = torch.randn(2, 3, 112, 112)
         with torch.no_grad():
@@ -143,8 +159,10 @@ class TestArcFaceTorch:
         torch.testing.assert_close(norms, torch.ones(2), atol=1e-4, rtol=1e-4)
 
     def test_loss_forward(self):
-        from landmarkdiff.arcface_torch import ArcFaceLoss
         import warnings
+
+        from landmarkdiff.arcface_torch import ArcFaceLoss
+
         warnings.filterwarnings("ignore")
         loss_fn = ArcFaceLoss()
         pred = torch.rand(2, 3, 256, 256)
@@ -154,8 +172,10 @@ class TestArcFaceTorch:
         assert loss.item() >= 0
 
     def test_orthognathic_zero(self):
-        from landmarkdiff.arcface_torch import ArcFaceLoss
         import warnings
+
+        from landmarkdiff.arcface_torch import ArcFaceLoss
+
         warnings.filterwarnings("ignore")
         loss_fn = ArcFaceLoss()
         pred = torch.rand(2, 3, 256, 256)
@@ -165,8 +185,10 @@ class TestArcFaceTorch:
 
     def test_gradient_flows(self):
         """The key test: gradients must flow through pred_image."""
-        from landmarkdiff.arcface_torch import ArcFaceLoss
         import warnings
+
+        from landmarkdiff.arcface_torch import ArcFaceLoss
+
         warnings.filterwarnings("ignore")
         loss_fn = ArcFaceLoss()
         pred = torch.rand(1, 3, 112, 112, requires_grad=True)
@@ -184,17 +206,20 @@ class TestCombinedLossIntegration:
         combined = CombinedLoss(phase="A")
         # Should use IdentityLoss (ONNX), not ArcFaceLoss
         from landmarkdiff.losses import IdentityLoss
+
         assert isinstance(combined.identity_loss, IdentityLoss)
 
     def test_phase_b_differentiable(self):
         combined = CombinedLoss(phase="B", use_differentiable_arcface=True)
         from landmarkdiff.arcface_torch import ArcFaceLoss
+
         assert isinstance(combined.identity_loss, ArcFaceLoss)
 
     def test_phase_b_backward_compat(self):
         """Phase B without flag should still work (uses ONNX)."""
         combined = CombinedLoss(phase="B")
         from landmarkdiff.losses import IdentityLoss
+
         assert isinstance(combined.identity_loss, IdentityLoss)
 
 
@@ -203,6 +228,7 @@ class TestValidationCallback:
 
     def test_import(self):
         from landmarkdiff.validation import ValidationCallback
+
         assert ValidationCallback is not None
 
 
@@ -236,11 +262,12 @@ class TestExportResults:
 
         # Import and test
         import sys
+
         sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
         from export_results import (
-            load_report,
-            compute_per_procedure_metrics,
             compute_fitzpatrick_metrics,
+            compute_per_procedure_metrics,
+            load_report,
         )
 
         loaded = load_report(report_path)

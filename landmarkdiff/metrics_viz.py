@@ -24,7 +24,6 @@ Usage:
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 
@@ -82,22 +81,26 @@ class MetricsVisualizer:
     def _get_plt(self):
         """Import matplotlib with configuration."""
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
+
         try:
             plt.style.use(self.style)
         except OSError:
             plt.style.use("seaborn-v0_8")
         # Publication font sizes
-        plt.rcParams.update({
-            "font.size": 10,
-            "axes.titlesize": 12,
-            "axes.labelsize": 11,
-            "xtick.labelsize": 9,
-            "ytick.labelsize": 9,
-            "legend.fontsize": 9,
-            "figure.titlesize": 13,
-        })
+        plt.rcParams.update(
+            {
+                "font.size": 10,
+                "axes.titlesize": 12,
+                "axes.labelsize": 11,
+                "xtick.labelsize": 9,
+                "ytick.labelsize": 9,
+                "legend.fontsize": 9,
+                "figure.titlesize": 13,
+            }
+        )
         return plt
 
     # ------------------------------------------------------------------
@@ -138,7 +141,7 @@ class MetricsVisualizer:
         if n_metrics == 1:
             axes = [axes]
 
-        for ax, metric in zip(axes, metrics):
+        for ax, metric in zip(axes, metrics, strict=False):
             values = [metrics_by_procedure[p].get(metric, 0) for p in procedures]
             colors = [self.COLORS.get(p, "#999999") for p in procedures]
 
@@ -146,16 +149,21 @@ class MetricsVisualizer:
             ax.set_xticks(range(n_procs))
             ax.set_xticklabels(
                 [p[:5].title() for p in procedures],
-                rotation=30, ha="right",
+                rotation=30,
+                ha="right",
             )
             ax.set_ylabel(self.METRIC_LABELS.get(metric, metric))
             ax.set_title(self.METRIC_LABELS.get(metric, metric))
 
             # Add value labels on bars
-            for bar, val in zip(bars, values):
+            for bar, val in zip(bars, values, strict=False):
                 ax.text(
-                    bar.get_x() + bar.get_width() / 2, bar.get_height(),
-                    f"{val:.3f}", ha="center", va="bottom", fontsize=8,
+                    bar.get_x() + bar.get_width() / 2,
+                    bar.get_height(),
+                    f"{val:.3f}",
+                    ha="center",
+                    va="bottom",
+                    fontsize=8,
                 )
 
         fig.suptitle(title, fontweight="bold")
@@ -192,9 +200,8 @@ class MetricsVisualizer:
 
         if metrics is None:
             metrics = sorted(
-                set.intersection(
-                    *(set(v.keys()) for v in experiments.values())
-                ) & set(self.METRIC_LABELS.keys())
+                set.intersection(*(set(v.keys()) for v in experiments.values()))
+                & set(self.METRIC_LABELS.keys())
             )
 
         n_metrics = len(metrics)
@@ -258,9 +265,7 @@ class MetricsVisualizer:
         plt = self._get_plt()
 
         fitz_types = sorted(metrics_by_type.keys())
-        procedures = sorted(
-            set.union(*(set(v.keys()) for v in metrics_by_type.values()))
-        )
+        procedures = sorted(set.union(*(set(v.keys()) for v in metrics_by_type.values())))
 
         # Build matrix
         matrix = np.zeros((len(fitz_types), len(procedures)))
@@ -268,7 +273,9 @@ class MetricsVisualizer:
             for j, proc in enumerate(procedures):
                 matrix[i, j] = metrics_by_type[ft].get(proc, 0)
 
-        fig, ax = plt.subplots(figsize=(max(6, len(procedures) * 1.5), max(4, len(fitz_types) * 0.8)))
+        fig, ax = plt.subplots(
+            figsize=(max(6, len(procedures) * 1.5), max(4, len(fitz_types) * 0.8))
+        )
 
         cmap = "RdYlGn" if self.METRIC_HIGHER_BETTER.get(metric, True) else "RdYlGn_r"
         im = ax.imshow(matrix, cmap=cmap, aspect="auto")
@@ -282,9 +289,15 @@ class MetricsVisualizer:
         # Annotate cells
         for i in range(len(fitz_types)):
             for j in range(len(procedures)):
-                ax.text(j, i, f"{matrix[i, j]:.3f}",
-                        ha="center", va="center", fontsize=9,
-                        color="white" if matrix[i, j] < np.median(matrix) else "black")
+                ax.text(
+                    j,
+                    i,
+                    f"{matrix[i, j]:.3f}",
+                    ha="center",
+                    va="center",
+                    fontsize=9,
+                    color="white" if matrix[i, j] < np.median(matrix) else "black",
+                )
 
         fig.colorbar(im, ax=ax, label=self.METRIC_LABELS.get(metric, metric))
 
@@ -328,18 +341,21 @@ class MetricsVisualizer:
         fig, ax = plt.subplots(figsize=(max(6, len(groups) * 1.2), 5))
 
         bp = ax.boxplot(
-            data, patch_artist=True, widths=0.6,
+            data,
+            patch_artist=True,
+            widths=0.6,
             medianprops={"color": "black", "linewidth": 1.5},
         )
 
         colors = [self.COLORS.get(g, "#4C72B0") for g in groups]
-        for patch, color in zip(bp["boxes"], colors):
+        for patch, color in zip(bp["boxes"], colors, strict=False):
             patch.set_facecolor(color)
             patch.set_alpha(0.7)
 
         ax.set_xticklabels(
             [g.title() for g in groups],
-            rotation=30, ha="right",
+            rotation=30,
+            ha="right",
         )
         ax.set_ylabel(self.METRIC_LABELS.get(metric, metric))
 
@@ -348,9 +364,16 @@ class MetricsVisualizer:
         ax.set_title(title, fontweight="bold")
 
         # Add sample count annotations
-        for i, (g, vals) in enumerate(zip(groups, data)):
-            ax.text(i + 1, ax.get_ylim()[0], f"n={len(vals)}",
-                    ha="center", va="bottom", fontsize=8, color="gray")
+        for i, (_g, vals) in enumerate(zip(groups, data, strict=False)):
+            ax.text(
+                i + 1,
+                ax.get_ylim()[0],
+                f"n={len(vals)}",
+                ha="center",
+                va="bottom",
+                fontsize=8,
+                color="gray",
+            )
 
         fig.tight_layout()
         out_path = self.output_dir / filename
@@ -430,10 +453,12 @@ class MetricsVisualizer:
                     parts.append(val_str)
             lines.append(" & ".join(parts) + " \\\\")
 
-        lines.extend([
-            "\\bottomrule",
-            "\\end{tabular}",
-            "\\end{table}",
-        ])
+        lines.extend(
+            [
+                "\\bottomrule",
+                "\\end{tabular}",
+                "\\end{table}",
+            ]
+        )
 
         return "\n".join(lines)

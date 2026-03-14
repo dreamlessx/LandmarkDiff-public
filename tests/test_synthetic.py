@@ -1,7 +1,6 @@
 """Tests for synthetic data generation pipeline."""
 
 import numpy as np
-import pytest
 
 from landmarkdiff.synthetic.augmentation import (
     apply_clinical_augmentation,
@@ -56,6 +55,8 @@ class TestTPSWarp:
         landmarks = np.zeros((478, 2), dtype=np.float32)
         landmarks[:] = 256.0
         indices = [0, 1, 2]
-        result = generate_random_warp(landmarks, indices, max_displacement=10.0, rng=np.random.default_rng(0))
+        result = generate_random_warp(
+            landmarks, indices, max_displacement=10.0, rng=np.random.default_rng(0)
+        )
         # Non-indexed landmarks should be unchanged
         assert np.array_equal(result[10], landmarks[10])

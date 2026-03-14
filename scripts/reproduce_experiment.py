@@ -25,6 +25,7 @@ from landmarkdiff.config import ExperimentConfig, load_config
 def load_checkpoint_metadata(checkpoint_path: Path) -> dict:
     """Extract metadata from a checkpoint without loading the full model."""
     import torch
+
     # Only load metadata keys, not the full state dict
     ckpt = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
 
@@ -56,12 +57,17 @@ def verify_config_match(ckpt_meta: dict, config: ExperimentConfig) -> list[str]:
         if isinstance(original, dict):
             # Check key training params
             checks = [
-                ("learning_rate", original.get("training", {}).get("learning_rate"),
-                 config.training.learning_rate),
-                ("batch_size", original.get("training", {}).get("batch_size"),
-                 config.training.batch_size),
-                ("phase", original.get("training", {}).get("phase"),
-                 config.training.phase),
+                (
+                    "learning_rate",
+                    original.get("training", {}).get("learning_rate"),
+                    config.training.learning_rate,
+                ),
+                (
+                    "batch_size",
+                    original.get("training", {}).get("batch_size"),
+                    config.training.batch_size,
+                ),
+                ("phase", original.get("training", {}).get("phase"), config.training.phase),
             ]
             for name, orig_val, curr_val in checks:
                 if orig_val is not None and orig_val != curr_val:
@@ -84,6 +90,7 @@ def verify_data_integrity(config: ExperimentConfig) -> list[str]:
     if manifest_path.exists():
         try:
             from landmarkdiff.data_version import DataManifest
+
             manifest = DataManifest.load(manifest_path)
             ok, verification_issues = manifest.verify(train_dir)
             if not ok:
@@ -101,7 +108,6 @@ def verify_data_integrity(config: ExperimentConfig) -> list[str]:
 def run_evaluation(checkpoint_path: Path, config: ExperimentConfig) -> dict:
     """Run evaluation on a checkpoint and return metrics."""
     import torch
-    from landmarkdiff.evaluation import evaluate_batch
 
     print(f"  Loading checkpoint: {checkpoint_path.name}")
     ckpt = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
@@ -129,9 +135,11 @@ def generate_report(
     status_color = "#28a745" if status == "REPRODUCIBLE" else "#ffc107"
 
     metrics = ckpt_meta.get("metrics", {})
-    metrics_rows = "\n".join(
-        f"<tr><td>{k}</td><td>{v:.4f}</td></tr>" for k, v in metrics.items()
-    ) if metrics else "<tr><td colspan='2'>No metrics recorded</td></tr>"
+    metrics_rows = (
+        "\n".join(f"<tr><td>{k}</td><td>{v:.4f}</td></tr>" for k, v in metrics.items())
+        if metrics
+        else "<tr><td colspan='2'>No metrics recorded</td></tr>"
+    )
 
     config_rows = "\n".join(f"<li>{issue}</li>" for issue in config_issues)
     data_rows = "\n".join(f"<li>{issue}</li>" for issue in data_issues)
@@ -152,8 +160,8 @@ th {{ background: #f8f9fa; }}
 <h2>Checkpoint Metadata</h2>
 <table>
 <tr><th>Field</th><th>Value</th></tr>
-<tr><td>Step</td><td>{ckpt_meta.get('step', 'N/A')}</td></tr>
-<tr><td>Phase</td><td>{ckpt_meta.get('phase', 'N/A')}</td></tr>
+<tr><td>Step</td><td>{ckpt_meta.get("step", "N/A")}</td></tr>
+<tr><td>Phase</td><td>{ckpt_meta.get("phase", "N/A")}</td></tr>
 </table>
 
 <h2>Training Metrics</h2>
@@ -162,7 +170,11 @@ th {{ background: #f8f9fa; }}
 {"<h2>Config Mismatches</h2><ul>" + config_rows + "</ul>" if config_issues else ""}
 {"<h2>Data Integrity Issues</h2><ul>" + data_rows + "</ul>" if data_issues else ""}
 
-{"<p>All checks passed — experiment should be reproducible.</p>" if not config_issues and not data_issues else ""}
+{
+        "<p>All checks passed -- experiment should be reproducible.</p>"
+        if not config_issues and not data_issues
+        else ""
+    }
 </body></html>"""
 
 
@@ -196,10 +208,7 @@ def main():
 
     # Load config
     print("\n2. Loading experiment config")
-    if args.config:
-        config = ExperimentConfig.from_yaml(args.config)
-    else:
-        config = load_config()
+    config = ExperimentConfig.from_yaml(args.config) if args.config else load_config()
     print(f"   Phase: {config.training.phase}")
     print(f"   LR: {config.training.learning_rate}")
 
@@ -224,7 +233,7 @@ def main():
     # Optional: run evaluation
     if args.eval_only:
         print("\n5. Running evaluation")
-        metrics = run_evaluation(ckpt_path, config)
+        run_evaluation(ckpt_path, config)
 
     # Optional: generate report
     if args.report:

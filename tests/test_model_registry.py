@@ -11,10 +11,10 @@ import torch.nn as nn
 
 from landmarkdiff.model_registry import ModelEntry, ModelRegistry
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 class TinyModel(nn.Module):
     def __init__(self):
@@ -25,20 +25,24 @@ class TinyModel(nn.Module):
         return self.linear(x)
 
 
-def _create_checkpoint(base_dir: Path, step: int, metrics: dict | None = None,
-                       phase: str = "", with_ema: bool = False) -> Path:
+def _create_checkpoint(
+    base_dir: Path, step: int, metrics: dict | None = None, phase: str = "", with_ema: bool = False
+) -> Path:
     """Helper to create a fake checkpoint directory."""
     ckpt_dir = base_dir / f"checkpoint-{step}"
     ckpt_dir.mkdir(parents=True, exist_ok=True)
 
     # Save training state
     model = TinyModel()
-    torch.save({
-        "controlnet": model.state_dict(),
-        "ema_controlnet": model.state_dict(),
-        "optimizer": torch.optim.Adam(model.parameters()).state_dict(),
-        "global_step": step,
-    }, ckpt_dir / "training_state.pt")
+    torch.save(
+        {
+            "controlnet": model.state_dict(),
+            "ema_controlnet": model.state_dict(),
+            "optimizer": torch.optim.Adam(model.parameters()).state_dict(),
+            "global_step": step,
+        },
+        ckpt_dir / "training_state.pt",
+    )
 
     # Save metadata
     meta = {
@@ -78,6 +82,7 @@ def registry(registry_dir):
 # ModelEntry tests
 # ---------------------------------------------------------------------------
 
+
 class TestModelEntry:
     def test_inference_path_ema(self, tmp_path):
         ckpt = tmp_path / "ckpt"
@@ -110,6 +115,7 @@ class TestModelEntry:
 # Registry scan and discovery
 # ---------------------------------------------------------------------------
 
+
 class TestScan:
     def test_discovers_checkpoints(self, registry):
         assert len(registry) == 4
@@ -129,8 +135,9 @@ class TestScan:
         ckpt_dir = tmp_path / "checkpoints" / "checkpoint-500"
         ckpt_dir.mkdir(parents=True)
         model = TinyModel()
-        torch.save({"controlnet": model.state_dict(), "global_step": 500},
-                    ckpt_dir / "training_state.pt")
+        torch.save(
+            {"controlnet": model.state_dict(), "global_step": 500}, ckpt_dir / "training_state.pt"
+        )
 
         reg = ModelRegistry(tmp_path / "checkpoints")
         assert len(reg) == 1
@@ -150,6 +157,7 @@ class TestScan:
 # ---------------------------------------------------------------------------
 # List and query
 # ---------------------------------------------------------------------------
+
 
 class TestQueries:
     def test_list_models_sorted_by_step(self, registry):
@@ -192,6 +200,7 @@ class TestQueries:
 # Best checkpoint
 # ---------------------------------------------------------------------------
 
+
 class TestBest:
     def test_best_lower_is_better(self, registry):
         best = registry.get_best("loss", lower_is_better=True)
@@ -213,6 +222,7 @@ class TestBest:
 # Loading
 # ---------------------------------------------------------------------------
 
+
 class TestLoading:
     def test_load_training_state(self, registry):
         state = registry.load("checkpoint-1000")
@@ -232,6 +242,7 @@ class TestLoading:
 # ---------------------------------------------------------------------------
 # Comparison
 # ---------------------------------------------------------------------------
+
 
 class TestCompare:
     def test_compare_two(self, registry):
@@ -259,6 +270,7 @@ class TestCompare:
 # ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
+
 
 class TestSummary:
     def test_summary_empty(self, tmp_path):

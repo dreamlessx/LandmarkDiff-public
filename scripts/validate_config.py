@@ -25,7 +25,7 @@ import argparse
 import dataclasses
 import sys
 from pathlib import Path
-from typing import Any, get_type_hints
+from typing import Any
 
 import yaml
 
@@ -33,17 +33,15 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from landmarkdiff.config import (
-    ExperimentConfig,
-    ModelConfig,
-    TrainingConfig,
     DataConfig,
-    InferenceConfig,
     EvaluationConfig,
-    WandbConfig,
-    SlurmConfig,
+    InferenceConfig,
+    ModelConfig,
     SafetyConfig,
+    SlurmConfig,
+    TrainingConfig,
+    WandbConfig,
 )
-
 
 # ── Schema: valid keys per section ───────────────────────────────
 
@@ -61,7 +59,10 @@ SECTION_CLASSES: dict[str, type] = {
 
 # Top-level keys (not in any section)
 TOP_LEVEL_KEYS = {
-    "experiment_name", "description", "version", "output_dir",
+    "experiment_name",
+    "description",
+    "version",
+    "output_dir",
     # Section names
     *SECTION_CLASSES.keys(),
 }
@@ -134,6 +135,7 @@ VALID_CHOICES: dict[str, dict[str, list[str]]] = {
 @dataclasses.dataclass
 class ConfigValidation:
     """Result of config validation."""
+
     path: str
     errors: list[str] = dataclasses.field(default_factory=list)
     warnings: list[str] = dataclasses.field(default_factory=list)
@@ -262,11 +264,8 @@ def validate_config(
         for key, (lo, hi) in constraints.items():
             if key in section_data:
                 val = section_data[key]
-                if isinstance(val, (int, float)):
-                    if val < lo or val > hi:
-                        result.errors.append(
-                            f"{section_name}.{key}={val} is out of range [{lo}, {hi}]"
-                        )
+                if isinstance(val, (int, float)) and (val < lo or val > hi):
+                    result.errors.append(f"{section_name}.{key}={val} is out of range [{lo}, {hi}]")
 
     # 7. Choice validation
     for section_name, choices in VALID_CHOICES.items():
@@ -281,8 +280,7 @@ def validate_config(
                 val = section_data[key]
                 if isinstance(val, str) and val not in valid_values:
                     result.errors.append(
-                        f"{section_name}.{key}='{val}' is not valid. "
-                        f"Must be one of: {valid_values}"
+                        f"{section_name}.{key}='{val}' is not valid. Must be one of: {valid_values}"
                     )
 
     # 8. Cross-field consistency
@@ -371,9 +369,10 @@ def validate_all_configs(
     valid = sum(1 for r in results if r.valid)
     total_errors = sum(len(r.errors) for r in results)
     total_warnings = sum(len(r.warnings) for r in results)
-    print(f"{'='*50}")
-    print(f"{valid}/{len(results)} configs valid | "
-          f"{total_errors} errors | {total_warnings} warnings")
+    print(f"{'=' * 50}")
+    print(
+        f"{valid}/{len(results)} configs valid | {total_errors} errors | {total_warnings} warnings"
+    )
 
     return results
 
@@ -396,9 +395,8 @@ def _check_type(
     elif "int" in type_str and not isinstance(value, int):
         if isinstance(value, float) and value == int(value):
             result.warnings.append(f"{key}: got float {value}, expected int")
-        elif not isinstance(value, bool):
-            if "float" not in type_str:
-                result.errors.append(f"{key}: expected int, got {type(value).__name__}")
+        elif not isinstance(value, bool) and "float" not in type_str:
+            result.errors.append(f"{key}: expected int, got {type(value).__name__}")
     elif "bool" in type_str and not isinstance(value, bool):
         result.errors.append(f"{key}: expected bool, got {type(value).__name__} ({value})")
     elif "str" in type_str and "list" not in type_str and not isinstance(value, str):
@@ -440,8 +438,7 @@ def _edit_distance(a: str, b: str) -> int:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Validate training configs")
     parser.add_argument("path", help="Config file or directory")
-    parser.add_argument("--strict", action="store_true",
-                        help="Treat warnings as errors")
+    parser.add_argument("--strict", action="store_true", help="Treat warnings as errors")
     args = parser.parse_args()
 
     path = Path(args.path)

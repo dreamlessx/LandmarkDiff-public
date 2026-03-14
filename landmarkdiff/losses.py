@@ -1,6 +1,7 @@
 """4-term loss function module for ControlNet fine-tuning.
 
-L_total = L_diffusion + w_landmark * L_landmark + w_identity * L_identity + w_perceptual * L_perceptual
+L_total = L_diffusion + w_landmark * L_landmark
+        + w_identity * L_identity + w_perceptual * L_perceptual
 
 Phase A (synthetic TPS data): L_diffusion ONLY. No perceptual loss against
 rubbery TPS warps — it would penalize realism.
@@ -92,11 +93,16 @@ class IdentityLoss:
             return
         try:
             from insightface.app import FaceAnalysis
+
             self._app = FaceAnalysis(
                 name="buffalo_l",
                 providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
             )
-            ctx_id = device.index if device.type == "cuda" and device.index is not None else (0 if device.type == "cuda" else -1)
+            ctx_id = (
+                device.index
+                if device.type == "cuda" and device.index is not None
+                else (0 if device.type == "cuda" else -1)
+            )
             self._app.prepare(ctx_id=ctx_id, det_size=(320, 320))
             self._has_arcface = True
         except Exception:
@@ -114,6 +120,7 @@ class IdentityLoss:
         """
         if self._has_arcface:
             import numpy as np
+
             embeddings = []
             valid_mask = []
             for i in range(image_tensor.shape[0]):
@@ -152,7 +159,9 @@ class IdentityLoss:
 
         # Resize to 112x112 for ArcFace
         pred_112 = F.interpolate(pred_crop, size=(112, 112), mode="bilinear", align_corners=False)
-        target_112 = F.interpolate(target_crop, size=(112, 112), mode="bilinear", align_corners=False)
+        target_112 = F.interpolate(
+            target_crop, size=(112, 112), mode="bilinear", align_corners=False
+        )
 
         # Normalize to [-1, 1]
         pred_norm = pred_112 * 2 - 1
@@ -163,7 +172,7 @@ class IdentityLoss:
         target_emb, target_valid = self._extract_embedding(target_norm)
 
         # Only compute loss for samples where both faces were detected
-        valid = [p and t for p, t in zip(pred_valid, target_valid)]
+        valid = [p and t for p, t in zip(pred_valid, target_valid, strict=False)]
         if not any(valid):
             return torch.tensor(0.0, device=pred_image.device)
 
@@ -216,6 +225,7 @@ class PerceptualLoss:
         if self._lpips is None:
             try:
                 import lpips
+
                 self._lpips = lpips.LPIPS(net="alex").to(device)
                 self._lpips.eval()
                 for p in self._lpips.parameters():
@@ -225,9 +235,9 @@ class PerceptualLoss:
 
     def __call__(
         self,
-        pred: torch.Tensor,    # (B, 3, H, W) in [0, 1]
+        pred: torch.Tensor,  # (B, 3, H, W) in [0, 1]
         target: torch.Tensor,
-        mask: torch.Tensor,    # (B, 1, H, W) surgical mask [0, 1]
+        mask: torch.Tensor,  # (B, 1, H, W) surgical mask [0, 1]
     ) -> torch.Tensor:
         self._ensure_loaded(pred.device)
 
@@ -289,6 +299,7 @@ class CombinedLoss:
         # or ONNX-based fallback
         if use_differentiable_arcface:
             from landmarkdiff.arcface_torch import ArcFaceLoss
+
             self.identity_loss = ArcFaceLoss(weights_path=arcface_weights_path)
         else:
             self.identity_loss = IdentityLoss()

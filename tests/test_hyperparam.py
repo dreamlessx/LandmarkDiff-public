@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import numpy as np
 import pytest
@@ -15,10 +14,10 @@ from landmarkdiff.hyperparam import (
     Trial,
 )
 
-
 # ---------------------------------------------------------------------------
 # ParamSpec
 # ---------------------------------------------------------------------------
+
 
 class TestParamSpec:
     def test_float_sample(self):
@@ -81,6 +80,7 @@ class TestParamSpec:
 # SearchSpace
 # ---------------------------------------------------------------------------
 
+
 class TestSearchSpace:
     def test_add_float(self):
         space = SearchSpace()
@@ -112,6 +112,7 @@ class TestSearchSpace:
 # Trial
 # ---------------------------------------------------------------------------
 
+
 class TestTrial:
     def test_config_hash_deterministic(self):
         t = Trial(trial_id="t1", config={"lr": 0.001, "bs": 4})
@@ -134,6 +135,7 @@ class TestTrial:
 # ---------------------------------------------------------------------------
 # HyperparamSearch — random
 # ---------------------------------------------------------------------------
+
 
 class TestRandomSearch:
     def _make_space(self):
@@ -168,13 +170,14 @@ class TestRandomSearch:
         s2 = HyperparamSearch(self._make_space(), seed=123)
         t1 = s1.generate_trials(strategy="random", n_trials=5)
         t2 = s2.generate_trials(strategy="random", n_trials=5)
-        for a, b in zip(t1, t2):
+        for a, b in zip(t1, t2, strict=False):
             assert a.config == b.config
 
 
 # ---------------------------------------------------------------------------
 # HyperparamSearch — grid
 # ---------------------------------------------------------------------------
+
 
 class TestGridSearch:
     def test_grid_count(self):
@@ -194,6 +197,7 @@ class TestGridSearch:
 # ---------------------------------------------------------------------------
 # Result tracking
 # ---------------------------------------------------------------------------
+
 
 class TestResults:
     def _make_search(self):
@@ -237,6 +241,7 @@ class TestResults:
 # ---------------------------------------------------------------------------
 # Save and table
 # ---------------------------------------------------------------------------
+
 
 class TestSaveAndTable:
     def test_save_configs(self, tmp_path):

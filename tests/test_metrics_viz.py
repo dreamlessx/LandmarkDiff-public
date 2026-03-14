@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 
 from landmarkdiff.metrics_viz import MetricsVisualizer
@@ -41,13 +39,15 @@ class TestProcedureComparison:
 
     def test_custom_filename(self, viz, procedure_metrics):
         path = viz.procedure_comparison(
-            procedure_metrics, filename="custom.png",
+            procedure_metrics,
+            filename="custom.png",
         )
         assert path.name == "custom.png"
 
     def test_specific_metrics(self, viz, procedure_metrics):
         path = viz.procedure_comparison(
-            procedure_metrics, metrics=["ssim"],
+            procedure_metrics,
+            metrics=["ssim"],
         )
         assert path.exists()
 
@@ -59,7 +59,8 @@ class TestRadarPlot:
 
     def test_specific_metrics(self, viz, experiment_metrics):
         path = viz.radar_plot(
-            experiment_metrics, metrics=["ssim", "lpips"],
+            experiment_metrics,
+            metrics=["ssim", "lpips"],
         )
         assert path.exists()
 
@@ -80,7 +81,8 @@ class TestFitzpatrickHeatmap:
             "V-VI": {"rhinoplasty": 0.15},
         }
         path = viz.fitzpatrick_heatmap(
-            metrics_by_type, metric="lpips",
+            metrics_by_type,
+            metric="lpips",
         )
         assert path.exists()
 
@@ -88,6 +90,7 @@ class TestFitzpatrickHeatmap:
 class TestDistributionBoxplot:
     def test_creates_figure(self, viz):
         import numpy as np
+
         samples = {
             "rhinoplasty": np.random.normal(0.9, 0.05, 50).tolist(),
             "blepharoplasty": np.random.normal(0.85, 0.08, 50).tolist(),
@@ -103,7 +106,8 @@ class TestLatexTable:
             {"name": "Ours", "ssim": 0.91, "lpips": 0.09},
         ]
         latex = MetricsVisualizer.to_latex_table(
-            rows, metrics=["ssim", "lpips"],
+            rows,
+            metrics=["ssim", "lpips"],
         )
         assert "\\begin{table}" in latex
         assert "\\textbf{0.9100}" in latex  # best SSIM
@@ -116,14 +120,17 @@ class TestLatexTable:
             {"name": "B", "ssim": 0.90},
         ]
         latex = MetricsVisualizer.to_latex_table(
-            rows, metrics=["ssim"], highlight_best=False,
+            rows,
+            metrics=["ssim"],
+            highlight_best=False,
         )
         assert "\\textbf" not in latex
 
     def test_custom_caption(self):
         rows = [{"name": "Test", "ssim": 0.5}]
         latex = MetricsVisualizer.to_latex_table(
-            rows, metrics=["ssim"],
+            rows,
+            metrics=["ssim"],
             caption="My custom caption",
             label="tab:custom",
         )
@@ -135,6 +142,7 @@ class TestLatexTable:
             {"name": "A", "ssim": 0.80, "fid": None},
         ]
         latex = MetricsVisualizer.to_latex_table(
-            rows, metrics=["ssim", "fid"],
+            rows,
+            metrics=["ssim", "fid"],
         )
         assert "--" in latex

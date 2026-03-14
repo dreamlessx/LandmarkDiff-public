@@ -5,17 +5,15 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-import cv2
 import numpy as np
-import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from landmarkdiff.clinical import (
     ClinicalFlags,
+    adjust_mask_for_keloid,
     adjust_mask_for_vitiligo,
     get_bells_palsy_side_indices,
-    adjust_mask_for_keloid,
 )
 
 

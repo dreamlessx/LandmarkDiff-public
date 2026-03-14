@@ -46,10 +46,12 @@ def setup_logging(
 
     if not _CONFIGURED:
         handler = logging.StreamHandler(stream or sys.stderr)
-        handler.setFormatter(logging.Formatter(
-            fmt or LOG_FORMAT,
-            datefmt=LOG_DATE_FORMAT,
-        ))
+        handler.setFormatter(
+            logging.Formatter(
+                fmt or LOG_FORMAT,
+                datefmt=LOG_DATE_FORMAT,
+            )
+        )
         root_logger.addHandler(handler)
         # Prevent propagation to root logger to avoid duplicate messages
         root_logger.propagate = False

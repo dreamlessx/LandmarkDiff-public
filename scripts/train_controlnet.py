@@ -8,18 +8,18 @@ from __future__ import annotations
 import argparse
 import copy
 import math
-import sys
 from pathlib import Path
 
+import numpy as np
 import torch
 import torch.nn.functional as F
-from torch.utils.data import DataLoader, Dataset
 from PIL import Image
-import numpy as np
+from torch.utils.data import DataLoader, Dataset
 
 # Optional imports with graceful fallback
 try:
     import wandb
+
     HAS_WANDB = True
 except ImportError:
     HAS_WANDB = False
@@ -62,10 +62,7 @@ class SyntheticPairDataset(Dataset):
 
     def _load_image(self, path: Path, grayscale: bool = False) -> torch.Tensor:
         img = Image.open(path)
-        if grayscale:
-            img = img.convert("L")
-        else:
-            img = img.convert("RGB")
+        img = img.convert("L") if grayscale else img.convert("RGB")
         img = img.resize((self.resolution, self.resolution))
         arr = np.array(img).astype(np.float32) / 255.0
 
@@ -85,7 +82,7 @@ def get_device() -> torch.device:
 @torch.no_grad()
 def update_ema(ema_model: torch.nn.Module, model: torch.nn.Module, decay: float = 0.9999):
     """Update EMA model parameters."""
-    for ema_p, p in zip(ema_model.parameters(), model.parameters()):
+    for ema_p, p in zip(ema_model.parameters(), model.parameters(), strict=False):
         ema_p.data.mul_(decay).add_(p.data, alpha=1 - decay)
 
 
@@ -132,11 +129,16 @@ def _generate_samples(
             scaled = scheduler.scale_model_input(sample_latents, t)
 
             down_samples, mid_sample = ema_controlnet(
-                scaled, t, encoder_hidden_states=encoder_hidden_states,
-                controlnet_cond=conditioning, return_dict=False,
+                scaled,
+                t,
+                encoder_hidden_states=encoder_hidden_states,
+                controlnet_cond=conditioning,
+                return_dict=False,
             )
             noise_pred = unet(
-                scaled, t, encoder_hidden_states=encoder_hidden_states,
+                scaled,
+                t,
+                encoder_hidden_states=encoder_hidden_states,
                 down_block_additional_residuals=down_samples,
                 mid_block_additional_residual=mid_sample,
             ).sample
@@ -188,6 +190,7 @@ def train(
 
     # Set seeds for reproducibility
     import random
+
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -220,7 +223,7 @@ def train(
     noise_scheduler = DDPMScheduler.from_pretrained(base_model_id, subfolder="scheduler")
 
     # ─── Freeze everything except ControlNet ───
-    vae.requires_grad_(False)          # CRITICAL: gradient leak corrupts latent space
+    vae.requires_grad_(False)  # CRITICAL: gradient leak corrupts latent space
     unet.requires_grad_(False)
     text_encoder.requires_grad_(False)
     controlnet.train()
@@ -244,7 +247,10 @@ def train(
 
     # Cosine schedule - period based on optimizer steps, not forward passes
     total_optimizer_steps = num_train_steps // gradient_accumulation_steps
-    lr_lambda = lambda step: 0.5 * (1 + math.cos(math.pi * step / total_optimizer_steps))
+
+    def lr_lambda(step):
+        return 0.5 * (1 + math.cos(math.pi * step / total_optimizer_steps))
+
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 
     # ─── Data ───
@@ -258,7 +264,10 @@ def train(
         pin_memory=True,
         drop_last=True,
     )
-    print(f"Dataset: {len(dataset)} pairs | Batch: {train_batch_size} | Accum: {gradient_accumulation_steps}")
+    print(
+        f"Dataset: {len(dataset)} pairs | Batch: {train_batch_size}"
+        f" | Accum: {gradient_accumulation_steps}"
+    )
 
     # ─── Text embeddings (constant - "a photo of a person's face") ───
     text_input = tokenizer(
@@ -334,7 +343,9 @@ def train(
 
         # Sample noise
         noise = torch.randn_like(latents)
-        timesteps = torch.randint(0, noise_scheduler.config.num_train_timesteps, (latents.shape[0],), device=device)
+        timesteps = torch.randint(
+            0, noise_scheduler.config.num_train_timesteps, (latents.shape[0],), device=device
+        )
         noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
 
         # Expand text embeddings to batch
@@ -380,7 +391,10 @@ def train(
         if global_step % log_every == 0:
             avg_loss = accumulation_loss / log_every
             lr_current = scheduler.get_last_lr()[0]
-            print(f"Step {global_step}/{num_train_steps} | Loss: {avg_loss:.6f} | LR: {lr_current:.2e}")
+            print(
+                f"Step {global_step}/{num_train_steps}"
+                f" | Loss: {avg_loss:.6f} | LR: {lr_current:.2e}"
+            )
 
             if HAS_WANDB:
                 wandb.log({"loss": avg_loss, "lr": lr_current}, step=global_step)
@@ -390,8 +404,16 @@ def train(
         # ─── Sample generation ───
         if global_step % sample_every == 0 and global_step > 0:
             _generate_samples(
-                ema_controlnet, vae, unet, text_embeddings, noise_scheduler,
-                dataset, device, weight_dtype, out, global_step,
+                ema_controlnet,
+                vae,
+                unet,
+                text_embeddings,
+                noise_scheduler,
+                dataset,
+                device,
+                weight_dtype,
+                out,
+                global_step,
             )
 
         # ─── Checkpoint ───
@@ -403,13 +425,16 @@ def train(
             ema_controlnet.save_pretrained(ckpt_dir / "controlnet_ema")
 
             # Save training state for resume
-            torch.save({
-                "controlnet": controlnet.state_dict(),
-                "ema_controlnet": ema_controlnet.state_dict(),
-                "optimizer": optimizer.state_dict(),
-                "scheduler": scheduler.state_dict(),
-                "global_step": global_step,
-            }, ckpt_dir / "training_state.pt")
+            torch.save(
+                {
+                    "controlnet": controlnet.state_dict(),
+                    "ema_controlnet": ema_controlnet.state_dict(),
+                    "optimizer": optimizer.state_dict(),
+                    "scheduler": scheduler.state_dict(),
+                    "global_step": global_step,
+                },
+                ckpt_dir / "training_state.pt",
+            )
 
             print(f"Checkpoint saved: {ckpt_dir}")
 

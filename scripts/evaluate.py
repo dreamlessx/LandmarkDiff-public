@@ -16,16 +16,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from landmarkdiff.evaluation import (
     EvalMetrics,
-    classify_fitzpatrick_ita,
     compute_fid,
-    compute_lpips,
-    compute_nme,
-    compute_ssim,
-    compute_identity_similarity,
     evaluate_batch,
 )
-from landmarkdiff.landmarks import extract_landmarks
 from landmarkdiff.inference import LandmarkDiffPipeline
+from landmarkdiff.landmarks import extract_landmarks
 
 
 def load_test_pairs(
@@ -42,11 +37,13 @@ def load_test_pairs(
             prefix = inp_path.name.rsplit("_input", 1)[0]
             target_path = inp_path.parent / f"{prefix}_target{inp_path.suffix}"
             if target_path.exists():
-                pairs.append({
-                    "input_path": str(inp_path),
-                    "target_path": str(target_path),
-                    "id": prefix,
-                })
+                pairs.append(
+                    {
+                        "input_path": str(inp_path),
+                        "target_path": str(target_path),
+                        "id": prefix,
+                    }
+                )
 
     # Format 2: Separate directories
     if not pairs:
@@ -57,11 +54,13 @@ def load_test_pairs(
                 if inp_path.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"}:
                     target_path = targets_dir / inp_path.name
                     if target_path.exists():
-                        pairs.append({
-                            "input_path": str(inp_path),
-                            "target_path": str(target_path),
-                            "id": inp_path.stem,
-                        })
+                        pairs.append(
+                            {
+                                "input_path": str(inp_path),
+                                "target_path": str(target_path),
+                                "id": inp_path.stem,
+                            }
+                        )
 
     # Load metadata if available
     meta_path = test_dir / "metadata.json"
@@ -88,8 +87,7 @@ def run_evaluation(
     compute_identity: bool = False,
     ip_adapter_scale: float = 0.6,
 ) -> EvalMetrics:
-    """Run full eval pipeline on test pairs.
-    """
+    """Run full eval pipeline on test pairs."""
     test_path = Path(test_dir)
     out_path = Path(output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
@@ -119,7 +117,6 @@ def run_evaluation(
     pred_landmarks_list = []
     target_landmarks_list = []
     procedures = []
-    results_log = []
 
     start_time = time.time()
 
@@ -188,7 +185,7 @@ def run_evaluation(
         if (i + 1) % 10 == 0:
             elapsed = time.time() - start_time
             rate = (i + 1) / elapsed
-            print(f"  [{i+1}/{len(pairs)}] {rate:.1f} img/s")
+            print(f"  [{i + 1}/{len(pairs)}] {rate:.1f} img/s")
 
     if not predictions:
         print("ERROR: No valid predictions generated")
@@ -234,11 +231,11 @@ def run_evaluation(
     with open(report_path, "w") as f:
         json.dump(report, f, indent=2)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(metrics.summary())
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"Report saved to {report_path}")
-    print(f"Total time: {elapsed:.1f}s ({len(predictions)/elapsed:.1f} img/s)")
+    print(f"Total time: {elapsed:.1f}s ({len(predictions) / elapsed:.1f} img/s)")
 
     return metrics
 
@@ -249,7 +246,8 @@ if __name__ == "__main__":
     parser.add_argument("--output", default="eval_results", help="Output directory")
     parser.add_argument("--checkpoint", default=None, help="ControlNet checkpoint path")
     parser.add_argument(
-        "--mode", default="tps",
+        "--mode",
+        default="tps",
         choices=["tps", "controlnet", "controlnet_ip", "img2img"],
     )
     parser.add_argument("--num-samples", type=int, default=0, help="Max samples (0=all)")

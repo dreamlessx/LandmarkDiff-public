@@ -2,15 +2,11 @@
 
 from __future__ import annotations
 
-import json
 import sys
-import tempfile
 from pathlib import Path
-from unittest.mock import patch
 
 import cv2
 import numpy as np
-import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -24,8 +20,10 @@ class TestBatchInference:
 
         # Create test images
         for i in range(5):
-            cv2.imwrite(str(tmp_path / f"img_{i:03d}.png"),
-                        np.random.randint(0, 255, (64, 64, 3), dtype=np.uint8))
+            cv2.imwrite(
+                str(tmp_path / f"img_{i:03d}.png"),
+                np.random.randint(0, 255, (64, 64, 3), dtype=np.uint8),
+            )
         # Create non-image file
         (tmp_path / "readme.txt").write_text("not an image")
 
@@ -36,6 +34,7 @@ class TestBatchInference:
     def test_collect_images_empty(self, tmp_path):
         """Test empty directory."""
         from scripts.batch_inference import collect_images
+
         images = collect_images(tmp_path)
         assert len(images) == 0
 
@@ -50,7 +49,10 @@ class TestBatchInference:
 
         out_path = tmp_path / "grid.png"
         result = create_intensity_grid(
-            img_path, "rhinoplasty", [25, 50, 75], out_path,
+            img_path,
+            "rhinoplasty",
+            [25, 50, 75],
+            out_path,
         )
         assert result is False
 
@@ -64,8 +66,10 @@ class TestComputeFID:
 
         # Create *_target.png files
         for i in range(3):
-            cv2.imwrite(str(tmp_path / f"sample_{i:03d}_target.png"),
-                        np.random.randint(0, 255, (64, 64, 3), dtype=np.uint8))
+            cv2.imwrite(
+                str(tmp_path / f"sample_{i:03d}_target.png"),
+                np.random.randint(0, 255, (64, 64, 3), dtype=np.uint8),
+            )
 
         targets = collect_target_images(tmp_path)
         assert len(targets) == 3
@@ -75,8 +79,10 @@ class TestComputeFID:
         from scripts.compute_fid import collect_target_images
 
         for i in range(4):
-            cv2.imwrite(str(tmp_path / f"sample_{i:03d}_output.png"),
-                        np.random.randint(0, 255, (64, 64, 3), dtype=np.uint8))
+            cv2.imwrite(
+                str(tmp_path / f"sample_{i:03d}_output.png"),
+                np.random.randint(0, 255, (64, 64, 3), dtype=np.uint8),
+            )
 
         targets = collect_target_images(tmp_path)
         assert len(targets) == 4

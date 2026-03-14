@@ -5,17 +5,16 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-import numpy as np
 import pytest
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from landmarkdiff.arcface_torch import (
-    SEModule,
-    IBasicBlock,
     ArcFaceBackbone,
     ArcFaceLoss,
+    IBasicBlock,
+    SEModule,
     align_face,
     align_face_no_crop,
 )
@@ -157,6 +156,7 @@ class TestArcFaceLoss:
     def loss_fn(self):
         # Use random weights (no pretrained) for testing
         import warnings
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             loss = ArcFaceLoss(device=torch.device("cpu"), crop_face=True)

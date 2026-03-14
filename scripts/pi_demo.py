@@ -12,15 +12,16 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from landmarkdiff.landmarks import (
-    extract_landmarks, render_landmark_image, visualize_landmarks, FaceLandmarks,
-)
-from landmarkdiff.conditioning import generate_conditioning, render_wireframe
-from landmarkdiff.manipulation import apply_procedure_preset
-from landmarkdiff.masking import generate_surgical_mask, mask_to_3channel
-from landmarkdiff.synthetic.tps_warp import warp_image_tps
+from landmarkdiff.conditioning import generate_conditioning
 from landmarkdiff.inference import LandmarkDiffPipeline, mask_composite
-
+from landmarkdiff.landmarks import (
+    FaceLandmarks,
+    extract_landmarks,
+    visualize_landmarks,
+)
+from landmarkdiff.manipulation import apply_procedure_preset
+from landmarkdiff.masking import generate_surgical_mask
+from landmarkdiff.synthetic.tps_warp import warp_image_tps
 
 WHITE = (255, 255, 255)
 GRAY = (180, 180, 180)
@@ -86,12 +87,18 @@ def make_figure_1_pipeline(face: FaceLandmarks, image: np.ndarray, out: Path) ->
     title_h = 40
     title_bar = np.zeros((title_h, row.shape[1], 3), dtype=np.uint8)
     cv2.putText(
-        title_bar, "LandmarkDiff Pipeline: Input -> Landmarks -> Condition -> Manipulate -> Mask -> Generate",
-        (10, 28), FONT, 0.5, ACCENT, 1, cv2.LINE_AA,
+        title_bar,
+        "LandmarkDiff Pipeline: Input -> Landmarks -> Condition -> Manipulate -> Mask -> Generate",
+        (10, 28),
+        FONT,
+        0.5,
+        ACCENT,
+        1,
+        cv2.LINE_AA,
     )
     figure = np.vstack([title_bar, row])
     cv2.imwrite(str(out / "fig1_pipeline.png"), figure)
-    print(f"  Fig 1: Pipeline overview")
+    print("  Fig 1: Pipeline overview")
 
 
 def make_figure_2_procedures(
@@ -107,7 +114,7 @@ def make_figure_2_procedures(
 
     cols = [put_label(resize_sq(image, s), "Original")]
 
-    for proc, name in zip(procedures, short_names):
+    for proc, name in zip(procedures, short_names, strict=False):
         manip = apply_procedure_preset(face, proc, 65.0, 512)
         mask = generate_surgical_mask(face, proc, 512, 512)
         tps = warp_image_tps(image, face.pixel_coords, manip.pixel_coords)
@@ -123,7 +130,7 @@ def make_figure_2_procedures(
 
     row = np.hstack(cols)
     cv2.imwrite(str(out / "fig2_procedures.png"), row)
-    print(f"  Fig 2: 4 procedures comparison")
+    print("  Fig 2: 4 procedures comparison")
 
 
 def make_figure_3_intensity(face: FaceLandmarks, image: np.ndarray, out: Path) -> None:
@@ -149,10 +156,19 @@ def make_figure_3_intensity(face: FaceLandmarks, image: np.ndarray, out: Path) -
 
     title_h = 30
     title_bar = np.zeros((title_h, row.shape[1], 3), dtype=np.uint8)
-    cv2.putText(title_bar, "Rhinoplasty Intensity Sweep (0-100)", (10, 22), FONT, 0.45, ACCENT, 1, cv2.LINE_AA)
+    cv2.putText(
+        title_bar,
+        "Rhinoplasty Intensity Sweep (0-100)",
+        (10, 22),
+        FONT,
+        0.45,
+        ACCENT,
+        1,
+        cv2.LINE_AA,
+    )
     figure = np.vstack([title_bar, row])
     cv2.imwrite(str(out / "fig3_intensity.png"), figure)
-    print(f"  Fig 3: Intensity sweep")
+    print("  Fig 3: Intensity sweep")
 
 
 def make_figure_4_multi_face(
@@ -215,8 +231,13 @@ def make_figure_5_training_data(out: Path) -> None:
     for i in range(min(5, len(list(pair_dir.glob("*_input.png"))))):
         prefix = f"{i:06d}"
         panels = []
-        for label, suffix in [("Input", "input"), ("Target", "target"),
-                               ("Conditioning", "conditioning"), ("Canny", "canny"), ("Mask", "mask")]:
+        for label, suffix in [
+            ("Input", "input"),
+            ("Target", "target"),
+            ("Conditioning", "conditioning"),
+            ("Canny", "canny"),
+            ("Mask", "mask"),
+        ]:
             fpath = pair_dir / f"{prefix}_{suffix}.png"
             if fpath.exists():
                 img = cv2.imread(str(fpath))
@@ -238,10 +259,19 @@ def make_figure_5_training_data(out: Path) -> None:
         title_h = 30
         w = padded[0].shape[1]
         title = np.zeros((title_h, w, 3), dtype=np.uint8)
-        cv2.putText(title, "Synthetic Training Pairs (TPS warp + clinical augmentation)", (10, 22), FONT, 0.45, ACCENT, 1, cv2.LINE_AA)
+        cv2.putText(
+            title,
+            "Synthetic Training Pairs (TPS warp + clinical augmentation)",
+            (10, 22),
+            FONT,
+            0.45,
+            ACCENT,
+            1,
+            cv2.LINE_AA,
+        )
         grid = np.vstack([title] + padded)
         cv2.imwrite(str(out / "fig5_training_data.png"), grid)
-        print(f"  Fig 5: Training data samples")
+        print("  Fig 5: Training data samples")
 
 
 def make_figure_6_before_after(
@@ -255,7 +285,7 @@ def make_figure_6_before_after(
 
     for proc in procedures:
         rows = []
-        for name, image, face in images[:3]:
+        for _name, image, face in images[:3]:
             manip = apply_procedure_preset(face, proc, 60.0, 512)
             mask = generate_surgical_mask(face, proc, 512, 512)
             tps = warp_image_tps(image, face.pixel_coords, manip.pixel_coords)
@@ -277,11 +307,13 @@ def make_figure_6_before_after(
             arrow = np.zeros((s, 40, 3), dtype=np.uint8)
             cv2.arrowedLine(arrow, (5, s // 2), (35, s // 2), WHITE, 2, tipLength=0.4)
 
-            pair = np.hstack([
-                put_label(before, "Before"),
-                arrow,
-                put_label(after_r, "After"),
-            ])
+            pair = np.hstack(
+                [
+                    put_label(before, "Before"),
+                    arrow,
+                    put_label(after_r, "After"),
+                ]
+            )
             rows.append(pair)
 
         if rows:

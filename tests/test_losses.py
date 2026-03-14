@@ -1,14 +1,13 @@
 """Tests for loss functions."""
 
-import torch
 import pytest
+import torch
 
 from landmarkdiff.losses import (
     CombinedLoss,
     DiffusionLoss,
     IdentityLoss,
     LandmarkLoss,
-    LossWeights,
 )
 
 
@@ -44,7 +43,7 @@ class TestLandmarkLoss:
         mask = torch.zeros(1, 10)
         mask[0, :5] = 1.0  # only first 5 landmarks
         loss_masked = loss_fn(a, b, mask=mask)
-        loss_full = loss_fn(a, b)
+        loss_fn(a, b)
         # Both should be > 0 but values differ due to masking
         assert loss_masked.item() > 0
 
@@ -84,9 +83,13 @@ class TestCombinedLoss:
         target_lm = torch.randn(2, 478, 2)
 
         losses = loss_fn(
-            noise_pred, noise_target,
-            pred_image=pred_img, target_image=target_img,
-            mask=mask, pred_landmarks=pred_lm, target_landmarks=target_lm,
+            noise_pred,
+            noise_target,
+            pred_image=pred_img,
+            target_image=target_img,
+            mask=mask,
+            pred_landmarks=pred_lm,
+            target_landmarks=target_lm,
         )
         assert "diffusion" in losses
         assert "landmark" in losses

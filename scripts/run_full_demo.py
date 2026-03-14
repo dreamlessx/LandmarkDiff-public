@@ -11,9 +11,9 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from landmarkdiff.inference import LandmarkDiffPipeline
-from landmarkdiff.landmarks import extract_landmarks, render_landmark_image, visualize_landmarks
 from landmarkdiff.conditioning import generate_conditioning
+from landmarkdiff.inference import LandmarkDiffPipeline
+from landmarkdiff.landmarks import extract_landmarks, render_landmark_image
 from landmarkdiff.manipulation import apply_procedure_preset
 from landmarkdiff.masking import generate_surgical_mask, mask_to_3channel
 
@@ -115,12 +115,15 @@ def run() -> None:
             cv2.imwrite(str(proc_dir / "before_after.png"), ba)
 
             # Full strip: input | wireframe diff | conditioning | mask | output
-            strip = np.hstack([
-                image, diff_overlay,
-                cv2.cvtColor(manip_wf, cv2.COLOR_GRAY2BGR),
-                (mask_3ch * 255).astype(np.uint8),
-                result["output"],
-            ])
+            strip = np.hstack(
+                [
+                    image,
+                    diff_overlay,
+                    cv2.cvtColor(manip_wf, cv2.COLOR_GRAY2BGR),
+                    (mask_3ch * 255).astype(np.uint8),
+                    result["output"],
+                ]
+            )
             cv2.imwrite(str(proc_dir / "full_strip.png"), strip)
 
             # Add to grid
@@ -142,7 +145,9 @@ def run() -> None:
             padded.append(r)
         grid = np.vstack(padded)
         cv2.imwrite(str(out / "master_results.png"), grid)
-        print(f"\nMaster results grid: {out / 'master_results.png'} ({grid.shape[1]}x{grid.shape[0]})")
+        print(
+            f"\nMaster results grid: {out / 'master_results.png'} ({grid.shape[1]}x{grid.shape[0]})"
+        )
 
     print(f"All results in {out}/")
 

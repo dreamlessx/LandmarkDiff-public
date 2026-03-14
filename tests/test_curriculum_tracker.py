@@ -2,10 +2,8 @@
 
 import json
 import tempfile
-from pathlib import Path
 
 import numpy as np
-import pytest
 
 
 class TestTrainingCurriculum:
@@ -13,6 +11,7 @@ class TestTrainingCurriculum:
 
     def test_difficulty_warmup(self):
         from landmarkdiff.curriculum import TrainingCurriculum
+
         c = TrainingCurriculum(total_steps=1000, warmup_fraction=0.1, full_difficulty_at=0.5)
         # During warmup (first 10%)
         assert c.get_difficulty(0) == 0.0
@@ -21,6 +20,7 @@ class TestTrainingCurriculum:
 
     def test_difficulty_ramp(self):
         from landmarkdiff.curriculum import TrainingCurriculum
+
         c = TrainingCurriculum(total_steps=1000, warmup_fraction=0.1, full_difficulty_at=0.5)
         # Midpoint of ramp should be ~0.5
         d = c.get_difficulty(300)
@@ -28,12 +28,14 @@ class TestTrainingCurriculum:
 
     def test_difficulty_full(self):
         from landmarkdiff.curriculum import TrainingCurriculum
+
         c = TrainingCurriculum(total_steps=1000, warmup_fraction=0.1, full_difficulty_at=0.5)
         assert c.get_difficulty(500) == 1.0
         assert c.get_difficulty(999) == 1.0
 
     def test_monotonic_increase(self):
         from landmarkdiff.curriculum import TrainingCurriculum
+
         c = TrainingCurriculum(total_steps=1000)
         prev = -1
         for step in range(0, 1001, 10):
@@ -43,6 +45,7 @@ class TestTrainingCurriculum:
 
     def test_should_include_easy_always(self):
         from landmarkdiff.curriculum import TrainingCurriculum
+
         c = TrainingCurriculum(total_steps=1000)
         rng = np.random.default_rng(42)
         # Easy samples should always be included
@@ -51,11 +54,11 @@ class TestTrainingCurriculum:
 
     def test_should_include_hard_rejected_early(self):
         from landmarkdiff.curriculum import TrainingCurriculum
+
         c = TrainingCurriculum(total_steps=1000)
         rng = np.random.default_rng(42)
         # Hard samples mostly rejected early
-        rejections = sum(1 for _ in range(100)
-                         if not c.should_include(0, 0.9, rng))
+        rejections = sum(1 for _ in range(100) if not c.should_include(0, 0.9, rng))
         assert rejections > 50  # most should be rejected
 
 
@@ -64,6 +67,7 @@ class TestProcedureCurriculum:
 
     def test_easy_procedure_higher_than_hard(self):
         from landmarkdiff.curriculum import ProcedureCurriculum
+
         c = ProcedureCurriculum(total_steps=1000)
         # Blepharoplasty is easiest — should have higher weight than orthognathic
         w_easy = c.get_weight(0, "blepharoplasty")
@@ -72,6 +76,7 @@ class TestProcedureCurriculum:
 
     def test_hard_procedure_low_weight_early(self):
         from landmarkdiff.curriculum import ProcedureCurriculum
+
         c = ProcedureCurriculum(total_steps=1000)
         # Orthognathic is hardest — should have lower weight early
         w = c.get_weight(0, "orthognathic")
@@ -79,6 +84,7 @@ class TestProcedureCurriculum:
 
     def test_all_full_weight_at_end(self):
         from landmarkdiff.curriculum import ProcedureCurriculum
+
         c = ProcedureCurriculum(total_steps=1000)
         weights = c.get_procedure_weights(999)
         for proc, w in weights.items():
@@ -86,6 +92,7 @@ class TestProcedureCurriculum:
 
     def test_never_zero_weight(self):
         from landmarkdiff.curriculum import ProcedureCurriculum
+
         c = ProcedureCurriculum(total_steps=1000)
         for step in range(0, 1001, 50):
             weights = c.get_procedure_weights(step)
@@ -98,6 +105,7 @@ class TestExperimentTracker:
 
     def test_start_and_list(self):
         from landmarkdiff.experiment_tracker import ExperimentTracker
+
         with tempfile.TemporaryDirectory() as tmpdir:
             tracker = ExperimentTracker(tmpdir)
             exp_id = tracker.start("test_exp", {"lr": 1e-5, "batch": 4})
@@ -109,6 +117,7 @@ class TestExperimentTracker:
 
     def test_log_metrics(self):
         from landmarkdiff.experiment_tracker import ExperimentTracker
+
         with tempfile.TemporaryDirectory() as tmpdir:
             tracker = ExperimentTracker(tmpdir)
             exp_id = tracker.start("test_exp", {})
@@ -121,6 +130,7 @@ class TestExperimentTracker:
 
     def test_finish(self):
         from landmarkdiff.experiment_tracker import ExperimentTracker
+
         with tempfile.TemporaryDirectory() as tmpdir:
             tracker = ExperimentTracker(tmpdir)
             exp_id = tracker.start("test_exp", {})
@@ -131,6 +141,7 @@ class TestExperimentTracker:
 
     def test_compare(self):
         from landmarkdiff.experiment_tracker import ExperimentTracker
+
         with tempfile.TemporaryDirectory() as tmpdir:
             tracker = ExperimentTracker(tmpdir)
             id1 = tracker.start("exp_a", {"lr": 1e-5})
@@ -143,6 +154,7 @@ class TestExperimentTracker:
 
     def test_get_best(self):
         from landmarkdiff.experiment_tracker import ExperimentTracker
+
         with tempfile.TemporaryDirectory() as tmpdir:
             tracker = ExperimentTracker(tmpdir)
             id1 = tracker.start("exp_a", {})
@@ -156,6 +168,7 @@ class TestExperimentTracker:
 
     def test_persistence(self):
         from landmarkdiff.experiment_tracker import ExperimentTracker
+
         with tempfile.TemporaryDirectory() as tmpdir:
             tracker1 = ExperimentTracker(tmpdir)
             exp_id = tracker1.start("persistent", {"lr": 1e-5})
@@ -168,6 +181,7 @@ class TestExperimentTracker:
 
     def test_multiple_experiments(self):
         from landmarkdiff.experiment_tracker import ExperimentTracker
+
         with tempfile.TemporaryDirectory() as tmpdir:
             tracker = ExperimentTracker(tmpdir)
             for i in range(5):
@@ -182,13 +196,21 @@ class TestComputeSampleDifficulty:
 
     def test_basic(self):
         from landmarkdiff.curriculum import compute_sample_difficulty
+
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-            json.dump({
-                "pairs": {
-                    "000001": {"procedure": "blepharoplasty", "source": "synthetic", "intensity": 0.5},
-                    "000002": {"procedure": "orthognathic", "source": "real", "intensity": 1.5},
-                }
-            }, f)
+            json.dump(
+                {
+                    "pairs": {
+                        "000001": {
+                            "procedure": "blepharoplasty",
+                            "source": "synthetic",
+                            "intensity": 0.5,
+                        },
+                        "000002": {"procedure": "orthognathic", "source": "real", "intensity": 1.5},
+                    }
+                },
+                f,
+            )
             f.flush()
             difficulties = compute_sample_difficulty(f.name)
             # Blepharoplasty synthetic should be easier than orthognathic real

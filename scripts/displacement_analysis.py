@@ -328,8 +328,11 @@ def main():
     # update-ablation
     ua = sub.add_parser("update-ablation", help="Update ablation results with real metrics")
     ua.add_argument("--ablation", required=True, help="Ablation results JSON path")
-    ua.add_argument("--config", required=True,
-                    choices=["diffusion_only", "diff_identity", "diff_perceptual", "full"])
+    ua.add_argument(
+        "--config",
+        required=True,
+        choices=["diffusion_only", "diff_identity", "diff_perceptual", "full"],
+    )
     ua.add_argument("--ssim", type=float, default=None)
     ua.add_argument("--lpips", type=float, default=None)
     ua.add_argument("--nme", type=float, default=None)
@@ -369,9 +372,11 @@ def main():
 
         for proc, data in stats.items():
             overall = data.get("overall", {})
-            print(f"  {proc}: mean={overall.get('mean_magnitude', 0):.4f}, "
-                  f"max={overall.get('max_magnitude', 0):.4f}, "
-                  f"active={overall.get('active_landmarks', 0)}")
+            print(
+                f"  {proc}: mean={overall.get('mean_magnitude', 0):.4f}, "
+                f"max={overall.get('max_magnitude', 0):.4f}, "
+                f"active={overall.get('active_landmarks', 0)}"
+            )
         print(f"  Saved to: {args.output}")
 
     elif args.command == "ablation-template":

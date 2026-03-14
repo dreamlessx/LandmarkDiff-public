@@ -24,9 +24,10 @@ class TestTrainingLauncher:
 
     def test_import(self):
         from scripts.launch_training import (
-            generate_slurm_script,
             SLURM_DEFAULTS,
+            generate_slurm_script,
         )
+
         assert generate_slurm_script is not None
         assert "partition" in SLURM_DEFAULTS
 
@@ -88,6 +89,7 @@ class TestTrainingLauncher:
     def test_check_existing_jobs_no_slurm(self):
         """Should handle missing squeue gracefully."""
         from scripts.launch_training import check_existing_jobs
+
         # Will return empty list if squeue not available
         jobs = check_existing_jobs("nonexistent_prefix")
         assert isinstance(jobs, list)
@@ -121,26 +123,26 @@ class TestTrainingMonitor:
     def test_import(self):
         from scripts.monitor_training import (
             parse_training_log,
-            print_summary,
-            detect_convergence,
-            export_metrics,
         )
+
         assert parse_training_log is not None
 
     def test_parse_training_log(self, tmp_path):
         """Parse a synthetic training log."""
         from scripts.monitor_training import parse_training_log
 
-        log_content = "\n".join([
-            "=== Phase A Training ===",
-            "Start: 2024-12-15 10:00:00",
-            "GPU: NVIDIA RTX A6000",
-            "Dataset: 30987 pairs | Batch: 4 | Accum: 4",
-            "Step 100/50000 | Loss: 0.123456 | LR: 9.80e-06 | GradNorm: 1.23 | 3.5 it/s | ETA: 4.0h",
-            "Step 200/50000 | Loss: 0.098765 | LR: 9.60e-06 | GradNorm: 0.98 | 3.6 it/s | ETA: 3.8h",
-            "Step 300/50000 | Loss: 0.087654 | LR: 9.40e-06 | GradNorm: 0.85 | 3.4 it/s | ETA: 4.1h",
-            "Checkpoint saved: checkpoints_phaseA/checkpoint-300",
-        ])
+        log_content = "\n".join(
+            [
+                "=== Phase A Training ===",
+                "Start: 2024-12-15 10:00:00",
+                "GPU: NVIDIA RTX A6000",
+                "Dataset: 30987 pairs | Batch: 4 | Accum: 4",
+                "Step 100/50000 | Loss: 0.123456 | LR: 9.80e-06 | GradNorm: 1.23 | 3.5 it/s | ETA: 4.0h",
+                "Step 200/50000 | Loss: 0.098765 | LR: 9.60e-06 | GradNorm: 0.98 | 3.6 it/s | ETA: 3.8h",
+                "Step 300/50000 | Loss: 0.087654 | LR: 9.40e-06 | GradNorm: 0.85 | 3.4 it/s | ETA: 4.1h",
+                "Checkpoint saved: checkpoints_phaseA/checkpoint-300",
+            ]
+        )
         log_path = tmp_path / "slurm-test.out"
         log_path.write_text(log_content)
 
@@ -167,7 +169,7 @@ class TestTrainingMonitor:
 
     def test_detect_convergence_decreasing(self, tmp_path):
         """Detect decreasing loss trend."""
-        from scripts.monitor_training import parse_training_log, detect_convergence
+        from scripts.monitor_training import detect_convergence, parse_training_log
 
         lines = ["=== Training ==="]
         for i in range(50):
@@ -187,7 +189,7 @@ class TestTrainingMonitor:
 
     def test_detect_convergence_too_few(self, tmp_path):
         """Handle too few data points."""
-        from scripts.monitor_training import parse_training_log, detect_convergence
+        from scripts.monitor_training import detect_convergence, parse_training_log
 
         log_content = (
             "Step 100/50000 | Loss: 0.5 | LR: 1e-05 | GradNorm: 1.0 | 3.0 it/s | ETA: 4.0h\n"
@@ -202,12 +204,14 @@ class TestTrainingMonitor:
 
     def test_export_metrics(self, tmp_path):
         """Export metrics to JSON."""
-        from scripts.monitor_training import parse_training_log, export_metrics
+        from scripts.monitor_training import export_metrics, parse_training_log
 
-        log_content = "\n".join([
-            "Step 100/10000 | Loss: 0.5 | LR: 1e-05 | GradNorm: 1.0 | 3.0 it/s | ETA: 1.0h",
-            "Step 200/10000 | Loss: 0.4 | LR: 9e-06 | GradNorm: 0.9 | 3.1 it/s | ETA: 0.9h",
-        ])
+        log_content = "\n".join(
+            [
+                "Step 100/10000 | Loss: 0.5 | LR: 1e-05 | GradNorm: 1.0 | 3.0 it/s | ETA: 1.0h",
+                "Step 200/10000 | Loss: 0.4 | LR: 9e-06 | GradNorm: 0.9 | 3.1 it/s | ETA: 0.9h",
+            ]
+        )
         log_path = tmp_path / "export_test.out"
         log_path.write_text(log_content)
 
@@ -240,8 +244,8 @@ class TestPostTrainingPipeline:
     def test_import(self):
         from scripts.post_training_pipeline import (
             PipelineStep,
-            run_pipeline,
         )
+
         assert PipelineStep is not None
 
     def test_pipeline_step_success(self):
@@ -319,14 +323,15 @@ class TestControlNetEvaluation:
 
     def test_import(self):
         from scripts.run_evaluation import evaluate_controlnet
+
         assert evaluate_controlnet is not None
 
     def test_fallback_no_gpu(self, tmp_path, monkeypatch):
         """Falls back to TPS proxy when no GPU available."""
-        from scripts.run_evaluation import evaluate_controlnet
-
         # Force torch.cuda.is_available() to return False
         import torch
+        from scripts.run_evaluation import evaluate_controlnet
+
         monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
 
         # Create minimal fake samples (need actual images for TPS fallback)
@@ -337,9 +342,9 @@ class TestControlNetEvaluation:
 
     def test_fallback_missing_checkpoint(self, tmp_path, monkeypatch):
         """Falls back to TPS proxy when checkpoint doesn't exist."""
+        import torch
         from scripts.run_evaluation import evaluate_controlnet
 
-        import torch
         monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
 
         results = evaluate_controlnet([], tmp_path, "/nonexistent/checkpoint")
@@ -350,8 +355,16 @@ class TestControlNetEvaluation:
         from scripts.run_evaluation import aggregate_metrics
 
         fake_results = [
-            {"method": "controlnet_proxy_tps", "prefix": "001", "procedure": "rhinoplasty",
-             "fitzpatrick": "III", "ssim": 0.85, "lpips": 0.12, "nme": 0.03, "identity": 0.9},
+            {
+                "method": "controlnet_proxy_tps",
+                "prefix": "001",
+                "procedure": "rhinoplasty",
+                "fitzpatrick": "III",
+                "ssim": 0.85,
+                "lpips": 0.12,
+                "nme": 0.03,
+                "identity": 0.9,
+            },
         ]
         agg = aggregate_metrics(fake_results)
         assert agg["n"] == 1
@@ -367,22 +380,23 @@ class TestTrainingDashboard:
     def test_import(self):
         from scripts.training_dashboard import (
             generate_dashboard_html,
-            parse_log_data,
-            find_latest_log,
         )
+
         assert generate_dashboard_html is not None
 
     def test_parse_log_data(self, tmp_path):
         from scripts.training_dashboard import parse_log_data
 
-        log_content = "\n".join([
-            "=== Phase A Training ===",
-            "GPU: NVIDIA RTX A6000",
-            "Dataset: 30987 pairs | Batch: 4 | Accum: 4",
-            "Step 100/50000 | Loss: 0.15 | LR: 9.80e-06 | GradNorm: 1.2 | 3.5 it/s | ETA: 4.0h",
-            "Step 200/50000 | Loss: 0.12 | LR: 9.60e-06 | GradNorm: 0.9 | 3.6 it/s | ETA: 3.8h",
-            "Checkpoint saved: checkpoints/checkpoint-200",
-        ])
+        log_content = "\n".join(
+            [
+                "=== Phase A Training ===",
+                "GPU: NVIDIA RTX A6000",
+                "Dataset: 30987 pairs | Batch: 4 | Accum: 4",
+                "Step 100/50000 | Loss: 0.15 | LR: 9.80e-06 | GradNorm: 1.2 | 3.5 it/s | ETA: 4.0h",
+                "Step 200/50000 | Loss: 0.12 | LR: 9.60e-06 | GradNorm: 0.9 | 3.6 it/s | ETA: 3.8h",
+                "Checkpoint saved: checkpoints/checkpoint-200",
+            ]
+        )
         log_path = tmp_path / "slurm-test.out"
         log_path.write_text(log_content)
 
@@ -421,10 +435,12 @@ class TestTrainingDashboard:
     def test_generate_dashboard_file(self, tmp_path):
         from scripts.training_dashboard import generate_dashboard
 
-        log_content = "\n".join([
-            "Step 100/1000 | Loss: 0.5 | LR: 1e-05 | GradNorm: 1.0 | 3.0 it/s | ETA: 1.0h",
-            "Step 200/1000 | Loss: 0.4 | LR: 9e-06 | GradNorm: 0.9 | 3.1 it/s | ETA: 0.9h",
-        ])
+        log_content = "\n".join(
+            [
+                "Step 100/1000 | Loss: 0.5 | LR: 1e-05 | GradNorm: 1.0 | 3.0 it/s | ETA: 1.0h",
+                "Step 200/1000 | Loss: 0.4 | LR: 9e-06 | GradNorm: 0.9 | 3.1 it/s | ETA: 0.9h",
+            ]
+        )
         log_path = tmp_path / "slurm-test.out"
         log_path.write_text(log_content)
 
@@ -446,8 +462,8 @@ class TestDryRunValidator:
     def test_import(self):
         from scripts.dry_run_training import (
             DryRunResult,
-            create_synthetic_dataset,
         )
+
         assert DryRunResult is not None
 
     def test_dry_run_result_tracking(self):
@@ -503,7 +519,8 @@ class TestDryRunValidator:
         create_synthetic_dataset(data_dir, n_pairs=3)
 
         dataset = SyntheticPairDataset(
-            str(data_dir), resolution=512,
+            str(data_dir),
+            resolution=512,
             clinical_augment=False,
             geometric_augment=False,
         )
@@ -522,7 +539,8 @@ class TestFastSplit:
     """Tests for scripts/fast_split.py."""
 
     def test_import(self):
-        from scripts.fast_split import fast_split, verify_splits
+        from scripts.fast_split import fast_split
+
         assert fast_split is not None
 
     def test_fast_split_basic(self, tmp_path):
@@ -622,18 +640,14 @@ class TestComparisonGrid:
     def test_import(self):
         from scripts.compare_outputs import (
             add_label,
-            compute_diff_heatmap,
-            generate_tps_output,
-            load_test_images,
             generate_comparison_grid,
-            generate_latex_figure,
         )
+
         assert add_label is not None
         assert generate_comparison_grid is not None
 
     def test_add_label_bottom(self):
         """Add label at bottom of image."""
-        import cv2
         from scripts.compare_outputs import add_label
 
         img = np.full((256, 256, 3), 128, dtype=np.uint8)
@@ -705,6 +719,7 @@ class TestComparisonGrid:
     def test_load_test_images_with_data(self, tmp_path):
         """Load test images grouped by procedure."""
         import cv2
+
         from scripts.compare_outputs import load_test_images
 
         # Create fake test images
@@ -737,12 +752,10 @@ class TestTrainingResilience:
 
     def test_import(self):
         from scripts.training_resilience import (
-            SlurmSignalHandler,
-            OOMHandler,
-            validate_checkpoint,
             GradientWatchdog,
-            create_emergency_save_fn,
+            SlurmSignalHandler,
         )
+
         assert SlurmSignalHandler is not None
         assert GradientWatchdog is not None
 
@@ -900,7 +913,7 @@ class TestTrainingResilience:
 
         # Create a simple model with gradients
         param = torch.nn.Parameter(torch.randn(10, 10))
-        loss = (param ** 2).sum()
+        loss = (param**2).sum()
         loss.backward()
 
         action = watchdog.check([param], loss.item(), step=1)
@@ -927,8 +940,9 @@ class TestTrainingResilience:
 
     def test_create_emergency_save_fn(self, tmp_path):
         """Emergency save function creates checkpoint."""
-        import torch
         from unittest.mock import MagicMock
+
+        import torch
         from scripts.training_resilience import create_emergency_save_fn
 
         # Create minimal model state dicts
@@ -940,9 +954,7 @@ class TestTrainingResilience:
         sched = torch.optim.lr_scheduler.StepLR(opt, step_size=1)
 
         step_ref = [42]
-        save_fn = create_emergency_save_fn(
-            tmp_path, model, ema, opt, sched, step_ref
-        )
+        save_fn = create_emergency_save_fn(tmp_path, model, ema, opt, sched, step_ref)
 
         save_fn()
 
@@ -959,6 +971,7 @@ class TestTrainingResilience:
         """Verify resilience is importable from train_controlnet."""
         # This tests that the import in train_controlnet.py works
         from scripts.train_controlnet import HAS_RESILIENCE
+
         assert HAS_RESILIENCE
 
 
@@ -971,9 +984,8 @@ class TestConfigValidator:
     def test_import(self):
         from scripts.validate_config import (
             validate_config,
-            validate_all_configs,
-            ConfigValidation,
         )
+
         assert validate_config is not None
 
     def test_valid_config(self, tmp_path):
@@ -1121,16 +1133,20 @@ class TestConfigValidator:
         """Validate multiple configs in a directory."""
         from scripts.validate_config import validate_all_configs
 
-        (tmp_path / "good.yaml").write_text(textwrap.dedent("""\
+        (tmp_path / "good.yaml").write_text(
+            textwrap.dedent("""\
             experiment_name: good
             training:
               phase: "A"
-        """))
-        (tmp_path / "bad.yaml").write_text(textwrap.dedent("""\
+        """)
+        )
+        (tmp_path / "bad.yaml").write_text(
+            textwrap.dedent("""\
             experiment_name: bad
             training:
               phase: "X"
-        """))
+        """)
+        )
 
         results = validate_all_configs(tmp_path)
         assert len(results) == 2
@@ -1195,10 +1211,8 @@ class TestExperimentLineage:
     def test_import(self):
         from scripts.experiment_lineage import (
             LineageDB,
-            ConfigRecord,
-            TrainingRecord,
-            EvalRecord,
         )
+
         assert LineageDB is not None
 
     def test_config_record_from_file(self, tmp_path):
@@ -1206,11 +1220,13 @@ class TestExperimentLineage:
         from scripts.experiment_lineage import ConfigRecord
 
         config = tmp_path / "test.yaml"
-        config.write_text(textwrap.dedent("""\
+        config.write_text(
+            textwrap.dedent("""\
             experiment_name: test_exp
             training:
               phase: "A"
-        """))
+        """)
+        )
 
         record = ConfigRecord.from_file(config)
         assert record.hash  # non-empty hash
@@ -1255,8 +1271,10 @@ class TestExperimentLineage:
 
         db = LineageDB()
         record = db.record_training(
-            str(config), "checkpoints/final",
-            steps=50000, final_loss=0.12,
+            str(config),
+            "checkpoints/final",
+            steps=50000,
+            final_loss=0.12,
         )
 
         assert record.id.startswith("train_")
@@ -1275,7 +1293,8 @@ class TestExperimentLineage:
         db.record_training(str(config), "checkpoints/final")
 
         eval_rec = db.record_evaluation(
-            "checkpoints/final", "results/eval.json",
+            "checkpoints/final",
+            "results/eval.json",
             metrics={"ssim_mean": 0.95, "lpips_mean": 0.05},
             n_samples=100,
         )
@@ -1334,8 +1353,7 @@ class TestExperimentLineage:
 
         db = LineageDB()
         db.record_training(str(config), "ckpt/final", steps=10000, final_loss=0.1)
-        db.record_evaluation("ckpt/final", "results.json",
-                           metrics={"ssim_mean": 0.95})
+        db.record_evaluation("ckpt/final", "results.json", metrics={"ssim_mean": 0.95})
 
         report = db.generate_report()
         assert "LINEAGE REPORT" in report
@@ -1425,15 +1443,20 @@ class TestPipelineIntegration:
 
         # Create config file
         config = tmp_path / "config.yaml"
-        config.write_text("experiment_name: e2e_test\ntraining:\n  phase: A\n  learning_rate: 1e-5\n")
+        config.write_text(
+            "experiment_name: e2e_test\ntraining:\n  phase: A\n  learning_rate: 1e-5\n"
+        )
 
         db_path = tmp_path / "lineage.json"
         db = LineageDB()
 
         # Record training
         train_rec = db.record_training(
-            str(config), str(tmp_path / "checkpoints/final"),
-            steps=50000, final_loss=0.08, slurm_job_id="12345",
+            str(config),
+            str(tmp_path / "checkpoints/final"),
+            steps=50000,
+            final_loss=0.08,
+            slurm_job_id="12345",
         )
         assert train_rec.slurm_job_id == "12345"
 
@@ -1460,7 +1483,9 @@ class TestPipelineIntegration:
         assert len(db2.check_stale()) == 0
 
         # Change config → should become stale
-        config.write_text("experiment_name: e2e_test_v2\ntraining:\n  phase: A\n  learning_rate: 5e-6\n")
+        config.write_text(
+            "experiment_name: e2e_test_v2\ntraining:\n  phase: A\n  learning_rate: 5e-6\n"
+        )
         stale = db2.check_stale()
         assert len(stale) >= 1  # eval is stale
         # Paper link should also be flagged
@@ -1469,7 +1494,9 @@ class TestPipelineIntegration:
 
     def test_validate_config_in_preflight(self):
         """preflight_training.py integrates config schema validation."""
-        preflight_path = Path(__file__).resolve().parent.parent / "scripts" / "preflight_training.py"
+        preflight_path = (
+            Path(__file__).resolve().parent.parent / "scripts" / "preflight_training.py"
+        )
         if preflight_path.exists():
             content = preflight_path.read_text()
             assert "validate_config" in content
@@ -1485,11 +1512,8 @@ class TestDisplacementAnalysis:
     def test_import(self):
         from scripts.displacement_analysis import (
             generate_displacement_report,
-            compute_region_statistics,
-            generate_ablation_template,
-            update_ablation_results,
-            generate_full_analysis,
         )
+
         assert generate_displacement_report is not None
 
     def test_ablation_template_generation(self, tmp_path):
@@ -1537,11 +1561,15 @@ class TestDisplacementAnalysis:
         generate_ablation_template(out)
 
         # Update with real metrics
-        updated = update_ablation_results(out, "full", {
-            "ssim": 0.9234,
-            "lpips": 0.0456,
-            "nme": 0.0123,
-        })
+        updated = update_ablation_results(
+            out,
+            "full",
+            {
+                "ssim": 0.9234,
+                "lpips": 0.0456,
+                "nme": 0.0123,
+            },
+        )
 
         assert updated["full"]["ssim"] == 0.9234
         assert updated["full"]["lpips"] == 0.0456
@@ -1563,7 +1591,7 @@ class TestDisplacementAnalysis:
 
         try:
             update_ablation_results(out, "invalid_config", {"ssim": 0.5})
-            assert False, "Should have raised ValueError"
+            raise AssertionError("Should have raised ValueError")
         except ValueError as e:
             assert "invalid_config" in str(e)
 
@@ -1608,22 +1636,39 @@ class TestDisplacementAnalysis:
 
     def test_ablation_table2_compatibility(self, tmp_path):
         """Ablation template works with generate_paper_tables Table 2."""
+        from scripts.generate_paper_tables import generate_table2_ablation
+
         from scripts.displacement_analysis import (
             generate_ablation_template,
             update_ablation_results,
         )
-        from scripts.generate_paper_tables import generate_table2_ablation
 
         ablation_path = tmp_path / "ablation.json"
         generate_ablation_template(ablation_path)
 
         # Fill in sample values
-        update_ablation_results(ablation_path, "diffusion_only", {
-            "ssim": 0.72, "lpips": 0.15, "nme": 0.023, "identity_sim": 0.85, "fid": 45.2,
-        })
-        update_ablation_results(ablation_path, "full", {
-            "ssim": 0.89, "lpips": 0.06, "nme": 0.012, "identity_sim": 0.94, "fid": 28.1,
-        })
+        update_ablation_results(
+            ablation_path,
+            "diffusion_only",
+            {
+                "ssim": 0.72,
+                "lpips": 0.15,
+                "nme": 0.023,
+                "identity_sim": 0.85,
+                "fid": 45.2,
+            },
+        )
+        update_ablation_results(
+            ablation_path,
+            "full",
+            {
+                "ssim": 0.89,
+                "lpips": 0.06,
+                "nme": 0.012,
+                "identity_sim": 0.94,
+                "fid": 28.1,
+            },
+        )
 
         # Generate table
         table = generate_table2_ablation(str(ablation_path))

@@ -2,20 +2,20 @@
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
 
 import numpy as np
 import pytest
 
-
 # ---- Config tests ----
+
 
 class TestExperimentConfig:
     """Test YAML config system."""
 
     def test_default_config(self):
         from landmarkdiff.config import ExperimentConfig
+
         config = ExperimentConfig()
         assert config.experiment_name == "default"
         assert config.training.phase == "A"
@@ -24,6 +24,7 @@ class TestExperimentConfig:
 
     def test_round_trip_yaml(self, tmp_path):
         from landmarkdiff.config import ExperimentConfig, TrainingConfig
+
         config = ExperimentConfig(
             experiment_name="test_roundtrip",
             training=TrainingConfig(
@@ -48,6 +49,7 @@ class TestExperimentConfig:
     def test_from_yaml_with_defaults(self, tmp_path):
         """Partial YAML should fill defaults for missing keys."""
         from landmarkdiff.config import ExperimentConfig
+
         yaml_path = tmp_path / "partial.yaml"
         yaml_path.write_text("experiment_name: partial_test\ntraining:\n  phase: B\n")
 
@@ -60,6 +62,7 @@ class TestExperimentConfig:
 
     def test_to_dict(self):
         from landmarkdiff.config import ExperimentConfig
+
         config = ExperimentConfig(experiment_name="dict_test")
         d = config.to_dict()
         assert isinstance(d, dict)
@@ -70,6 +73,7 @@ class TestExperimentConfig:
     def test_load_phaseA_yaml(self):
         """Test loading the actual phaseA config file."""
         from landmarkdiff.config import ExperimentConfig
+
         path = Path(__file__).parent.parent / "configs" / "phaseA_default.yaml"
         if path.exists():
             config = ExperimentConfig.from_yaml(path)
@@ -79,6 +83,7 @@ class TestExperimentConfig:
     def test_load_phaseB_yaml(self):
         """Test loading the actual phaseB config file."""
         from landmarkdiff.config import ExperimentConfig
+
         path = Path(__file__).parent.parent / "configs" / "phaseB_identity.yaml"
         if path.exists():
             config = ExperimentConfig.from_yaml(path)
@@ -87,6 +92,7 @@ class TestExperimentConfig:
 
 
 # ---- Augmentation tests ----
+
 
 class TestAugmentation:
     """Test training data augmentation."""
@@ -106,10 +112,12 @@ class TestAugmentation:
         }
 
     def test_augment_preserves_shapes(self, sample_data):
-        from landmarkdiff.augmentation import augment_training_sample, AugmentationConfig
+        from landmarkdiff.augmentation import AugmentationConfig, augment_training_sample
+
         config = AugmentationConfig(seed=42)
         result = augment_training_sample(
-            **sample_data, config=config,
+            **sample_data,
+            config=config,
         )
         assert result["input_image"].shape == (512, 512, 3)
         assert result["target_image"].shape == (512, 512, 3)
@@ -119,17 +127,17 @@ class TestAugmentation:
         assert result["landmarks_dst"].shape == (478, 2)
 
     def test_augment_deterministic_with_seed(self, sample_data):
-        from landmarkdiff.augmentation import augment_training_sample, AugmentationConfig
+        from landmarkdiff.augmentation import AugmentationConfig, augment_training_sample
+
         config = AugmentationConfig(seed=123)
-        r1 = augment_training_sample(**sample_data, config=config,
-                                      rng=np.random.default_rng(123))
-        r2 = augment_training_sample(**sample_data, config=config,
-                                      rng=np.random.default_rng(123))
+        r1 = augment_training_sample(**sample_data, config=config, rng=np.random.default_rng(123))
+        r2 = augment_training_sample(**sample_data, config=config, rng=np.random.default_rng(123))
         np.testing.assert_array_equal(r1["input_image"], r2["input_image"])
 
     def test_no_augmentation(self, sample_data):
         """With all augmentations disabled, output should match input."""
-        from landmarkdiff.augmentation import augment_training_sample, AugmentationConfig
+        from landmarkdiff.augmentation import AugmentationConfig, augment_training_sample
+
         config = AugmentationConfig(
             random_flip=False,
             random_rotation_deg=0.0,
@@ -146,7 +154,8 @@ class TestAugmentation:
         np.testing.assert_array_equal(result["input_image"], sample_data["input_image"])
 
     def test_landmarks_bounded(self, sample_data):
-        from landmarkdiff.augmentation import augment_training_sample, AugmentationConfig
+        from landmarkdiff.augmentation import AugmentationConfig, augment_training_sample
+
         config = AugmentationConfig(seed=42)
         result = augment_training_sample(**sample_data, config=config)
         assert np.all(result["landmarks_src"] >= 0)
@@ -156,7 +165,8 @@ class TestAugmentation:
 
     def test_conditioning_dropout(self, sample_data):
         """With dropout=1.0, conditioning should be all zeros."""
-        from landmarkdiff.augmentation import augment_training_sample, AugmentationConfig
+        from landmarkdiff.augmentation import AugmentationConfig, augment_training_sample
+
         config = AugmentationConfig(
             random_flip=False,
             random_rotation_deg=0.0,
@@ -175,6 +185,7 @@ class TestAugmentation:
 class TestSkinToneAugmentation:
     def test_augment_skin_tone_no_change(self):
         from landmarkdiff.augmentation import augment_skin_tone
+
         img = np.full((64, 64, 3), 128, dtype=np.uint8)
         result = augment_skin_tone(img, ita_delta=0.0)
         # With zero delta, should be very close to original
@@ -182,6 +193,7 @@ class TestSkinToneAugmentation:
 
     def test_augment_skin_tone_lighter(self):
         from landmarkdiff.augmentation import augment_skin_tone
+
         img = np.full((64, 64, 3), 100, dtype=np.uint8)
         result = augment_skin_tone(img, ita_delta=20.0)
         # Should be lighter (higher L channel)
@@ -191,19 +203,19 @@ class TestSkinToneAugmentation:
 class TestFitzpatrickBalancer:
     def test_uniform_weights(self):
         from landmarkdiff.augmentation import FitzpatrickBalancer
+
         balancer = FitzpatrickBalancer()
         for ft in ["I", "II", "III", "IV", "V", "VI"]:
             for _ in range(10):
                 balancer.register_sample(ft)
 
-        weights = balancer.get_sampling_weights(
-            ["I", "II", "III", "IV", "V", "VI"]
-        )
+        weights = balancer.get_sampling_weights(["I", "II", "III", "IV", "V", "VI"])
         # With equal counts, weights should be approximately equal
         assert np.allclose(weights, weights[0], atol=0.01)
 
     def test_imbalanced_upweighting(self):
         from landmarkdiff.augmentation import FitzpatrickBalancer
+
         balancer = FitzpatrickBalancer()
         # Imbalanced: 100 Type I, 10 Type VI
         for _ in range(100):
@@ -218,21 +230,25 @@ class TestFitzpatrickBalancer:
 
 # ---- FID tests ----
 
+
 class TestFID:
     def test_import(self):
-        from landmarkdiff.fid import compute_fid_from_dirs, compute_fid_from_arrays
+        from landmarkdiff.fid import compute_fid_from_arrays, compute_fid_from_dirs
+
         assert callable(compute_fid_from_dirs)
         assert callable(compute_fid_from_arrays)
 
     def test_statistics_computation(self):
         from landmarkdiff.fid import _compute_statistics
+
         features = np.random.randn(100, 2048)
         mu, sigma = _compute_statistics(features)
         assert mu.shape == (2048,)
         assert sigma.shape == (2048, 2048)
 
     def test_fid_same_distribution(self):
-        from landmarkdiff.fid import _compute_statistics, _calculate_fid
+        from landmarkdiff.fid import _calculate_fid, _compute_statistics
+
         rng = np.random.default_rng(42)
         features = rng.standard_normal((200, 64))  # small dim for speed
         mu, sigma = _compute_statistics(features)
@@ -241,7 +257,8 @@ class TestFID:
         assert abs(fid) < 1e-6
 
     def test_fid_different_distributions(self):
-        from landmarkdiff.fid import _compute_statistics, _calculate_fid
+        from landmarkdiff.fid import _calculate_fid, _compute_statistics
+
         rng = np.random.default_rng(42)
         feat1 = rng.standard_normal((200, 64))
         feat2 = rng.standard_normal((200, 64)) + 5.0  # shifted mean
@@ -254,6 +271,7 @@ class TestFID:
 
 # ---- Training dataset with augmentation integration tests ----
 
+
 class TestTrainingDatasetAugmentation:
     """Test SyntheticPairDataset integration with augmentation pipeline."""
 
@@ -261,6 +279,7 @@ class TestTrainingDatasetAugmentation:
     def mock_dataset_dir(self, tmp_path):
         """Create a minimal mock dataset with 3 synthetic pairs."""
         import cv2
+
         rng = np.random.default_rng(42)
         for i in range(3):
             prefix = f"{i:06d}"
@@ -276,9 +295,11 @@ class TestTrainingDatasetAugmentation:
     def test_dataset_loads_with_augmentation(self, mock_dataset_dir):
         """Dataset should load and apply augmentation without errors."""
         import sys
+
         sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
         # Import Dataset class directly from the training script module
         from importlib import import_module
+
         spec = import_module("train_controlnet")
         ds = spec.SyntheticPairDataset(
             str(mock_dataset_dir),
@@ -295,8 +316,10 @@ class TestTrainingDatasetAugmentation:
     def test_dataset_augmentation_varies(self, mock_dataset_dir):
         """Repeated access to same index should yield different results (stochastic aug)."""
         import sys
+
         sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
         from importlib import import_module
+
         spec = import_module("train_controlnet")
         ds = spec.SyntheticPairDataset(
             str(mock_dataset_dir),
@@ -304,7 +327,7 @@ class TestTrainingDatasetAugmentation:
             geometric_augment=True,
         )
         s1 = ds[0]["target"].numpy()
-        s2 = ds[0]["target"].numpy()
+        ds[0]["target"].numpy()
         # With random augmentation, outputs should differ (flips, rotations, etc.)
         # There's a small chance they match exactly, so allow that
         # But over multiple samples it should vary
@@ -319,8 +342,10 @@ class TestTrainingDatasetAugmentation:
     def test_dataset_no_augmentation(self, mock_dataset_dir):
         """With augmentation disabled, repeated access gives same result."""
         import sys
+
         sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
         from importlib import import_module
+
         spec = import_module("train_controlnet")
         ds = spec.SyntheticPairDataset(
             str(mock_dataset_dir),
@@ -335,8 +360,10 @@ class TestTrainingDatasetAugmentation:
     def test_dataset_values_in_range(self, mock_dataset_dir):
         """All output tensors should be in [0, 1] range."""
         import sys
+
         sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
         from importlib import import_module
+
         spec = import_module("train_controlnet")
         ds = spec.SyntheticPairDataset(
             str(mock_dataset_dir),

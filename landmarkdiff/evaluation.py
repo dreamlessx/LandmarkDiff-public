@@ -23,7 +23,7 @@ class EvalMetrics:
 
     fid: float = 0.0
     lpips: float = 0.0
-    nme: float = 0.0           # Normalized Mean landmark Error
+    nme: float = 0.0  # Normalized Mean landmark Error
     identity_sim: float = 0.0  # ArcFace cosine similarity
     ssim: float = 0.0
 
@@ -154,9 +154,7 @@ def compute_nme(
     Returns:
         NME value (lower is better).
     """
-    iod = np.linalg.norm(
-        target_landmarks[left_eye_idx] - target_landmarks[right_eye_idx]
-    )
+    iod = np.linalg.norm(target_landmarks[left_eye_idx] - target_landmarks[right_eye_idx])
     if iod < 1.0:
         iod = 1.0
 
@@ -175,6 +173,7 @@ def compute_ssim(
     """
     try:
         from skimage.metrics import structural_similarity
+
         # Convert to grayscale if color, or compute per-channel
         if pred.ndim == 3 and pred.shape[2] == 3:
             return float(structural_similarity(pred, target, channel_axis=2, data_range=255))
@@ -194,10 +193,8 @@ def compute_ssim(
         C1 = (0.01 * 255) ** 2
         C2 = (0.03 * 255) ** 2
 
-        ssim_val = (
-            (2 * mu_p * mu_t + C1) * (2 * sigma_pt + C2)
-        ) / (
-            (mu_p ** 2 + mu_t ** 2 + C1) * (sigma_p ** 2 + sigma_t ** 2 + C2)
+        ssim_val = ((2 * mu_p * mu_t + C1) * (2 * sigma_pt + C2)) / (
+            (mu_p**2 + mu_t**2 + C1) * (sigma_p**2 + sigma_t**2 + C2)
         )
         return float(ssim_val)
 
@@ -211,6 +208,7 @@ def _get_lpips_fn():
     global _LPIPS_FN
     if _LPIPS_FN is None:
         import lpips
+
         _LPIPS_FN = lpips.LPIPS(net="alex", verbose=False)
         _LPIPS_FN.eval()
     return _LPIPS_FN
@@ -225,7 +223,7 @@ def compute_lpips(
     Returns LPIPS score (lower = more similar).
     """
     try:
-        import lpips
+        import lpips  # noqa: F401
         import torch
     except ImportError:
         return float("nan")
@@ -261,9 +259,10 @@ def compute_fid(
     except ImportError:
         raise ImportError(
             "torch-fidelity is required for FID. Install with: pip install torch-fidelity"
-        )
+        ) from None
 
     import torch
+
     metrics = calculate_metrics(
         input1=generated_dir,
         input2=real_dir,
@@ -285,6 +284,7 @@ def compute_identity_similarity(
     """
     try:
         from insightface.app import FaceAnalysis
+
         global _ARCFACE_APP
         if _ARCFACE_APP is None:
             _ARCFACE_APP = FaceAnalysis(

@@ -22,7 +22,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 
 @dataclass
@@ -68,9 +68,7 @@ class DataManifest:
     """
 
     version: str = "1.0"
-    created_at: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
-    )
+    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     root_dir: str = ""
     files: list[FileEntry] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -237,8 +235,7 @@ class DataManifest:
             actual_size = fp.stat().st_size
             if actual_size != entry.size_bytes:
                 issues.append(
-                    f"Size mismatch: {entry.path} "
-                    f"(expected {entry.size_bytes}, got {actual_size})"
+                    f"Size mismatch: {entry.path} (expected {entry.size_bytes}, got {actual_size})"
                 )
 
             # Check checksum
@@ -265,8 +262,7 @@ class DataManifest:
         added = sorted(other_paths - self_paths)
         removed = sorted(self_paths - other_paths)
         modified = sorted(
-            p for p in self_paths & other_paths
-            if self_files[p].checksum != other_files[p].checksum
+            p for p in self_paths & other_paths if self_files[p].checksum != other_files[p].checksum
         )
 
         return {"added": added, "removed": removed, "modified": modified}
@@ -292,6 +288,7 @@ def _get_hostname() -> str:
     """Get hostname safely."""
     try:
         import socket
+
         return socket.gethostname()
     except Exception:
         return "unknown"

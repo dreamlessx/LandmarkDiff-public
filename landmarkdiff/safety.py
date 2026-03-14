@@ -26,7 +26,6 @@ Usage:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 import cv2
 import numpy as np
@@ -35,6 +34,7 @@ import numpy as np
 @dataclass
 class SafetyResult:
     """Result of safety validation checks."""
+
     passed: bool = True
     failures: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
@@ -124,9 +124,7 @@ class SafetyValidator:
 
         return result
 
-    def _check_face_confidence(
-        self, result: SafetyResult, confidence: float
-    ) -> None:
+    def _check_face_confidence(self, result: SafetyResult, confidence: float) -> None:
         """Check face detection confidence."""
         if confidence < self.min_face_confidence:
             result.add_failure(
@@ -147,14 +145,14 @@ class SafetyValidator:
         """Check identity preservation using ArcFace similarity."""
         try:
             from landmarkdiff.evaluation import compute_identity_similarity
+
             sim = compute_identity_similarity(output_image, input_image)
             result.details["identity_similarity"] = float(sim)
 
             if sim < self.identity_threshold:
                 result.add_failure(
                     "identity",
-                    f"Identity similarity {sim:.3f} below threshold "
-                    f"{self.identity_threshold}",
+                    f"Identity similarity {sim:.3f} below threshold {self.identity_threshold}",
                 )
             else:
                 result.add_pass("identity")
@@ -257,9 +255,7 @@ class SafetyValidator:
         else:
             result.add_pass("procedure_region")
 
-    def _check_output_quality(
-        self, result: SafetyResult, output: np.ndarray
-    ) -> None:
+    def _check_output_quality(self, result: SafetyResult, output: np.ndarray) -> None:
         """Check output image quality (not blank, not corrupted)."""
         if output is None or output.size == 0:
             result.add_failure("output_quality", "Output image is empty")
@@ -346,8 +342,7 @@ class SafetyValidator:
         cv2.addWeighted(overlay, opacity, result, 1 - opacity, 0, result)
 
         # White text
-        cv2.putText(result, text, (x, y), font, font_scale,
-                    (255, 255, 255), thickness, cv2.LINE_AA)
+        cv2.putText(result, text, (x, y), font, font_scale, (255, 255, 255), thickness, cv2.LINE_AA)
 
         return result
 
@@ -371,7 +366,7 @@ class SafetyValidator:
             "procedure": procedure,
             "intensity": intensity,
             "disclaimer": "AI-generated surgical prediction for visualization only. "
-                          "Not a guarantee of surgical outcome.",
+            "Not a guarantee of surgical outcome.",
         }
 
         # Save as sidecar JSON (PNG doesn't have easy EXIF support)

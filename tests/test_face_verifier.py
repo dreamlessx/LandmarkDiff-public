@@ -1,24 +1,23 @@
 """Tests for neural face verifier and distortion detection."""
 
 import numpy as np
-import pytest
 
 from landmarkdiff.face_verifier import (
-    detect_blur,
-    detect_noise,
-    detect_compression_artifacts,
-    detect_oversmoothing,
-    detect_color_cast,
-    detect_lighting_issues,
-    analyze_distortions,
     DistortionReport,
     RestorationResult,
+    analyze_distortions,
+    detect_blur,
+    detect_color_cast,
+    detect_compression_artifacts,
+    detect_lighting_issues,
+    detect_noise,
+    detect_oversmoothing,
 )
-
 
 # ---------------------------------------------------------------------------
 # Synthetic test images
 # ---------------------------------------------------------------------------
+
 
 def _make_sharp_image(h=256, w=256):
     """Create a sharp image with high-frequency detail."""
@@ -33,6 +32,7 @@ def _make_sharp_image(h=256, w=256):
 def _make_blurry_image(h=256, w=256):
     """Create a blurry image."""
     import cv2
+
     sharp = _make_sharp_image(h, w)
     return cv2.GaussianBlur(sharp, (31, 31), 10)
 
@@ -47,6 +47,7 @@ def _make_noisy_image(h=256, w=256):
 def _make_oversmoothed_image(h=256, w=256):
     """Create an oversmoothed (beauty-filtered) image."""
     import cv2
+
     sharp = _make_sharp_image(h, w)
     # Heavy bilateral filter (preserves edges, removes texture)
     return cv2.bilateralFilter(sharp, 15, 80, 80)
@@ -63,6 +64,7 @@ def _make_color_cast_image(h=256, w=256):
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 class TestBlurDetection:
     def test_sharp_image_low_blur(self):
@@ -85,6 +87,7 @@ class TestBlurDetection:
 class TestNoiseDetection:
     def test_clean_image_low_noise(self):
         import cv2
+
         clean = np.full((256, 256, 3), 128, dtype=np.uint8)
         clean = cv2.GaussianBlur(clean, (5, 5), 1)  # Smooth = low noise
         score = detect_noise(clean)

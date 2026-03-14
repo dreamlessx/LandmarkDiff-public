@@ -166,9 +166,7 @@ class CheckpointManager:
         torch.save(state, ckpt_dir / "training_state.pt")
 
         # Compute checkpoint size
-        size_mb = sum(
-            f.stat().st_size for f in ckpt_dir.rglob("*") if f.is_file()
-        ) / (1024 * 1024)
+        size_mb = sum(f.stat().st_size for f in ckpt_dir.rglob("*") if f.is_file()) / (1024 * 1024)
 
         # Create metadata
         meta = CheckpointMetadata(
@@ -216,7 +214,7 @@ class CheckpointManager:
         entries.sort(key=lambda x: x[1], reverse=not self.lower_is_better)
 
         # Mark best
-        best_names = {e[0] for e in entries[:self.keep_best]}
+        best_names = {e[0] for e in entries[: self.keep_best]}
         for name, meta in self._index["checkpoints"].items():
             meta["is_best"] = name in best_names
 
@@ -245,11 +243,13 @@ class CheckpointManager:
             val = meta.get("metrics", {}).get(self.metric)
             if val is None:
                 continue
-            if best_val is None:
-                best, best_val = name, val
-            elif self.lower_is_better and val < best_val:
-                best, best_val = name, val
-            elif not self.lower_is_better and val > best_val:
+            if (
+                best_val is None
+                or self.lower_is_better
+                and val < best_val
+                or not self.lower_is_better
+                and val > best_val
+            ):
                 best, best_val = name, val
         return best
 
@@ -280,7 +280,7 @@ class CheckpointManager:
         keep = set()
 
         # Keep latest
-        for name in all_names[-self.keep_latest:]:
+        for name in all_names[-self.keep_latest :]:
             keep.add(name)
 
         # Keep best
@@ -323,10 +323,7 @@ class CheckpointManager:
 
     def total_size_mb(self) -> float:
         """Return total disk size of all tracked checkpoints."""
-        return sum(
-            meta.get("size_mb", 0.0)
-            for meta in self._index["checkpoints"].values()
-        )
+        return sum(meta.get("size_mb", 0.0) for meta in self._index["checkpoints"].values())
 
     def summary(self) -> str:
         """Return a human-readable summary of checkpoint state."""
@@ -350,6 +347,7 @@ class CheckpointManager:
 # ------------------------------------------------------------------
 # Helpers
 # ------------------------------------------------------------------
+
 
 def _get_state_dict(module: torch.nn.Module) -> dict:
     """Extract state dict, handling DDP wrapper."""

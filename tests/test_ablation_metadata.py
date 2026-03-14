@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import sys
-import tempfile
 from pathlib import Path
 
 import cv2
@@ -15,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
 # ─── Fixtures ───
+
 
 @pytest.fixture
 def mock_test_dir(tmp_path):
@@ -87,9 +87,11 @@ def mock_ablation_json(tmp_path):
 
 # ─── Metadata Generation Tests ───
 
+
 class TestMetadataGeneration:
     def test_infer_procedure_from_filename(self):
         from scripts.generate_metadata import infer_procedure
+
         assert infer_procedure("rhinoplasty_0001") == "rhinoplasty"
         assert infer_procedure("blepharoplasty_face_0042") == "blepharoplasty"
         assert infer_procedure("rhytidectomy_v3_0100") == "rhytidectomy"
@@ -98,12 +100,14 @@ class TestMetadataGeneration:
 
     def test_infer_wave_from_filename(self):
         from scripts.generate_metadata import infer_wave
+
         assert infer_wave("pair_v3_rhinoplasty") == "wave3_realistic"
         assert infer_wave("pair_v2_bleph") == "wave2_displacement"
         assert infer_wave("pair_v1_rhytid") == "wave1_basic"
 
     def test_estimate_displacement_intensity(self):
         from scripts.generate_metadata import estimate_displacement_intensity
+
         # Identical images → low intensity
         img = np.random.randint(100, 200, (128, 128, 3), dtype=np.uint8)
         intensity = estimate_displacement_intensity(img, img.copy())
@@ -117,6 +121,7 @@ class TestMetadataGeneration:
 
     def test_generate_metadata_creates_json(self, mock_test_dir):
         from scripts.generate_metadata import generate_metadata
+
         out_path = str(mock_test_dir / "metadata.json")
         meta = generate_metadata(str(mock_test_dir), output_path=out_path)
 
@@ -127,6 +132,7 @@ class TestMetadataGeneration:
 
     def test_generate_metadata_infers_procedures(self, mock_test_dir):
         from scripts.generate_metadata import generate_metadata
+
         meta = generate_metadata(str(mock_test_dir))
 
         procs = set()
@@ -138,9 +144,11 @@ class TestMetadataGeneration:
 
 # ─── Ablation Tests ───
 
+
 class TestAblationExperiments:
     def test_load_test_images(self, mock_test_dir):
         from scripts.run_ablation_experiments import load_test_images
+
         images = load_test_images(str(mock_test_dir))
         assert len(images) == 6
         assert all("input_path" in img for img in images)
@@ -148,20 +156,26 @@ class TestAblationExperiments:
 
     def test_load_test_images_max_samples(self, mock_test_dir):
         from scripts.run_ablation_experiments import load_test_images
+
         images = load_test_images(str(mock_test_dir), max_samples=3)
         assert len(images) == 3
 
     def test_generate_ablation_latex(self, tmp_path):
         from scripts.run_ablation_experiments import generate_ablation_latex
+
         results = {
             "Full TPS": {
                 "aggregate": {
-                    "ssim_mean": 0.95, "lpips_mean": 0.02, "nme_mean": 0.005,
+                    "ssim_mean": 0.95,
+                    "lpips_mean": 0.02,
+                    "nme_mean": 0.005,
                 }
             },
             "No Mask": {
                 "aggregate": {
-                    "ssim_mean": 0.70, "lpips_mean": 0.15, "nme_mean": 0.02,
+                    "ssim_mean": 0.70,
+                    "lpips_mean": 0.15,
+                    "nme_mean": 0.02,
                 }
             },
         }
@@ -175,26 +189,32 @@ class TestAblationExperiments:
 
 # ─── Table Population Tests ───
 
+
 class TestPopulateTables:
     def test_fmt_metric_ssim(self):
         from scripts.populate_paper_tables import fmt_metric
+
         assert fmt_metric(0.95123, "ssim") == "0.951"
         assert fmt_metric(0.99, "ssim") == "0.990"
 
     def test_fmt_metric_lpips(self):
         from scripts.populate_paper_tables import fmt_metric
+
         assert fmt_metric(0.0234, "lpips") == "0.0234"
 
     def test_fmt_metric_nan(self):
         from scripts.populate_paper_tables import fmt_metric
+
         assert fmt_metric(float("nan"), "ssim") == "-- "
 
     def test_load_json_missing(self, tmp_path):
         from scripts.populate_paper_tables import load_json
+
         assert load_json(str(tmp_path / "nonexistent.json")) is None
 
     def test_load_json_valid(self, mock_benchmark_json):
         from scripts.populate_paper_tables import load_json
+
         data = load_json(str(mock_benchmark_json))
         assert data is not None
         assert "methods" in data
@@ -202,10 +222,12 @@ class TestPopulateTables:
 
 # ─── DDP Curriculum Fix Tests ───
 
+
 class TestCurriculumDDP:
     def test_curriculum_weights_computed(self):
         """Curriculum weights should be computed regardless of DDP mode."""
         from landmarkdiff.curriculum import ProcedureCurriculum
+
         curriculum = ProcedureCurriculum(total_steps=10000)
 
         # Step 0: easy procs have higher weights
@@ -222,6 +244,7 @@ class TestCurriculumDDP:
     def test_loss_weighting_normalization(self):
         """Loss weights should normalize so mean ≈ 1."""
         import torch
+
         weights = torch.tensor([0.4, 0.6, 0.8, 1.0])
         normalized = weights / weights.mean().clamp(min=0.1)
         # Mean of normalized weights should be close to 1
@@ -230,10 +253,12 @@ class TestCurriculumDDP:
     def test_curriculum_weights_broadcast_shape(self):
         """Curriculum weights tensor should be 1D with length = dataset size."""
         import torch
+
         n_samples = 100
         weights = torch.ones(n_samples)
         # Simulate curriculum update
         from landmarkdiff.curriculum import ProcedureCurriculum
+
         curriculum = ProcedureCurriculum(total_steps=1000)
         for i in range(n_samples):
             proc = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"][i % 4]

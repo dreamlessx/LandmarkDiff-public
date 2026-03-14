@@ -3,40 +3,54 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import pytest
 
-from landmarkdiff.audit import AuditCase, AuditReporter, AuditSummary
-
+from landmarkdiff.audit import AuditCase, AuditReporter
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def sample_cases():
     return [
         AuditCase(
-            case_id="P001", procedure="rhinoplasty", safety_passed=True,
-            identity_sim=0.87, fitzpatrick_type="I-II",
+            case_id="P001",
+            procedure="rhinoplasty",
+            safety_passed=True,
+            identity_sim=0.87,
+            fitzpatrick_type="I-II",
         ),
         AuditCase(
-            case_id="P002", procedure="rhinoplasty", safety_passed=True,
-            identity_sim=0.91, fitzpatrick_type="III-IV",
+            case_id="P002",
+            procedure="rhinoplasty",
+            safety_passed=True,
+            identity_sim=0.91,
+            fitzpatrick_type="III-IV",
         ),
         AuditCase(
-            case_id="P003", procedure="blepharoplasty", safety_passed=True,
-            identity_sim=0.89, fitzpatrick_type="I-II",
+            case_id="P003",
+            procedure="blepharoplasty",
+            safety_passed=True,
+            identity_sim=0.89,
+            fitzpatrick_type="I-II",
         ),
         AuditCase(
-            case_id="P004", procedure="blepharoplasty", safety_passed=False,
-            identity_sim=0.45, fitzpatrick_type="V-VI",
+            case_id="P004",
+            procedure="blepharoplasty",
+            safety_passed=False,
+            identity_sim=0.45,
+            fitzpatrick_type="V-VI",
             failures=["Identity similarity 0.45 below threshold 0.6"],
         ),
         AuditCase(
-            case_id="P005", procedure="orthognathic", safety_passed=True,
-            identity_sim=0.82, fitzpatrick_type="III-IV",
+            case_id="P005",
+            procedure="orthognathic",
+            safety_passed=True,
+            identity_sim=0.82,
+            fitzpatrick_type="III-IV",
             warnings=["Unusual aspect ratio: 2.5"],
         ),
     ]
@@ -53,6 +67,7 @@ def reporter(sample_cases):
 # AuditCase
 # ---------------------------------------------------------------------------
 
+
 class TestAuditCase:
     def test_defaults(self):
         case = AuditCase(case_id="X", procedure="test", safety_passed=True)
@@ -66,7 +81,9 @@ class TestAuditCase:
 
     def test_with_metrics(self):
         case = AuditCase(
-            case_id="X", procedure="rhinoplasty", safety_passed=True,
+            case_id="X",
+            procedure="rhinoplasty",
+            safety_passed=True,
             metrics={"ssim": 0.89, "lpips": 0.11},
         )
         assert case.metrics["ssim"] == 0.89
@@ -75,6 +92,7 @@ class TestAuditCase:
 # ---------------------------------------------------------------------------
 # AuditReporter init
 # ---------------------------------------------------------------------------
+
 
 class TestReporterInit:
     def test_defaults(self):
@@ -101,6 +119,7 @@ class TestReporterInit:
 # ---------------------------------------------------------------------------
 # Summary computation
 # ---------------------------------------------------------------------------
+
 
 class TestComputeSummary:
     def test_counts(self, reporter):
@@ -153,6 +172,7 @@ class TestComputeSummary:
 # Flagged cases
 # ---------------------------------------------------------------------------
 
+
 class TestFlaggedCases:
     def test_returns_failed_and_warned(self, reporter):
         flagged = reporter.flagged_cases()
@@ -170,6 +190,7 @@ class TestFlaggedCases:
 # ---------------------------------------------------------------------------
 # JSON export
 # ---------------------------------------------------------------------------
+
 
 class TestToJson:
     def test_valid_json(self, reporter):
@@ -200,6 +221,7 @@ class TestToJson:
 # ---------------------------------------------------------------------------
 # HTML report generation
 # ---------------------------------------------------------------------------
+
 
 class TestGenerateReport:
     def test_creates_file(self, reporter, tmp_path):

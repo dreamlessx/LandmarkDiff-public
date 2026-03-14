@@ -26,7 +26,6 @@ Usage:
 from __future__ import annotations
 
 import base64
-import io
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -78,7 +77,7 @@ class LandmarkDiffClient:
             try:
                 import requests
             except ImportError:
-                raise ImportError("requests required. Install with: pip install requests")
+                raise ImportError("requests required. Install with: pip install requests") from None
             self._session = requests.Session()
             self._session.timeout = self.timeout
         return self._session
@@ -218,12 +217,14 @@ class LandmarkDiffClient:
                 results.append(result)
             except Exception as e:
                 # Create a failed result
-                results.append(PredictionResult(
-                    output_image=np.zeros((512, 512, 3), dtype=np.uint8),
-                    procedure=procedure,
-                    intensity=intensity,
-                    metadata={"error": str(e), "path": str(path)},
-                ))
+                results.append(
+                    PredictionResult(
+                        output_image=np.zeros((512, 512, 3), dtype=np.uint8),
+                        procedure=procedure,
+                        intensity=intensity,
+                        metadata={"error": str(e), "path": str(path)},
+                    )
+                )
         return results
 
     def close(self) -> None:

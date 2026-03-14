@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import cv2
 import numpy as np
@@ -15,12 +14,12 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from process_hda_database import discover_pairs, process_pair, HDA_PROCEDURE_MAP
-
+from process_hda_database import HDA_PROCEDURE_MAP, discover_pairs, process_pair
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def hda_db(tmp_path):
@@ -61,6 +60,7 @@ def single_pair(tmp_path):
 # ---------------------------------------------------------------------------
 # discover_pairs
 # ---------------------------------------------------------------------------
+
 
 class TestDiscoverPairs:
     def test_finds_all_pairs(self, hda_db):
@@ -131,6 +131,7 @@ class TestDiscoverPairs:
 # process_pair
 # ---------------------------------------------------------------------------
 
+
 class TestProcessPair:
     @patch("process_hda_database.extract_landmarks")
     def test_returns_none_no_before_face(self, mock_extract, single_pair, tmp_path):
@@ -143,6 +144,7 @@ class TestProcessPair:
     @patch("process_hda_database.extract_landmarks")
     def test_returns_none_no_after_face(self, mock_extract, single_pair, tmp_path):
         from landmarkdiff.landmarks import FaceLandmarks
+
         mock_lm = FaceLandmarks(
             landmarks=np.random.rand(478, 3).astype(np.float32),
             image_width=400,
@@ -161,6 +163,7 @@ class TestProcessPair:
     @patch("process_hda_database.generate_surgical_mask")
     def test_successful_processing(self, mock_mask, mock_cond, mock_extract, single_pair, tmp_path):
         from landmarkdiff.landmarks import FaceLandmarks
+
         lm = np.random.rand(478, 3).astype(np.float32) * 0.5 + 0.25
         face = FaceLandmarks(landmarks=lm, image_width=400, image_height=300, confidence=1.0)
         mock_extract.return_value = face
@@ -194,11 +197,16 @@ class TestProcessPair:
     @patch("process_hda_database.extract_landmarks")
     def test_low_quality_skipped(self, mock_extract, single_pair, tmp_path):
         from landmarkdiff.landmarks import FaceLandmarks
+
         # Create landmarks with very different positions to get low quality
         lm_before = np.random.rand(478, 3).astype(np.float32) * 0.3 + 0.2
         lm_after = np.random.rand(478, 3).astype(np.float32) * 0.3 + 0.5  # Very different
-        face_before = FaceLandmarks(landmarks=lm_before, image_width=400, image_height=300, confidence=1.0)
-        face_after = FaceLandmarks(landmarks=lm_after, image_width=400, image_height=300, confidence=1.0)
+        face_before = FaceLandmarks(
+            landmarks=lm_before, image_width=400, image_height=300, confidence=1.0
+        )
+        face_after = FaceLandmarks(
+            landmarks=lm_after, image_width=400, image_height=300, confidence=1.0
+        )
         mock_extract.side_effect = [face_before, face_after]
 
         output = tmp_path / "out"
@@ -210,6 +218,7 @@ class TestProcessPair:
 # ---------------------------------------------------------------------------
 # HDA_PROCEDURE_MAP
 # ---------------------------------------------------------------------------
+
 
 class TestProcedureMap:
     def test_all_categories_mapped(self):

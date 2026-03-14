@@ -45,6 +45,7 @@ def export_controlnet_onnx(
 
     try:
         from diffusers import ControlNetModel
+
         controlnet = ControlNetModel.from_pretrained(
             checkpoint_path,
             torch_dtype=torch.float32,
@@ -53,6 +54,7 @@ def export_controlnet_onnx(
         print(f"Failed to load ControlNet: {e}")
         print("Creating a minimal ControlNet for export demonstration...")
         from diffusers import ControlNetModel
+
         controlnet = ControlNetModel.from_pretrained(
             "lllyasviel/control_v11p_sd15_openpose",
             torch_dtype=torch.float32,
@@ -65,7 +67,7 @@ def export_controlnet_onnx(
     # Prepare dummy inputs matching ControlNet's forward signature
     batch_size = 1
     height = 64  # Latent space height (512/8)
-    width = 64   # Latent space width (512/8)
+    width = 64  # Latent space width (512/8)
     channels = 4  # Latent channels
 
     dummy_sample = torch.randn(batch_size, channels, height, width, device=device)
@@ -127,10 +129,11 @@ def _apply_quantization(onnx_path: Path, mode: str) -> Path:
     """
     try:
         import onnx
-        from onnxruntime.quantization import quantize_dynamic, QuantType
+        from onnxruntime.quantization import QuantType, quantize_dynamic
 
         if mode == "fp16":
             from onnxruntime.transformers import float16
+
             model = onnx.load(str(onnx_path))
             model_fp16 = float16.convert_float_to_float16(model)
             output_path = onnx_path.with_suffix(".fp16.onnx")
@@ -183,7 +186,8 @@ def benchmark_comparison(
         from diffusers import ControlNetModel
 
         controlnet = ControlNetModel.from_pretrained(
-            checkpoint_path, torch_dtype=torch.float32,
+            checkpoint_path,
+            torch_dtype=torch.float32,
         )
         controlnet.eval()
 
@@ -222,8 +226,10 @@ def benchmark_comparison(
             "std_ms": round(np.std(times) * 1000, 2),
             "device": str(device),
         }
-        print(f"  PyTorch: {results['pytorch']['mean_ms']:.2f} ± "
-              f"{results['pytorch']['std_ms']:.2f} ms ({device})")
+        print(
+            f"  PyTorch: {results['pytorch']['mean_ms']:.2f} ± "
+            f"{results['pytorch']['std_ms']:.2f} ms ({device})"
+        )
 
     except Exception as e:
         print(f"  PyTorch benchmark failed: {e}")
@@ -266,9 +272,11 @@ def benchmark_comparison(
                 "std_ms": round(np.std(times) * 1000, 2),
                 "provider": session.get_providers()[0],
             }
-            print(f"  ONNX: {results['onnx']['mean_ms']:.2f} ± "
-                  f"{results['onnx']['std_ms']:.2f} ms "
-                  f"({results['onnx']['provider']})")
+            print(
+                f"  ONNX: {results['onnx']['mean_ms']:.2f} ± "
+                f"{results['onnx']['std_ms']:.2f} ms "
+                f"({results['onnx']['provider']})"
+            )
 
             if "pytorch" in results and "mean_ms" in results["pytorch"]:
                 speedup = results["pytorch"]["mean_ms"] / results["onnx"]["mean_ms"]
@@ -286,16 +294,11 @@ def benchmark_comparison(
 
 def main():
     parser = argparse.ArgumentParser(description="Export LandmarkDiff to ONNX")
-    parser.add_argument("--checkpoint", required=True,
-                        help="ControlNet checkpoint path")
-    parser.add_argument("--output", default="exports/controlnet.onnx",
-                        help="Output ONNX path")
-    parser.add_argument("--opset", type=int, default=17,
-                        help="ONNX opset version")
-    parser.add_argument("--quantize", choices=["fp16", "int8"],
-                        help="Quantization mode")
-    parser.add_argument("--benchmark", action="store_true",
-                        help="Run benchmark comparison")
+    parser.add_argument("--checkpoint", required=True, help="ControlNet checkpoint path")
+    parser.add_argument("--output", default="exports/controlnet.onnx", help="Output ONNX path")
+    parser.add_argument("--opset", type=int, default=17, help="ONNX opset version")
+    parser.add_argument("--quantize", choices=["fp16", "int8"], help="Quantization mode")
+    parser.add_argument("--benchmark", action="store_true", help="Run benchmark comparison")
     parser.add_argument("--benchmark-iterations", type=int, default=10)
     args = parser.parse_args()
 
@@ -320,6 +323,7 @@ def main():
 
         print("\n--- Benchmark Summary ---")
         import json
+
         print(json.dumps(results, indent=2))
 
 

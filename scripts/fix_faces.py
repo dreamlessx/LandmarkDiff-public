@@ -14,10 +14,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from landmarkdiff.face_verifier import (
     analyze_distortions,
+    neural_quality_score,
     verify_and_restore,
     verify_batch,
-    neural_quality_score,
-    verify_identity,
 )
 
 
@@ -141,19 +140,38 @@ if __name__ == "__main__":
     parser.add_argument("--output", "-o", help="Output path (file or directory)")
     parser.add_argument("--batch", action="store_true", help="Process entire directory")
     parser.add_argument("--analyze-only", action="store_true", help="Only analyze, don't restore")
-    parser.add_argument("--comparison", action="store_true", default=True, help="Save side-by-side comparison")
+    parser.add_argument(
+        "--comparison", action="store_true", default=True, help="Save side-by-side comparison"
+    )
     parser.add_argument("--json-report", action="store_true", default=True, help="Save JSON report")
-    parser.add_argument("--save-rejected", action="store_true", help="Save rejected images in batch mode")
+    parser.add_argument(
+        "--save-rejected", action="store_true", help="Save rejected images in batch mode"
+    )
 
-    parser.add_argument("--quality-threshold", type=float, default=60.0,
-                        help="Min quality to skip restoration (0-100, default: 60)")
-    parser.add_argument("--identity-threshold", type=float, default=0.6,
-                        help="Min ArcFace similarity to pass (0-1, default: 0.6)")
-    parser.add_argument("--restore-mode", default="auto",
-                        choices=["auto", "codeformer", "gfpgan", "all"],
-                        help="Restoration mode (default: auto)")
-    parser.add_argument("--codeformer-fidelity", type=float, default=0.7,
-                        help="CodeFormer quality-fidelity balance (0=quality, 1=fidelity)")
+    parser.add_argument(
+        "--quality-threshold",
+        type=float,
+        default=60.0,
+        help="Min quality to skip restoration (0-100, default: 60)",
+    )
+    parser.add_argument(
+        "--identity-threshold",
+        type=float,
+        default=0.6,
+        help="Min ArcFace similarity to pass (0-1, default: 0.6)",
+    )
+    parser.add_argument(
+        "--restore-mode",
+        default="auto",
+        choices=["auto", "codeformer", "gfpgan", "all"],
+        help="Restoration mode (default: auto)",
+    )
+    parser.add_argument(
+        "--codeformer-fidelity",
+        type=float,
+        default=0.7,
+        help="CodeFormer quality-fidelity balance (0=quality, 1=fidelity)",
+    )
 
     args = parser.parse_args()
 

@@ -33,12 +33,11 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
-from typing import Optional, Union
 
 import cv2
 import numpy as np
 
-from landmarkdiff.landmarks import extract_landmarks, FaceLandmarks
+from landmarkdiff.landmarks import FaceLandmarks, extract_landmarks
 from landmarkdiff.manipulation import PROCEDURE_LANDMARKS
 
 logger = logging.getLogger(__name__)
@@ -53,6 +52,7 @@ PROCEDURES = list(PROCEDURE_LANDMARKS.keys())
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _normalized_coords_2d(face: FaceLandmarks) -> np.ndarray:
     """Extract (478, 2) normalized [0, 1] coordinates from a FaceLandmarks object.
@@ -84,9 +84,24 @@ def _compute_alignment_quality(
     # Stable landmarks: forehead, temple region, outer face oval
     # These should exhibit near-zero displacement after surgery.
     stable_indices = [
-        10, 109, 67, 103, 54, 21, 162, 127,  # left forehead/temple
-        338, 297, 332, 284, 251, 389, 356, 454,  # right forehead/temple
-        234, 93,  # outer cheek anchors
+        10,
+        109,
+        67,
+        103,
+        54,
+        21,
+        162,
+        127,  # left forehead/temple
+        338,
+        297,
+        332,
+        284,
+        251,
+        389,
+        356,
+        454,  # right forehead/temple
+        234,
+        93,  # outer cheek anchors
     ]
     stable_indices = [i for i in stable_indices if i < NUM_LANDMARKS]
 
@@ -95,7 +110,7 @@ def _compute_alignment_quality(
 
     # RMS displacement on stable points
     diffs = after_stable - before_stable
-    rms = np.sqrt(np.mean(np.sum(diffs ** 2, axis=1)))
+    rms = np.sqrt(np.mean(np.sum(diffs**2, axis=1)))
 
     # Map RMS to quality: 0 displacement -> 1.0, rms >= 0.05 (5% of image) -> 0.0
     quality = float(np.clip(1.0 - rms / 0.05, 0.0, 1.0))
@@ -105,6 +120,7 @@ def _compute_alignment_quality(
 # ---------------------------------------------------------------------------
 # Procedure classification
 # ---------------------------------------------------------------------------
+
 
 def classify_procedure(displacements: np.ndarray) -> str:
     """Classify which surgical procedure was performed from displacement vectors.
@@ -143,8 +159,7 @@ def classify_procedure(displacements: np.ndarray) -> str:
     # Threshold: mean displacement < 0.002 (~1 pixel at 512x512)
     if best_score < 0.002:
         logger.debug(
-            "No significant displacement detected (best=%.5f). "
-            "Classified as 'unknown'.",
+            "No significant displacement detected (best=%.5f). Classified as 'unknown'.",
             best_score,
         )
         return "unknown"
@@ -156,11 +171,12 @@ def classify_procedure(displacements: np.ndarray) -> str:
 # Single-pair extraction
 # ---------------------------------------------------------------------------
 
+
 def extract_displacements(
     before_img: np.ndarray,
     after_img: np.ndarray,
     min_detection_confidence: float = 0.5,
-) -> Optional[dict]:
+) -> dict | None:
     """Extract landmark displacements from a before/after surgery image pair.
 
     Runs MediaPipe Face Mesh on both images, computes per-landmark
@@ -185,16 +201,12 @@ def extract_displacements(
         Returns ``None`` if face detection fails on either image.
     """
     # Extract landmarks from both images
-    face_before = extract_landmarks(
-        before_img, min_detection_confidence=min_detection_confidence
-    )
+    face_before = extract_landmarks(before_img, min_detection_confidence=min_detection_confidence)
     if face_before is None:
         logger.warning("Face detection failed on before image.")
         return None
 
-    face_after = extract_landmarks(
-        after_img, min_detection_confidence=min_detection_confidence
-    )
+    face_after = extract_landmarks(after_img, min_detection_confidence=min_detection_confidence)
     if face_after is None:
         logger.warning("Face detection failed on after image.")
         return None
@@ -227,8 +239,9 @@ def extract_displacements(
 # Batch extraction from directory
 # ---------------------------------------------------------------------------
 
+
 def extract_from_directory(
-    pairs_dir: Union[str, Path],
+    pairs_dir: str | Path,
     min_detection_confidence: float = 0.5,
     min_quality: float = 0.0,
 ) -> list[dict]:
@@ -338,6 +351,7 @@ def extract_from_directory(
 # Displacement model
 # ---------------------------------------------------------------------------
 
+
 class DisplacementModel:
     """Statistical model of per-procedure surgical displacements.
 
@@ -418,12 +432,12 @@ class DisplacementModel:
             n = stacked.shape[0]
 
             self.stats[proc] = {
-                "mean": np.mean(stacked, axis=0),           # (478, 2)
-                "std": np.std(stacked, axis=0),             # (478, 2)
-                "min": np.min(stacked, axis=0),             # (478, 2)
-                "max": np.max(stacked, axis=0),             # (478, 2)
-                "median": np.median(stacked, axis=0),       # (478, 2)
-                "mean_magnitude": np.mean(                  # (478,)
+                "mean": np.mean(stacked, axis=0),  # (478, 2)
+                "std": np.std(stacked, axis=0),  # (478, 2)
+                "min": np.min(stacked, axis=0),  # (478, 2)
+                "max": np.max(stacked, axis=0),  # (478, 2)
+                "median": np.median(stacked, axis=0),  # (478, 2)
+                "mean_magnitude": np.mean(  # (478,)
                     np.linalg.norm(stacked, axis=2), axis=0
                 ),
             }
@@ -442,7 +456,7 @@ class DisplacementModel:
         procedure: str,
         intensity: float = 1.0,
         noise_scale: float = 0.0,
-        rng: Optional[np.random.Generator] = None,
+        rng: np.random.Generator | None = None,
     ) -> np.ndarray:
         """Generate a displacement field for a given procedure and intensity.
 
@@ -470,10 +484,7 @@ class DisplacementModel:
 
         if procedure not in self.stats:
             available = ", ".join(self.procedures)
-            raise KeyError(
-                f"Procedure '{procedure}' not in model. "
-                f"Available: {available}"
-            )
+            raise KeyError(f"Procedure '{procedure}' not in model. Available: {available}")
 
         proc_stats = self.stats[procedure]
         field = proc_stats["mean"].copy() * intensity
@@ -489,7 +500,7 @@ class DisplacementModel:
 
         return field.astype(np.float32)
 
-    def get_summary(self, procedure: Optional[str] = None) -> dict:
+    def get_summary(self, procedure: str | None = None) -> dict:
         """Get a human-readable summary of the model statistics.
 
         Args:
@@ -518,7 +529,7 @@ class DisplacementModel:
 
         return summary
 
-    def save(self, path: Union[str, Path]) -> None:
+    def save(self, path: str | Path) -> None:
         """Save the fitted model to disk as a ``.npz`` file.
 
         The file contains:
@@ -550,15 +561,13 @@ class DisplacementModel:
             "n_samples": self.n_samples,
             "num_landmarks": NUM_LANDMARKS,
         }
-        arrays["__metadata__"] = np.frombuffer(
-            json.dumps(metadata).encode("utf-8"), dtype=np.uint8
-        )
+        arrays["__metadata__"] = np.frombuffer(json.dumps(metadata).encode("utf-8"), dtype=np.uint8)
 
         np.savez_compressed(str(path), **arrays)
         logger.info("Saved displacement model to %s", path)
 
     @classmethod
-    def load(cls, path: Union[str, Path]) -> "DisplacementModel":
+    def load(cls, path: str | Path) -> DisplacementModel:
         """Load a fitted model from a ``.npz`` file.
 
         Supports two formats:
@@ -592,7 +601,7 @@ class DisplacementModel:
                 model.stats[proc] = {}
                 for key in data.files:
                     if key.startswith(f"{proc}__"):
-                        stat_name = key[len(f"{proc}__"):]
+                        stat_name = key[len(f"{proc}__") :]
                         model.stats[proc][stat_name] = data[key]
 
         # Format 2: extract_displacements.py format with procedures array
@@ -625,10 +634,7 @@ class DisplacementModel:
                     model.n_samples[proc] = 0
 
         else:
-            raise ValueError(
-                f"Unrecognized displacement model format. "
-                f"Keys: {data.files[:10]}"
-            )
+            raise ValueError(f"Unrecognized displacement model format. Keys: {data.files[:10]}")
 
         model._fitted = True
         logger.info(
@@ -643,6 +649,7 @@ class DisplacementModel:
 # ---------------------------------------------------------------------------
 # Utilities
 # ---------------------------------------------------------------------------
+
 
 def _top_k_landmarks(
     magnitudes: np.ndarray,
@@ -659,10 +666,7 @@ def _top_k_landmarks(
         descending by magnitude.
     """
     top_indices = np.argsort(magnitudes)[::-1][:k]
-    return [
-        {"index": int(idx), "magnitude": float(magnitudes[idx])}
-        for idx in top_indices
-    ]
+    return [{"index": int(idx), "magnitude": float(magnitudes[idx])} for idx in top_indices]
 
 
 def visualize_displacements(
@@ -698,7 +702,7 @@ def visualize_displacements(
         dy = int(displacements[i, 1] * h * scale)
 
         # Only draw if displacement is above noise floor
-        mag = np.sqrt(dx ** 2 + dy ** 2)
+        mag = np.sqrt(dx**2 + dy**2)
         if mag < 1.0:
             continue
 

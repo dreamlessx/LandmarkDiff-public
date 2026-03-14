@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import argparse
-import sys
 from pathlib import Path
-from PIL import Image
 
+from PIL import Image
 
 DATASETS = {
     "celeba_hq": {
@@ -80,7 +79,7 @@ def download_dataset(
     # Try alternative image keys if primary fails
     alt_keys = ["image", "img", "pixel_values", "face"]
 
-    for i, sample in enumerate(dataset):
+    for _i, sample in enumerate(dataset):
         if count >= num_images:
             break
 
@@ -138,6 +137,7 @@ def consolidate(output_dir: Path, consolidated_dir: Path) -> int:
             dest = consolidated_dir / f"{idx:06d}.png"
             if not dest.exists():
                 import shutil
+
                 shutil.copy2(img_path, dest)
                 total_new += 1
             idx += 1
@@ -151,10 +151,18 @@ def main():
     parser.add_argument("--output", default="data/faces_multi", help="Output directory")
     parser.add_argument("--consolidated", default="data/faces_all", help="Consolidated output")
     parser.add_argument("--resolution", type=int, default=512)
-    parser.add_argument("--datasets", nargs="+", default=["celeba_hq", "ffhq", "celeba", "fairface"],
-                        choices=list(DATASETS.keys()))
-    parser.add_argument("--num", type=int, default=None,
-                        help="Override per-dataset count (default: use dataset-specific defaults)")
+    parser.add_argument(
+        "--datasets",
+        nargs="+",
+        default=["celeba_hq", "ffhq", "celeba", "fairface"],
+        choices=list(DATASETS.keys()),
+    )
+    parser.add_argument(
+        "--num",
+        type=int,
+        default=None,
+        help="Override per-dataset count (default: use dataset-specific defaults)",
+    )
     parser.add_argument("--skip-consolidate", action="store_true")
     args = parser.parse_args()
 
@@ -165,16 +173,16 @@ def main():
     for ds_name in args.datasets:
         num = args.num or DATASETS[ds_name]["max_default"]
         desc = DATASETS[ds_name]["description"]
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Dataset: {desc}")
         print(f"Target: {num} images at {args.resolution}x{args.resolution}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         count = download_dataset(ds_name, num, out, args.resolution)
         total += count
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Total downloaded: {total} images across {len(args.datasets)} datasets")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     if not args.skip_consolidate:
         consolidate(out, Path(args.consolidated))

@@ -17,9 +17,9 @@ import sys
 
 def cmd_infer(args: argparse.Namespace) -> None:
     """Run single-image inference."""
-    import cv2
-    import numpy as np
     from pathlib import Path
+
+    import cv2
 
     from landmarkdiff.inference import LandmarkDiffPipeline
 
@@ -51,6 +51,7 @@ def cmd_infer(args: argparse.Namespace) -> None:
 
     if args.watermark:
         from landmarkdiff.safety import SafetyValidator
+
         validator = SafetyValidator()
         watermarked = validator.apply_watermark(result["output"])
         wm_path = out_path.with_stem(out_path.stem + "_watermarked")
@@ -98,10 +99,7 @@ def cmd_config(args: argparse.Namespace) -> None:
     """Show or validate configuration."""
     from landmarkdiff.config import ExperimentConfig, load_config, validate_config
 
-    if args.file:
-        config = load_config(args.file)
-    else:
-        config = ExperimentConfig()
+    config = load_config(args.file) if args.file else ExperimentConfig()
 
     if args.validate:
         warnings = validate_config(config)
@@ -112,14 +110,17 @@ def cmd_config(args: argparse.Namespace) -> None:
         else:
             print("Configuration valid (no warnings).")
     else:
-        import yaml
         from dataclasses import asdict
+
+        import yaml
+
         print(yaml.dump(asdict(config), default_flow_style=False, sort_keys=False))
 
 
 def cmd_validate(args: argparse.Namespace) -> None:
     """Run safety validation on an output image."""
     import cv2
+
     from landmarkdiff.safety import SafetyValidator
 
     input_img = cv2.imread(args.input)
@@ -148,6 +149,7 @@ def cmd_validate(args: argparse.Namespace) -> None:
 def cmd_version(args: argparse.Namespace) -> None:
     """Print version info."""
     from landmarkdiff import __version__
+
     print(f"LandmarkDiff v{__version__}")
 
 
@@ -162,8 +164,11 @@ def main(argv: list[str] | None = None) -> None:
     # --- infer ---
     p_infer = subparsers.add_parser("infer", help="Run single-image inference")
     p_infer.add_argument("image", help="Input face image path")
-    p_infer.add_argument("--procedure", default="rhinoplasty",
-                         choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"])
+    p_infer.add_argument(
+        "--procedure",
+        default="rhinoplasty",
+        choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"],
+    )
     p_infer.add_argument("--intensity", type=float, default=65.0)
     p_infer.add_argument("--output", default="output.png")
     p_infer.add_argument("--mode", default="tps", choices=["controlnet", "img2img", "tps"])
@@ -180,8 +185,11 @@ def main(argv: list[str] | None = None) -> None:
     p_ensemble.add_argument("--intensity", type=float, default=65.0)
     p_ensemble.add_argument("--output", default="ensemble_output")
     p_ensemble.add_argument("--n-samples", type=int, default=5)
-    p_ensemble.add_argument("--strategy", default="best_of_n",
-                            choices=["pixel_average", "weighted_average", "best_of_n", "median"])
+    p_ensemble.add_argument(
+        "--strategy",
+        default="best_of_n",
+        choices=["pixel_average", "weighted_average", "best_of_n", "median"],
+    )
     p_ensemble.add_argument("--mode", default="tps", choices=["controlnet", "img2img", "tps"])
     p_ensemble.add_argument("--checkpoint", default=None)
     p_ensemble.add_argument("--displacement-model", default=None)

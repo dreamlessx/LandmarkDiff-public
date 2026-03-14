@@ -27,7 +27,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import shutil
 import sys
 from pathlib import Path
 
@@ -145,8 +144,8 @@ def export_from_training_state(
 def _export_pipeline(controlnet, base_model_id: str, output_dir: Path) -> None:
     """Export complete pipeline (ControlNet + SD1.5)."""
     from diffusers import (
-        StableDiffusionControlNetPipeline,
         DPMSolverMultistepScheduler,
+        StableDiffusionControlNetPipeline,
     )
 
     print(f"Loading base model {base_model_id} for pipeline export...")
@@ -220,27 +219,30 @@ if __name__ == "__main__":
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Export LandmarkDiff ControlNet")
-    parser.add_argument("--checkpoint", default=None,
-                        help="Path to ControlNet checkpoint directory")
-    parser.add_argument("--training_state", default=None,
-                        help="Path to training_state.pt file")
-    parser.add_argument("--output", required=True,
-                        help="Output directory for exported model")
-    parser.add_argument("--include_pipeline", action="store_true",
-                        help="Also export full SD1.5 pipeline")
-    parser.add_argument("--base_model", default="runwayml/stable-diffusion-v1-5",
-                        help="Base SD model ID")
+    parser.add_argument(
+        "--checkpoint", default=None, help="Path to ControlNet checkpoint directory"
+    )
+    parser.add_argument("--training_state", default=None, help="Path to training_state.pt file")
+    parser.add_argument("--output", required=True, help="Output directory for exported model")
+    parser.add_argument(
+        "--include_pipeline", action="store_true", help="Also export full SD1.5 pipeline"
+    )
+    parser.add_argument(
+        "--base_model", default="runwayml/stable-diffusion-v1-5", help="Base SD model ID"
+    )
     args = parser.parse_args()
 
     if args.checkpoint:
         export_from_checkpoint(
-            args.checkpoint, args.output,
+            args.checkpoint,
+            args.output,
             include_pipeline=args.include_pipeline,
             base_model_id=args.base_model,
         )
     elif args.training_state:
         export_from_training_state(
-            args.training_state, args.output,
+            args.training_state,
+            args.output,
             include_pipeline=args.include_pipeline,
             base_model_id=args.base_model,
         )

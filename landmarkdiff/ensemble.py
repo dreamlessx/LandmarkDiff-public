@@ -21,8 +21,6 @@ Usage:
 
 from __future__ import annotations
 
-from typing import Optional
-
 import cv2
 import numpy as np
 
@@ -93,7 +91,7 @@ class EnsembleInference:
         guidance_scale: float = 9.0,
         controlnet_conditioning_scale: float = 0.9,
         strength: float = 0.5,
-        seed: Optional[int] = None,
+        seed: int | None = None,
         **kwargs,
     ) -> dict:
         """Generate ensemble output.
@@ -155,14 +153,16 @@ class EnsembleInference:
         # Copy metadata from best result
         best_idx = selected_idx if selected_idx >= 0 else 0
         ensemble_result = dict(results[best_idx])
-        ensemble_result.update({
-            "output": final,
-            "outputs": outputs,
-            "scores": scores,
-            "selected_idx": selected_idx,
-            "strategy": self.strategy,
-            "n_samples": self.n_samples,
-        })
+        ensemble_result.update(
+            {
+                "output": final,
+                "outputs": outputs,
+                "scores": scores,
+                "selected_idx": selected_idx,
+                "strategy": self.strategy,
+                "n_samples": self.n_samples,
+            }
+        )
 
         return ensemble_result
 
@@ -196,7 +196,7 @@ class EnsembleInference:
 
         # Weighted average
         result = np.zeros_like(outputs[0], dtype=np.float32)
-        for output, weight in zip(outputs, weights):
+        for output, weight in zip(outputs, weights, strict=False):
             result += output.astype(np.float32) * weight
 
         return np.clip(result, 0, 255).astype(np.uint8), scores
@@ -269,8 +269,10 @@ def ensemble_inference(
     for i, output in enumerate(result["outputs"]):
         cv2.imwrite(str(out / f"sample_{i:02d}.png"), output)
         score = result["scores"][i]
-        print(f"  Sample {i}: score={score:.4f}"
-              + (" <-- selected" if i == result.get("selected_idx") else ""))
+        print(
+            f"  Sample {i}: score={score:.4f}"
+            + (" <-- selected" if i == result.get("selected_idx") else "")
+        )
 
     # Comparison grid
     panels = [image] + result["outputs"] + [result["output"]]
@@ -281,8 +283,10 @@ def ensemble_inference(
 
     print(f"\nEnsemble output saved: {out / 'ensemble_output.png'}")
     if result.get("selected_idx", -1) >= 0:
-        print(f"Selected sample: {result['selected_idx']} "
-              f"(score={result['scores'][result['selected_idx']]:.4f})")
+        print(
+            f"Selected sample: {result['selected_idx']} "
+            f"(score={result['scores'][result['selected_idx']]:.4f})"
+        )
 
 
 if __name__ == "__main__":
@@ -294,18 +298,26 @@ if __name__ == "__main__":
     parser.add_argument("--intensity", type=float, default=65.0)
     parser.add_argument("--output", default="ensemble_output")
     parser.add_argument("--n_samples", type=int, default=5)
-    parser.add_argument("--strategy", default="best_of_n",
-                        choices=["pixel_average", "weighted_average", "best_of_n", "median"])
-    parser.add_argument("--mode", default="tps",
-                        choices=["controlnet", "img2img", "tps"])
+    parser.add_argument(
+        "--strategy",
+        default="best_of_n",
+        choices=["pixel_average", "weighted_average", "best_of_n", "median"],
+    )
+    parser.add_argument("--mode", default="tps", choices=["controlnet", "img2img", "tps"])
     parser.add_argument("--checkpoint", default=None)
     parser.add_argument("--displacement-model", default=None)
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
 
     ensemble_inference(
-        args.image, args.procedure, args.intensity,
-        args.output, args.n_samples, args.strategy,
-        args.mode, args.checkpoint, args.displacement_model,
+        args.image,
+        args.procedure,
+        args.intensity,
+        args.output,
+        args.n_samples,
+        args.strategy,
+        args.mode,
+        args.checkpoint,
+        args.displacement_model,
         args.seed,
     )

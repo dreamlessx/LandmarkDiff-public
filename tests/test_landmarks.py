@@ -4,8 +4,8 @@ import numpy as np
 import pytest
 
 from landmarkdiff.landmarks import (
-    FaceLandmarks,
     LANDMARK_REGIONS,
+    FaceLandmarks,
     render_landmark_image,
 )
 

@@ -17,14 +17,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from torch.utils.data import DataLoader
 
 from landmarkdiff.data import (
-    SurgicalPairDataset,
-    EvalPairDataset,
     CombinedDataset,
+    EvalPairDataset,
+    SurgicalPairDataset,
     bgr_to_tensor,
-    tensor_to_bgr,
-    mask_to_tensor,
     create_dataloader,
     create_procedure_sampler,
+    mask_to_tensor,
+    tensor_to_bgr,
 )
 
 
@@ -170,9 +170,7 @@ class TestSurgicalPairDataset:
         assert set(procs) == {"rhinoplasty", "blepharoplasty", "rhytidectomy"}
 
     def test_manifest_loading(self, sample_data_dir, sample_manifest):
-        ds = SurgicalPairDataset(
-            sample_data_dir, resolution=64, manifest_path=sample_manifest
-        )
+        ds = SurgicalPairDataset(sample_data_dir, resolution=64, manifest_path=sample_manifest)
         assert len(ds) == 6
 
     def test_custom_resolution(self, sample_data_dir):
@@ -201,9 +199,7 @@ class TestSurgicalPairDataset:
             sample["target_image"] = np.flip(sample["target_image"], axis=1).copy()
             return sample
 
-        ds = SurgicalPairDataset(
-            sample_data_dir, resolution=64, transform=flip_transform
-        )
+        ds = SurgicalPairDataset(sample_data_dir, resolution=64, transform=flip_transform)
         item = ds[0]
         assert item["input"].shape == (3, 64, 64)
 
@@ -304,17 +300,13 @@ class TestCreateDataloader:
 
     def test_batch_shape(self, sample_data_dir):
         ds = SurgicalPairDataset(sample_data_dir, resolution=64)
-        loader = create_dataloader(
-            ds, batch_size=2, num_workers=0, drop_last=False
-        )
+        loader = create_dataloader(ds, batch_size=2, num_workers=0, drop_last=False)
         batch = next(iter(loader))
         assert batch["input"].shape == (2, 3, 64, 64)
 
     def test_with_sampler(self, sample_data_dir):
         ds = SurgicalPairDataset(sample_data_dir, resolution=64)
         sampler = create_procedure_sampler(ds)
-        loader = create_dataloader(
-            ds, batch_size=2, num_workers=0, sampler=sampler
-        )
+        loader = create_dataloader(ds, batch_size=2, num_workers=0, sampler=sampler)
         batch = next(iter(loader))
         assert batch["input"].shape[0] == 2

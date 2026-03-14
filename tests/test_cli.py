@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from unittest.mock import patch, MagicMock
 
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from landmarkdiff.cli import main, cmd_version, cmd_config
+from landmarkdiff.cli import main
 
 
 class TestCLIVersion:
@@ -47,10 +46,7 @@ class TestCLIConfig:
 
     def test_config_load_file(self, tmp_path, capsys):
         cfg_file = tmp_path / "test.yaml"
-        cfg_file.write_text(
-            "experiment_name: test_exp\n"
-            "version: '0.3.0'\n"
-        )
+        cfg_file.write_text("experiment_name: test_exp\nversion: '0.3.0'\n")
         main(["config", "--file", str(cfg_file)])
         out = capsys.readouterr().out
         assert "experiment_name" in out
@@ -74,8 +70,6 @@ class TestCLIParserStructure:
 
     def test_infer_parser_accepts_procedure(self):
         """Check that the infer parser accepts known procedure choices."""
-        import argparse
-        from landmarkdiff.cli import main as cli_main
 
         # Verify parser construction doesn't crash
         # We can't run infer without a real image, but we can test parsing

@@ -5,18 +5,17 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-import cv2
 import numpy as np
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from landmarkdiff.landmarks import FaceLandmarks
 from landmarkdiff.masking import (
+    MASK_CONFIG,
     generate_surgical_mask,
     mask_to_3channel,
-    MASK_CONFIG,
 )
-from landmarkdiff.landmarks import FaceLandmarks
 
 
 @pytest.fixture

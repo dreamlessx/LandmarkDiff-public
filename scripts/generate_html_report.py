@@ -43,7 +43,7 @@ def metric_cell(val: float | None, fmt: str = ".4f") -> str:
     if val is None or val == 0.0:
         return '<td class="na">--</td>'
     formatted = f"{val:{fmt}}"
-    return f'<td>{formatted}</td>'
+    return f"<td>{formatted}</td>"
 
 
 def generate_html(
@@ -110,23 +110,23 @@ def generate_html(
             if val is not None and val != 0.0:
                 html += f'<div class="summary-card"><div class="value">{val:{fmt_str}}</div>'
                 html += f'<div class="label">{name}</div></div>\n'
-        html += '</div>\n'
+        html += "</div>\n"
 
     # Main results table
-    html += '<h2>Quantitative Results</h2>\n'
-    html += '<table>\n<tr><th>Method</th><th>FID</th><th>SSIM</th>'
-    html += '<th>LPIPS</th><th>NME</th><th>ArcFace</th></tr>\n'
+    html += "<h2>Quantitative Results</h2>\n"
+    html += "<table>\n<tr><th>Method</th><th>FID</th><th>SSIM</th>"
+    html += "<th>LPIPS</th><th>NME</th><th>ArcFace</th></tr>\n"
 
     if baselines:
         for method_key, method_name in [("tps", "TPS-only"), ("morphing", "Morphing")]:
             m = baselines.get("methods", {}).get(method_key, {}).get("metrics", {})
-            html += f'<tr><td>{method_name}</td>'
+            html += f"<tr><td>{method_name}</td>"
             html += metric_cell(m.get("fid"), ".1f")
             html += metric_cell(m.get("ssim"))
             html += metric_cell(m.get("lpips"))
             html += metric_cell(m.get("nme"))
             html += metric_cell(m.get("identity_sim"))
-            html += '</tr>\n'
+            html += "</tr>\n"
 
     if eval_results:
         m = eval_results.get("metrics", {})
@@ -136,9 +136,9 @@ def generate_html(
         html += metric_cell(m.get("lpips"))
         html += metric_cell(m.get("nme"))
         html += metric_cell(m.get("identity_sim"))
-        html += '</tr>\n'
+        html += "</tr>\n"
 
-    html += '</table>\n'
+    html += "</table>\n"
 
     # Per-procedure breakdown
     source = eval_results or {}
@@ -149,21 +149,21 @@ def generate_html(
             break
 
     if per_proc:
-        html += '<h2>Per-Procedure Breakdown</h2>\n'
-        html += '<table>\n<tr><th>Procedure</th><th>SSIM</th>'
-        html += '<th>LPIPS</th><th>NME</th>'
-        html += '<th>ArcFace</th><th>N</th></tr>\n'
+        html += "<h2>Per-Procedure Breakdown</h2>\n"
+        html += "<table>\n<tr><th>Procedure</th><th>SSIM</th>"
+        html += "<th>LPIPS</th><th>NME</th>"
+        html += "<th>ArcFace</th><th>N</th></tr>\n"
         for proc in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]:
             vals = per_proc.get(proc, {})
             if not vals:
                 continue
-            html += f'<tr><td>{proc.capitalize()}</td>'
+            html += f"<tr><td>{proc.capitalize()}</td>"
             html += metric_cell(vals.get("ssim"))
             html += metric_cell(vals.get("lpips"))
             html += metric_cell(vals.get("nme"))
             html += metric_cell(vals.get("identity_sim"))
-            html += f'<td>{vals.get("count", 0)}</td></tr>\n'
-        html += '</table>\n'
+            html += f"<td>{vals.get('count', 0)}</td></tr>\n"
+        html += "</table>\n"
 
     # Fitzpatrick fairness table
     per_fitz = source.get("per_fitzpatrick", {})
@@ -173,36 +173,36 @@ def generate_html(
             break
 
     if per_fitz:
-        html += '<h2>Fairness Analysis (Fitzpatrick Skin Type)</h2>\n'
-        html += '<table>\n<tr><th>Type</th><th>SSIM</th>'
-        html += '<th>LPIPS</th><th>NME</th>'
-        html += '<th>ArcFace</th><th>N</th></tr>\n'
+        html += "<h2>Fairness Analysis (Fitzpatrick Skin Type)</h2>\n"
+        html += "<table>\n<tr><th>Type</th><th>SSIM</th>"
+        html += "<th>LPIPS</th><th>NME</th>"
+        html += "<th>ArcFace</th><th>N</th></tr>\n"
         for ft in ["I", "II", "III", "IV", "V", "VI"]:
             vals = per_fitz.get(ft, {})
             if not vals:
                 continue
-            html += f'<tr><td>Type {ft}</td>'
+            html += f"<tr><td>Type {ft}</td>"
             html += metric_cell(vals.get("ssim"))
             html += metric_cell(vals.get("lpips"))
             html += metric_cell(vals.get("nme"))
             html += metric_cell(vals.get("identity_sim"))
-            html += f'<td>{vals.get("count", 0)}</td></tr>\n'
-        html += '</table>\n'
+            html += f"<td>{vals.get('count', 0)}</td></tr>\n"
+        html += "</table>\n"
 
     # Comparison images
     if images_dir and Path(images_dir).exists():
         images = sorted(Path(images_dir).glob("*.png"))[:20]
         if images:
-            html += '<h2>Sample Comparisons</h2>\n'
+            html += "<h2>Sample Comparisons</h2>\n"
             html += '<div class="comparison-grid">\n'
             for img_path in images:
                 b64 = img_to_base64(str(img_path))
                 if b64:
-                    html += f'<div class="comparison-item">'
+                    html += '<div class="comparison-item">'
                     html += f'<img src="{b64}" alt="{img_path.stem}">'
-                    html += f'<div style="text-align:center;font-size:12px;color:#666;">'
-                    html += f'{img_path.stem}</div></div>\n'
-            html += '</div>\n'
+                    html += '<div style="text-align:center;font-size:12px;color:#666;">'
+                    html += f"{img_path.stem}</div></div>\n"
+            html += "</div>\n"
 
     num_pairs = eval_results.get("num_pairs", 0) if eval_results else 0
     html += f"""

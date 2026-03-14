@@ -28,9 +28,9 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import copy
 import json
-import math
 import shutil
 import sys
 import time
@@ -55,7 +55,6 @@ class DryRunResult:
         self.t0 = time.time()
 
     def check(self, name: str, passed: bool, detail: str = ""):
-        status = "PASS" if passed else "FAIL"
         self.checks.append({"name": name, "passed": passed, "detail": detail})
         icon = "+" if passed else "X"
         msg = f"  [{icon}] {name}"
@@ -110,8 +109,7 @@ def create_synthetic_dataset(output_dir: Path, n_pairs: int = 10) -> Path:
     # Minimal metadata
     metadata = {
         "pairs": {
-            f"{i:06d}": {"procedure": "rhinoplasty", "source": "dry_run"}
-            for i in range(n_pairs)
+            f"{i:06d}": {"procedure": "rhinoplasty", "source": "dry_run"} for i in range(n_pairs)
         }
     }
     with open(output_dir / "metadata.json", "w") as f:
@@ -128,9 +126,9 @@ def run_dry_run(
     """Run a complete training dry-run validation."""
     result = DryRunResult()
 
-    print(f"{'='*60}")
-    print(f"  Training Dry-Run Validator")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
+    print("  Training Dry-Run Validator")
+    print(f"{'=' * 60}")
     print(f"  Steps: {n_steps} | Device: CPU (forced)")
     if config_path:
         print(f"  Config: {config_path}")
@@ -142,6 +140,7 @@ def run_dry_run(
     if config_path:
         try:
             from scripts.launch_training import load_config
+
             config = load_config(config_path)
             result.check("Config loads", True, f"experiment={config.get('experiment_name', '?')}")
 
@@ -171,8 +170,10 @@ def run_dry_run(
     # Test dataset loading
     try:
         from scripts.train_controlnet import SyntheticPairDataset
+
         dataset = SyntheticPairDataset(
-            str(data_dir), resolution=512,
+            str(data_dir),
+            resolution=512,
             clinical_augment=False,
             geometric_augment=False,
         )
@@ -280,9 +281,7 @@ def run_dry_run(
         return result
 
     try:
-        noise_scheduler = DDPMScheduler.from_pretrained(
-            base_model_id, subfolder="scheduler"
-        )
+        noise_scheduler = DDPMScheduler.from_pretrained(base_model_id, subfolder="scheduler")
         result.check("Noise scheduler loads", True)
     except Exception as e:
         result.check("Noise scheduler loads", False, str(e))
@@ -337,14 +336,17 @@ def run_dry_run(
 
         # Add noise
         noise = torch.randn_like(latents)
-        timesteps = torch.randint(0, noise_scheduler.config.num_train_timesteps, (latents.shape[0],), device=device)
+        timesteps = torch.randint(
+            0, noise_scheduler.config.num_train_timesteps, (latents.shape[0],), device=device
+        )
         noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
 
         encoder_hidden_states = text_embeddings.expand(latents.shape[0], -1, -1)
 
         # ControlNet forward
         down_samples, mid_sample = controlnet(
-            noisy_latents, timesteps,
+            noisy_latents,
+            timesteps,
             encoder_hidden_states=encoder_hidden_states,
             controlnet_cond=conditioning,
             return_dict=False,
@@ -352,7 +354,8 @@ def run_dry_run(
 
         # UNet forward
         noise_pred = unet(
-            noisy_latents, timesteps,
+            noisy_latents,
+            timesteps,
             encoder_hidden_states=encoder_hidden_states,
             down_block_additional_residuals=down_samples,
             mid_block_additional_residual=mid_sample,
@@ -367,33 +370,35 @@ def run_dry_run(
 
         # EMA update
         from scripts.train_controlnet import update_ema
+
         update_ema(ema_controlnet, controlnet, 0.9999)
 
         loss_val = loss.item()
         losses.append(loss_val)
         if verbose:
-            print(f"    Step {step+1}/{n_steps}: loss={loss_val:.6f}")
+            print(f"    Step {step + 1}/{n_steps}: loss={loss_val:.6f}")
 
     result.check(
         "Forward+backward pass",
-        len(losses) == n_steps and all(np.isfinite(l) for l in losses),
+        len(losses) == n_steps and all(np.isfinite(v) for v in losses),
         f"{n_steps} steps, loss={losses[-1]:.6f}",
     )
     result.check(
         "No NaN/Inf in loss",
-        all(np.isfinite(l) for l in losses),
+        all(np.isfinite(v) for v in losses),
         f"min={min(losses):.6f}, max={max(losses):.6f}",
     )
 
     # Check gradients flowed to ControlNet
-    has_grad = any(
+    any(
         p.grad is not None and p.grad.abs().sum() > 0
-        for p in controlnet.parameters() if p.requires_grad
+        for p in controlnet.parameters()
+        if p.requires_grad
     )
     # After optimizer.zero_grad(), grads are zeroed, so check params changed from EMA
     params_differ = not all(
         torch.equal(p1, p2)
-        for p1, p2 in zip(controlnet.parameters(), ema_controlnet.parameters())
+        for p1, p2 in zip(controlnet.parameters(), ema_controlnet.parameters(), strict=False)
     )
     result.check("Gradients flow to ControlNet", params_differ, "params updated from init")
 
@@ -436,6 +441,7 @@ def run_dry_run(
     print("\nPhase 6: Inference Pipeline")
     try:
         from landmarkdiff.inference import LandmarkDiffPipeline
+
         result.check("Inference import", True)
     except ImportError as e:
         result.check("Inference import", False, str(e))
@@ -444,32 +450,43 @@ def run_dry_run(
     print("\nPhase 7: Post-Training Tools")
     try:
         from scripts.analyze_training_run import (
-            TrainingMetrics, detect_convergence_issues,
-            check_phase_transition, find_checkpoints, generate_report,
+            TrainingMetrics,
+            check_phase_transition,
+            detect_convergence_issues,
+            find_checkpoints,
+            generate_report,
         )
+
         result.check("Analyzer import", True)
     except ImportError as e:
         result.check("Analyzer import", False, str(e))
 
     try:
         from scripts.post_training_pipeline import PipelineStep, run_pipeline
+
         result.check("Pipeline import", True)
     except ImportError as e:
         result.check("Pipeline import", False, str(e))
 
     try:
         from scripts.score_checkpoints import (
-            load_val_samples, compute_tps_score, rank_checkpoints,
+            compute_tps_score,
+            load_val_samples,
+            rank_checkpoints,
         )
+
         result.check("Scorer import", True)
     except ImportError as e:
         result.check("Scorer import", False, str(e))
 
     try:
         from scripts.run_evaluation import (
-            evaluate_tps_baseline, evaluate_controlnet,
-            aggregate_metrics, generate_latex_table,
+            aggregate_metrics,
+            evaluate_controlnet,
+            evaluate_tps_baseline,
+            generate_latex_table,
         )
+
         result.check("Evaluation import", True)
     except ImportError as e:
         result.check("Evaluation import", False, str(e))
@@ -478,9 +495,9 @@ def run_dry_run(
     _cleanup(tmp_dir)
 
     # ── Summary ──
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  {result.summary()}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     if result.all_passed:
         print("\n  Training pipeline is ready for SLURM submission.")
@@ -496,10 +513,8 @@ def run_dry_run(
 def _cleanup(tmp_dir: Path):
     """Remove temporary dry-run files."""
     if tmp_dir.exists():
-        try:
+        with contextlib.suppress(Exception):
             shutil.rmtree(tmp_dir)
-        except Exception:
-            pass
 
 
 if __name__ == "__main__":

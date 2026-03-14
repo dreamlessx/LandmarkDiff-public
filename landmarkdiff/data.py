@@ -23,8 +23,8 @@ from __future__ import annotations
 import csv
 import json
 import logging
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 import cv2
 import numpy as np
@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Core dataset
 # ---------------------------------------------------------------------------
+
 
 class SurgicalPairDataset(Dataset):
     """Dataset for loading surgical before/after training pairs.
@@ -162,9 +163,7 @@ class SurgicalPairDataset(Dataset):
         img = cv2.imread(str(path))
         if img is None:
             logger.warning("Failed to load %s, using blank", path)
-            return np.zeros(
-                (self.resolution, self.resolution, 3), dtype=np.uint8
-            )
+            return np.zeros((self.resolution, self.resolution, 3), dtype=np.uint8)
         if img.shape[:2] != (self.resolution, self.resolution):
             img = cv2.resize(img, (self.resolution, self.resolution))
         return img
@@ -173,14 +172,10 @@ class SurgicalPairDataset(Dataset):
         """Load a mask as float32 [0,1], resized to resolution."""
         path = self.data_dir / filename
         if not path.exists():
-            return np.ones(
-                (self.resolution, self.resolution), dtype=np.float32
-            )
+            return np.ones((self.resolution, self.resolution), dtype=np.float32)
         mask = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE)
         if mask is None:
-            return np.ones(
-                (self.resolution, self.resolution), dtype=np.float32
-            )
+            return np.ones((self.resolution, self.resolution), dtype=np.float32)
         mask = cv2.resize(mask, (self.resolution, self.resolution))
         return mask.astype(np.float32) / 255.0
 
@@ -188,6 +183,7 @@ class SurgicalPairDataset(Dataset):
 # ---------------------------------------------------------------------------
 # Evaluation dataset (input + ground truth)
 # ---------------------------------------------------------------------------
+
 
 class EvalPairDataset(Dataset):
     """Dataset for evaluation: loads input/target pairs with procedure labels.
@@ -235,9 +231,7 @@ class EvalPairDataset(Dataset):
         path = self.data_dir / filename
         img = cv2.imread(str(path))
         if img is None:
-            return np.zeros(
-                (self.resolution, self.resolution, 3), dtype=np.uint8
-            )
+            return np.zeros((self.resolution, self.resolution, 3), dtype=np.uint8)
         if img.shape[:2] != (self.resolution, self.resolution):
             img = cv2.resize(img, (self.resolution, self.resolution))
         return img
@@ -246,6 +240,7 @@ class EvalPairDataset(Dataset):
 # ---------------------------------------------------------------------------
 # Conversion utilities
 # ---------------------------------------------------------------------------
+
 
 def bgr_to_tensor(bgr: np.ndarray) -> torch.Tensor:
     """Convert BGR uint8 image to RGB [0,1] tensor (C, H, W)."""
@@ -270,6 +265,7 @@ def mask_to_tensor(mask: np.ndarray) -> torch.Tensor:
 # ---------------------------------------------------------------------------
 # Samplers
 # ---------------------------------------------------------------------------
+
 
 def create_procedure_sampler(
     dataset: SurgicalPairDataset,
@@ -308,6 +304,7 @@ def create_procedure_sampler(
 # ---------------------------------------------------------------------------
 # DataLoader factory
 # ---------------------------------------------------------------------------
+
 
 def create_dataloader(
     dataset: Dataset,
@@ -352,6 +349,7 @@ def create_dataloader(
 # ---------------------------------------------------------------------------
 # Multi-directory dataset
 # ---------------------------------------------------------------------------
+
 
 class CombinedDataset(Dataset):
     """Combine multiple SurgicalPairDatasets into one.

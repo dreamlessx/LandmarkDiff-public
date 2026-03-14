@@ -80,9 +80,9 @@ def detect_vitiligo_patches(
     # Also check for low saturation (a,b channels close to 128)
     a_channel = lab[:, :, 1]
     b_channel = lab[:, :, 2]
-    low_sat = (
-        (np.abs(a_channel - 128) < 15) & (np.abs(b_channel - 128) < 15)
-    ).astype(np.uint8) * 255
+    low_sat = ((np.abs(a_channel - 128) < 15) & (np.abs(b_channel - 128) < 15)).astype(
+        np.uint8
+    ) * 255
 
     # Combined: bright AND low-saturation within face
     vitiligo_raw = cv2.bitwise_and(bright_mask, low_sat)

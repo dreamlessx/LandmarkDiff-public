@@ -42,11 +42,11 @@ import numpy as np
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from landmarkdiff.inference import mask_composite
 from landmarkdiff.landmarks import extract_landmarks
 from landmarkdiff.manipulation import apply_procedure_preset
 from landmarkdiff.masking import generate_surgical_mask
 from landmarkdiff.synthetic.tps_warp import warp_image_tps
-from landmarkdiff.inference import mask_composite
 
 PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
 PROC_LABELS = {
@@ -140,12 +140,14 @@ def load_test_images(test_dir: Path, max_per_proc: int = 2) -> dict[str, list[di
         if procedure not in by_proc:
             by_proc[procedure] = []
         if len(by_proc[procedure]) < max_per_proc:
-            by_proc[procedure].append({
-                "prefix": prefix,
-                "input": img,
-                "target": target,
-                "procedure": procedure,
-            })
+            by_proc[procedure].append(
+                {
+                    "prefix": prefix,
+                    "input": img,
+                    "target": target,
+                    "procedure": procedure,
+                }
+            )
 
     return by_proc
 
@@ -208,7 +210,7 @@ def generate_comparison_grid(
 
             panels = [cv2.resize(img, (panel_size, panel_size))]
 
-            for method_name, ckpt_path in methods:
+            for _method_name, ckpt_path in methods:
                 if ckpt_path is None:
                     # TPS baseline
                     output = generate_tps_output(img, proc, intensity)
@@ -251,8 +253,9 @@ def generate_comparison_grid(
     for row_panels in rows:
         bordered = []
         for panel in row_panels:
-            p = cv2.copyMakeBorder(panel, border, border, border, border,
-                                   cv2.BORDER_CONSTANT, value=(40, 40, 40))
+            p = cv2.copyMakeBorder(
+                panel, border, border, border, border, cv2.BORDER_CONSTANT, value=(40, 40, 40)
+            )
             bordered.append(p)
         grid_rows.append(np.hstack(bordered))
 
@@ -289,7 +292,7 @@ def generate_comparison_grid(
 def generate_latex_figure(columns: list[str], procedures: list[str]) -> str:
     """Generate LaTeX figure code for the comparison grid."""
     n_cols = len(columns)
-    col_spec = "c" * n_cols
+    "c" * n_cols
 
     lines = [
         "\\begin{figure*}[t]",
@@ -297,7 +300,8 @@ def generate_latex_figure(columns: list[str], procedures: list[str]) -> str:
         "\\includegraphics[width=\\textwidth]{figures/comparison_grid.png}",
         f"\\caption{{Qualitative comparison across {len(procedures)} procedures. "
         f"Columns show: {', '.join(columns)}. "
-        "Our method preserves fine skin texture while applying anatomically-correct deformations.}}",
+        "Our method preserves fine skin texture while applying"
+        " anatomically-correct deformations.}}",
         "\\label{fig:qualitative}",
         "\\end{figure*}",
     ]
@@ -307,16 +311,16 @@ def generate_latex_figure(columns: list[str], procedures: list[str]) -> str:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Multi-method comparison grid generator")
-    parser.add_argument("--test_dir", default="data/splits/test",
-                        help="Test data directory")
-    parser.add_argument("--checkpoint", action="append", default=None,
-                        help="ControlNet checkpoint(s) to compare (can be repeated)")
-    parser.add_argument("--output", default="results/comparison",
-                        help="Output directory")
-    parser.add_argument("--max_samples", type=int, default=2,
-                        help="Max samples per procedure")
-    parser.add_argument("--panel_size", type=int, default=256,
-                        help="Size per panel in pixels")
+    parser.add_argument("--test_dir", default="data/splits/test", help="Test data directory")
+    parser.add_argument(
+        "--checkpoint",
+        action="append",
+        default=None,
+        help="ControlNet checkpoint(s) to compare (can be repeated)",
+    )
+    parser.add_argument("--output", default="results/comparison", help="Output directory")
+    parser.add_argument("--max_samples", type=int, default=2, help="Max samples per procedure")
+    parser.add_argument("--panel_size", type=int, default=256, help="Size per panel in pixels")
     parser.add_argument("--intensity", type=float, default=65.0)
     args = parser.parse_args()
 

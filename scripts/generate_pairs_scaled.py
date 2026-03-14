@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import argparse
 import time
-from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -73,8 +73,12 @@ def main():
     parser.add_argument("--num", type=int, default=10000, help="Total pairs to generate")
     parser.add_argument("--data_root", default="data", help="Root data directory")
     parser.add_argument("--output", default="data/synthetic_pairs_v2", help="Output directory")
-    parser.add_argument("--workers", type=int, default=1,
-                        help="Parallel workers (1=sequential, avoids MediaPipe issues)")
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=1,
+        help="Parallel workers (1=sequential, avoids MediaPipe issues)",
+    )
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
 
@@ -118,7 +122,7 @@ def main():
         # Sequential - safer with MediaPipe
         from landmarkdiff.synthetic.pair_generator import generate_pair, save_pair
 
-        for i, (img_path, pair_idx, out, procedure, intensity, seed) in enumerate(work_items):
+        for _i, (img_path, pair_idx, out, procedure, intensity, seed) in enumerate(work_items):
             try:
                 image = cv2.imread(str(img_path))
                 if image is None:
@@ -133,7 +137,7 @@ def main():
 
                 save_pair(pair, Path(out), pair_idx)
                 success += 1
-            except Exception as e:
+            except Exception:
                 failed += 1
                 continue
 
@@ -141,10 +145,12 @@ def main():
                 elapsed = time.time() - start
                 rate = success / elapsed if elapsed > 0 else 0
                 eta = (len(work_items) - success - failed) / rate if rate > 0 else 0
-                print(f"  Progress: {success}/{args.num} pairs | "
-                      f"{failed} failed | "
-                      f"{rate:.1f} pairs/sec | "
-                      f"ETA: {eta/60:.1f} min")
+                print(
+                    f"  Progress: {success}/{args.num} pairs | "
+                    f"{failed} failed | "
+                    f"{rate:.1f} pairs/sec | "
+                    f"ETA: {eta / 60:.1f} min"
+                )
     else:
         # Parallel - use ProcessPoolExecutor
         with ProcessPoolExecutor(max_workers=args.workers) as executor:
@@ -162,7 +168,7 @@ def main():
                     print(f"  Progress: {success}/{args.num} | {failed} failed | {rate:.1f}/sec")
 
     elapsed = time.time() - start
-    print(f"\nDone! {success} pairs generated in {elapsed/60:.1f} min ({failed} failed)")
+    print(f"\nDone! {success} pairs generated in {elapsed / 60:.1f} min ({failed} failed)")
     print(f"Output: {output_dir}")
 
 

@@ -51,10 +51,12 @@ def find_latest_log() -> str | None:
 
 def parse_log_data(log_path: str) -> dict:
     """Parse training log into structured data for the dashboard."""
-    from scripts.monitor_training import parse_training_log, detect_convergence
+    from scripts.monitor_training import detect_convergence, parse_training_log
 
     data = parse_training_log(log_path)
-    convergence = detect_convergence(data) if len(data.get("steps", [])) >= 5 else "Too few data points"
+    convergence = (
+        detect_convergence(data) if len(data.get("steps", [])) >= 5 else "Too few data points"
+    )
 
     # Extract header info
     header = {}
@@ -159,7 +161,7 @@ canvas {{ width: 100% !important; height: 250px !important; }}
     <h1>LandmarkDiff Training Dashboard</h1>
     <div class="meta">
         {phase_info} | {gpu_info} | {dataset_info}<br>
-        Log: {Path(data['log_path']).name} | Generated: {data['generated']}
+        Log: {Path(data["log_path"]).name} | Generated: {data["generated"]}
     </div>
 </div>
 
@@ -204,7 +206,7 @@ canvas {{ width: 100% !important; height: 250px !important; }}
 
 <div class="convergence">
     <h3>Convergence Analysis</h3>
-    <div class="analysis">{data['convergence']}</div>
+    <div class="analysis">{data["convergence"]}</div>
 </div>
 
 {"<div class='ckpt-section'><h3>Checkpoints</h3>" + ckpt_html + "</div>" if ckpt_html else ""}
@@ -361,8 +363,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Training dashboard generator")
     parser.add_argument("--log", default=None, help="SLURM log file (auto-detect if omitted)")
     parser.add_argument("--output", default=None, help="Output HTML path")
-    parser.add_argument("--watch", type=int, default=0,
-                        help="Watch mode: regenerate every N seconds")
+    parser.add_argument(
+        "--watch", type=int, default=0, help="Watch mode: regenerate every N seconds"
+    )
     args = parser.parse_args()
 
     if args.watch > 0:

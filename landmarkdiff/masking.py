@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 import cv2
 import numpy as np
 
-from landmarkdiff.landmarks import FaceLandmarks, LANDMARK_REGIONS
+from landmarkdiff.landmarks import FaceLandmarks
 
 if TYPE_CHECKING:
     from landmarkdiff.clinical import ClinicalFlags
@@ -21,35 +21,145 @@ if TYPE_CHECKING:
 MASK_CONFIG: dict[str, dict] = {
     "rhinoplasty": {
         "landmark_indices": [
-            1, 2, 4, 5, 6, 19, 94, 141, 168, 195, 197, 236, 240,
-            274, 275, 278, 279, 294, 326, 327, 360, 363, 370, 456, 460,
+            1,
+            2,
+            4,
+            5,
+            6,
+            19,
+            94,
+            141,
+            168,
+            195,
+            197,
+            236,
+            240,
+            274,
+            275,
+            278,
+            279,
+            294,
+            326,
+            327,
+            360,
+            363,
+            370,
+            456,
+            460,
         ],
         "dilation_px": 30,
         "feather_sigma": 15.0,
     },
     "blepharoplasty": {
         "landmark_indices": [
-            33, 7, 163, 144, 145, 153, 154, 155, 157, 158, 159, 160, 161, 246,
-            362, 382, 381, 380, 374, 373, 390, 249, 263, 466, 388, 387, 386,
-            385, 384, 398,
+            33,
+            7,
+            163,
+            144,
+            145,
+            153,
+            154,
+            155,
+            157,
+            158,
+            159,
+            160,
+            161,
+            246,
+            362,
+            382,
+            381,
+            380,
+            374,
+            373,
+            390,
+            249,
+            263,
+            466,
+            388,
+            387,
+            386,
+            385,
+            384,
+            398,
         ],
         "dilation_px": 15,
         "feather_sigma": 10.0,
     },
     "rhytidectomy": {
         "landmark_indices": [
-            10, 21, 54, 58, 67, 93, 103, 109, 127, 132, 136, 150, 162, 172,
-            176, 187, 207, 213, 234, 284, 297, 323, 332, 338, 356, 361, 365,
-            379, 389, 397, 400, 427, 454,
+            10,
+            21,
+            54,
+            58,
+            67,
+            93,
+            103,
+            109,
+            127,
+            132,
+            136,
+            150,
+            162,
+            172,
+            176,
+            187,
+            207,
+            213,
+            234,
+            284,
+            297,
+            323,
+            332,
+            338,
+            356,
+            361,
+            365,
+            379,
+            389,
+            397,
+            400,
+            427,
+            454,
         ],
         "dilation_px": 40,
         "feather_sigma": 20.0,
     },
     "orthognathic": {
         "landmark_indices": [
-            0, 17, 18, 36, 37, 39, 40, 57, 61, 78, 80, 81, 82, 84, 87, 88,
-            91, 95, 146, 167, 169, 170, 175, 181, 191, 200, 201, 202, 204,
-            208, 211, 212, 214,
+            0,
+            17,
+            18,
+            36,
+            37,
+            39,
+            40,
+            57,
+            61,
+            78,
+            80,
+            81,
+            82,
+            84,
+            87,
+            88,
+            91,
+            95,
+            146,
+            167,
+            169,
+            170,
+            175,
+            181,
+            191,
+            200,
+            201,
+            202,
+            204,
+            208,
+            211,
+            212,
+            214,
         ],
         "dilation_px": 35,
         "feather_sigma": 18.0,
@@ -62,7 +172,7 @@ def generate_surgical_mask(
     procedure: str,
     width: int | None = None,
     height: int | None = None,
-    clinical_flags: "ClinicalFlags | None" = None,
+    clinical_flags: ClinicalFlags | None = None,
     image: np.ndarray | None = None,
 ) -> np.ndarray:
     """Generate a feathered surgical mask for a procedure.
@@ -134,15 +244,20 @@ def generate_surgical_mask(
     if clinical_flags is not None:
         # Vitiligo: reduce mask over depigmented patches to preserve them
         if clinical_flags.vitiligo and image is not None:
-            from landmarkdiff.clinical import detect_vitiligo_patches, adjust_mask_for_vitiligo
+            from landmarkdiff.clinical import adjust_mask_for_vitiligo, detect_vitiligo_patches
+
             patches = detect_vitiligo_patches(image, face)
             mask = adjust_mask_for_vitiligo(mask, patches)
 
         # Keloid: soften transitions in keloid-prone regions
         if clinical_flags.keloid_prone and clinical_flags.keloid_regions:
-            from landmarkdiff.clinical import get_keloid_exclusion_mask, adjust_mask_for_keloid
+            from landmarkdiff.clinical import adjust_mask_for_keloid, get_keloid_exclusion_mask
+
             keloid_mask = get_keloid_exclusion_mask(
-                face, clinical_flags.keloid_regions, w, h,
+                face,
+                clinical_flags.keloid_regions,
+                w,
+                h,
             )
             mask = adjust_mask_for_keloid(mask, keloid_mask)
 

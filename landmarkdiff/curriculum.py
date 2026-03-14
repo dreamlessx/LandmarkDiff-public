@@ -104,10 +104,10 @@ class ProcedureCurriculum:
 
     # Difficulty ranking (0=easiest, 1=hardest)
     DEFAULT_PROCEDURE_DIFFICULTY = {
-        "blepharoplasty": 0.3,   # small, localized changes
-        "rhinoplasty": 0.5,     # moderate, central face
-        "rhytidectomy": 0.7,    # large, affects face shape
-        "orthognathic": 0.9,    # largest deformations
+        "blepharoplasty": 0.3,  # small, localized changes
+        "rhinoplasty": 0.5,  # moderate, central face
+        "rhytidectomy": 0.7,  # large, affects face shape
+        "orthognathic": 0.9,  # largest deformations
     }
 
     def __init__(
@@ -137,10 +137,7 @@ class ProcedureCurriculum:
 
     def get_procedure_weights(self, step: int) -> dict[str, float]:
         """Get all procedure weights at the given step."""
-        return {
-            proc: self.get_weight(step, proc)
-            for proc in self.proc_difficulty
-        }
+        return {proc: self.get_weight(step, proc) for proc in self.proc_difficulty}
 
 
 def compute_sample_difficulty(
@@ -174,7 +171,7 @@ def compute_sample_difficulty(
     source_bonus = {
         "synthetic": 0.0,
         "synthetic_v3": 0.1,  # realistic displacements slightly harder
-        "real": 0.2,          # real data hardest
+        "real": 0.2,  # real data hardest
         "augmented": 0.0,
     }
 

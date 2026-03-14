@@ -12,8 +12,13 @@ import numpy as np
 # Add parent to path for imports
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from landmarkdiff.landmarks import extract_landmarks, visualize_landmarks, render_landmark_image, load_image
-from landmarkdiff.conditioning import generate_conditioning, render_wireframe
+from landmarkdiff.conditioning import generate_conditioning
+from landmarkdiff.landmarks import (
+    extract_landmarks,
+    load_image,
+    render_landmark_image,
+    visualize_landmarks,
+)
 from landmarkdiff.manipulation import apply_procedure_preset
 from landmarkdiff.masking import generate_surgical_mask, mask_to_3channel
 
@@ -44,19 +49,19 @@ def run_demo(
     # 3. Visualize original landmarks on image
     annotated = visualize_landmarks(image, face, radius=2)
     cv2.imwrite(str(out / "01_landmarks_on_face.png"), annotated)
-    print(f"  Saved: 01_landmarks_on_face.png")
+    print("  Saved: 01_landmarks_on_face.png")
 
     # 4. Render landmark dots on black canvas
     landmark_img = render_landmark_image(face)
     cv2.imwrite(str(out / "02_landmark_dots.png"), landmark_img)
-    print(f"  Saved: 02_landmark_dots.png")
+    print("  Saved: 02_landmark_dots.png")
 
     # 5. Generate conditioning signals (wireframe + canny)
     print("Generating conditioning signals...")
     _, canny, wireframe = generate_conditioning(face)
     cv2.imwrite(str(out / "03_wireframe.png"), wireframe)
     cv2.imwrite(str(out / "04_canny_edges.png"), canny)
-    print(f"  Saved: 03_wireframe.png, 04_canny_edges.png")
+    print("  Saved: 03_wireframe.png, 04_canny_edges.png")
 
     # 6. Apply surgical manipulation
     print(f"Applying {procedure} at intensity {intensity}...")
@@ -68,14 +73,14 @@ def run_demo(
     cv2.imwrite(str(out / "05_manipulated_landmarks.png"), manip_landmark)
     cv2.imwrite(str(out / "06_manipulated_wireframe.png"), manip_wireframe)
     cv2.imwrite(str(out / "07_manipulated_canny.png"), manip_canny)
-    print(f"  Saved: 05-07 manipulated conditioning")
+    print("  Saved: 05-07 manipulated conditioning")
 
     # 8. Generate surgical mask
     print("Generating surgical mask...")
     mask = generate_surgical_mask(face, procedure)
     mask_vis = (mask * 255).astype(np.uint8)
     cv2.imwrite(str(out / "08_surgical_mask.png"), mask_vis)
-    print(f"  Saved: 08_surgical_mask.png")
+    print("  Saved: 08_surgical_mask.png")
 
     # 9. Overlay mask on original image
     mask_overlay = image.copy()
@@ -83,22 +88,22 @@ def run_demo(
     red_tint = np.zeros_like(image, dtype=np.float32)
     red_tint[:, :, 2] = 255.0  # red channel
     mask_overlay = (
-        image.astype(np.float32) * (1 - mask_3ch * 0.4)
-        + red_tint * (mask_3ch * 0.4)
+        image.astype(np.float32) * (1 - mask_3ch * 0.4) + red_tint * (mask_3ch * 0.4)
     ).astype(np.uint8)
     cv2.imwrite(str(out / "09_mask_overlay.png"), mask_overlay)
-    print(f"  Saved: 09_mask_overlay.png")
+    print("  Saved: 09_mask_overlay.png")
 
     # 10. Side-by-side comparison: original vs manipulated conditioning
     orig_cond = np.hstack([wireframe, canny])
     manip_cond = np.hstack([manip_wireframe, manip_canny])
     comparison = np.vstack([orig_cond, manip_cond])
     cv2.imwrite(str(out / "10_before_after_conditioning.png"), comparison)
-    print(f"  Saved: 10_before_after_conditioning.png")
+    print("  Saved: 10_before_after_conditioning.png")
 
     # 11. Full pipeline summary composite
     # Resize all to same height for composite
     target_h = 256
+
     def resize_to_h(img: np.ndarray, target: int) -> np.ndarray:
         scale = target / img.shape[0]
         new_w = int(img.shape[1] * scale)
@@ -116,11 +121,11 @@ def run_demo(
     ]
     composite = np.hstack(panels)
     cv2.imwrite(str(out / "11_pipeline_summary.png"), composite)
-    print(f"  Saved: 11_pipeline_summary.png")
+    print("  Saved: 11_pipeline_summary.png")
 
     print(f"\nDone. All outputs in {out}/")
     print(f"Pipeline: Input -> Landmarks -> Wireframe -> Manipulate ({procedure}) -> Mask")
-    print(f"Next step: ControlNet inference (requires GPU + model weights)")
+    print("Next step: ControlNet inference (requires GPU + model weights)")
 
 
 def run_synthetic_demo(output_dir: str = "scripts/demo_output") -> None:
@@ -162,8 +167,8 @@ def run_synthetic_demo(output_dir: str = "scripts/demo_output") -> None:
         if idx < 478:
             landmarks[idx] = [0.5 + rng.uniform(-0.03, 0.03), 0.60 + rng.uniform(-0.01, 0.01), 0.0]
 
-    from landmarkdiff.landmarks import FaceLandmarks
     from landmarkdiff.conditioning import generate_conditioning
+    from landmarkdiff.landmarks import FaceLandmarks
     from landmarkdiff.manipulation import apply_procedure_preset
     from landmarkdiff.masking import generate_surgical_mask
 
@@ -200,8 +205,14 @@ def run_synthetic_demo(output_dir: str = "scripts/demo_output") -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="LandmarkDiff pipeline demo")
     parser.add_argument("image", nargs="?", help="Path to face image")
-    parser.add_argument("--procedure", default="rhinoplasty", choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"])
-    parser.add_argument("--intensity", type=float, default=50.0, help="Manipulation intensity 0-100")
+    parser.add_argument(
+        "--procedure",
+        default="rhinoplasty",
+        choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"],
+    )
+    parser.add_argument(
+        "--intensity", type=float, default=50.0, help="Manipulation intensity 0-100"
+    )
     parser.add_argument("--output", default="scripts/demo_output", help="Output directory")
     args = parser.parse_args()
 

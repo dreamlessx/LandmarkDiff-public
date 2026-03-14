@@ -11,11 +11,11 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from landmarkdiff.displacement_model import (
+    NUM_LANDMARKS,
     DisplacementModel,
-    classify_procedure,
     _compute_alignment_quality,
     _top_k_landmarks,
-    NUM_LANDMARKS,
+    classify_procedure,
 )
 from landmarkdiff.manipulation import PROCEDURE_LANDMARKS
 
@@ -117,20 +117,24 @@ class TestDisplacementModel:
             for idx in nose_indices:
                 if idx < NUM_LANDMARKS:
                     disp[idx] = rng.normal(0.005, 0.002, 2)
-            data.append({
-                "displacements": disp,
-                "procedure": "rhinoplasty",
-            })
+            data.append(
+                {
+                    "displacements": disp,
+                    "procedure": "rhinoplasty",
+                }
+            )
         for _ in range(5):
             disp = np.zeros((NUM_LANDMARKS, 2))
             eye_indices = PROCEDURE_LANDMARKS.get("blepharoplasty", [])
             for idx in eye_indices:
                 if idx < NUM_LANDMARKS:
                     disp[idx] = rng.normal(0.008, 0.003, 2)
-            data.append({
-                "displacements": disp,
-                "procedure": "blepharoplasty",
-            })
+            data.append(
+                {
+                    "displacements": disp,
+                    "procedure": "blepharoplasty",
+                }
+            )
         return data
 
     def test_unfitted_properties(self):

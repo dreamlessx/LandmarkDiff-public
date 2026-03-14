@@ -56,7 +56,17 @@ class TestGaussianRBF:
 
 
 class TestProcedurePresets:
-    @pytest.mark.parametrize("procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"])
+    @pytest.mark.parametrize(
+        "procedure",
+        [
+            "rhinoplasty",
+            "blepharoplasty",
+            "rhytidectomy",
+            "orthognathic",
+            "brow_lift",
+            "mentoplasty",
+        ],
+    )
     def test_preset_returns_face_landmarks(self, procedure):
         face = _make_fake_face()
         result = apply_procedure_preset(face, procedure, intensity=50.0)

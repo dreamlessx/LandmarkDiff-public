@@ -10,38 +10,33 @@
 Every boundary, edge case, and numerical-stability scenario is tested.
 """
 
-import math
-import itertools
-
 import cv2
 import numpy as np
 import pytest
 import torch
 import torch.nn.functional as F
-from PIL import Image
 
-from landmarkdiff.landmarks import FaceLandmarks, LANDMARK_REGIONS
-from landmarkdiff.masking import generate_surgical_mask, MASK_CONFIG, mask_to_3channel
 from landmarkdiff.inference import (
+    _match_skin_tone,
     estimate_face_view,
     mask_composite,
-    _match_skin_tone,
     numpy_to_pil,
     pil_to_numpy,
 )
+from landmarkdiff.landmarks import FaceLandmarks
 from landmarkdiff.losses import (
-    IdentityLoss,
-    DiffusionLoss,
-    LandmarkLoss,
-    PerceptualLoss,
     CombinedLoss,
+    DiffusionLoss,
+    IdentityLoss,
+    LandmarkLoss,
     LossWeights,
 )
-
+from landmarkdiff.masking import MASK_CONFIG, generate_surgical_mask, mask_to_3channel
 
 # ============================================================================
 # HELPERS
 # ============================================================================
+
 
 def _make_face(w=512, h=512, seed=0):
     """Create a synthetic FaceLandmarks with realistic normalized coordinates."""
@@ -51,7 +46,13 @@ def _make_face(w=512, h=512, seed=0):
 
 
 def _make_face_with_specific_landmarks(
-    nose_tip, left_ear, right_ear, forehead, chin, w=512, h=512,
+    nose_tip,
+    left_ear,
+    right_ear,
+    forehead,
+    chin,
+    w=512,
+    h=512,
 ):
     """Build a FaceLandmarks object with specific landmark positions for view tests.
 
@@ -81,6 +82,7 @@ def _bgr_image(h=512, w=512, seed=42):
 # FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def face():
     landmarks = np.random.default_rng(42).uniform(0.2, 0.8, (478, 3)).astype(np.float32)
@@ -97,6 +99,7 @@ def sample_image():
 #   AREA 1: FACE VIEW ESTIMATION  (estimate_face_view in inference.py)
 #
 # ############################################################################
+
 
 class TestFaceViewYawCalculation:
     """Test yaw calculation: ratio = (right_dist - left_dist) / total."""
@@ -137,15 +140,18 @@ class TestFaceViewYawCalculation:
         result = estimate_face_view(face)
         assert result["yaw"] < 0, f"Expected negative yaw, got {result['yaw']}"
 
-    @pytest.mark.parametrize("nose_x,expected_sign", [
-        (0.25, 1),   # closer to left ear
-        (0.35, 1),
-        (0.45, 1),
-        (0.50, 0),   # symmetric
-        (0.55, -1),
-        (0.65, -1),
-        (0.75, -1),
-    ])
+    @pytest.mark.parametrize(
+        "nose_x,expected_sign",
+        [
+            (0.25, 1),  # closer to left ear
+            (0.35, 1),
+            (0.45, 1),
+            (0.50, 0),  # symmetric
+            (0.55, -1),
+            (0.65, -1),
+            (0.75, -1),
+        ],
+    )
     def test_yaw_sign_sweep(self, nose_x, expected_sign):
         face = _make_face_with_specific_landmarks(
             nose_tip=[nose_x, 0.5, 0.0],
@@ -184,7 +190,9 @@ class TestFaceViewYawCalculation:
             chin=[0.5, 0.8, 0.0],
         )
         result = estimate_face_view(face)
-        assert result["yaw"] > 45, f"Extreme: nose on left ear, yaw should be large, got {result['yaw']}"
+        assert result["yaw"] > 45, (
+            f"Extreme: nose on left ear, yaw should be large, got {result['yaw']}"
+        )
 
 
 class TestFaceViewPitchCalculation:
@@ -233,12 +241,15 @@ class TestFaceViewPitchCalculation:
             result = estimate_face_view(face)
             assert -46.0 <= result["pitch"] <= 46.0, f"pitch out of range: {result['pitch']}"
 
-    @pytest.mark.parametrize("forehead_y, chin_y, expect_sign", [
-        (0.2, 0.8, 0),    # equal upper/lower (upper=0.3*512, lower=0.3*512)
-        (0.3, 0.7, 0),    # equal upper/lower (upper=0.2*512, lower=0.2*512)
-        (0.45, 0.9, 1),   # lower > upper
-        (0.1, 0.55, -1),  # upper > lower
-    ])
+    @pytest.mark.parametrize(
+        "forehead_y, chin_y, expect_sign",
+        [
+            (0.2, 0.8, 0),  # equal upper/lower (upper=0.3*512, lower=0.3*512)
+            (0.3, 0.7, 0),  # equal upper/lower (upper=0.2*512, lower=0.2*512)
+            (0.45, 0.9, 1),  # lower > upper
+            (0.1, 0.55, -1),  # upper > lower
+        ],
+    )
     def test_pitch_direction(self, forehead_y, chin_y, expect_sign):
         face = _make_face_with_specific_landmarks(
             nose_tip=[0.5, 0.5, 0.0],
@@ -259,19 +270,22 @@ class TestFaceViewPitchCalculation:
 class TestFaceViewClassification:
     """Test view classification boundaries."""
 
-    @pytest.mark.parametrize("abs_yaw,expected_view", [
-        (0.0, "frontal"),
-        (5.0, "frontal"),
-        (10.0, "frontal"),
-        (14.0, "frontal"),
-        (20.0, "three_quarter"),
-        (30.0, "three_quarter"),
-        (40.0, "three_quarter"),
-        (50.0, "profile"),
-        (60.0, "profile"),
-        (70.0, "profile"),
-        (80.0, "profile"),
-    ])
+    @pytest.mark.parametrize(
+        "abs_yaw,expected_view",
+        [
+            (0.0, "frontal"),
+            (5.0, "frontal"),
+            (10.0, "frontal"),
+            (14.0, "frontal"),
+            (20.0, "three_quarter"),
+            (30.0, "three_quarter"),
+            (40.0, "three_quarter"),
+            (50.0, "profile"),
+            (60.0, "profile"),
+            (70.0, "profile"),
+            (80.0, "profile"),
+        ],
+    )
     def test_view_boundary_classification(self, abs_yaw, expected_view):
         """View classification: frontal < 15, three_quarter [15,45), profile >= 45.
 
@@ -331,7 +345,9 @@ class TestFaceViewEdgeCases:
     def test_all_landmarks_zero(self):
         """All landmarks at (0,0,0) => total < 1.0 => yaw=0, pitch=0."""
         landmarks = np.zeros((478, 3), dtype=np.float32)
-        face = FaceLandmarks(landmarks=landmarks, image_width=512, image_height=512, confidence=0.95)
+        face = FaceLandmarks(
+            landmarks=landmarks, image_width=512, image_height=512, confidence=0.95
+        )
         result = estimate_face_view(face)
         assert result["yaw"] == 0.0
         assert result["pitch"] == 0.0
@@ -341,7 +357,9 @@ class TestFaceViewEdgeCases:
     def test_all_landmarks_same_point(self):
         """All landmarks at same point => distances = 0 => yaw=0, pitch=0."""
         landmarks = np.full((478, 3), 0.5, dtype=np.float32)
-        face = FaceLandmarks(landmarks=landmarks, image_width=512, image_height=512, confidence=0.95)
+        face = FaceLandmarks(
+            landmarks=landmarks, image_width=512, image_height=512, confidence=0.95
+        )
         result = estimate_face_view(face)
         assert result["yaw"] == 0.0
         assert result["pitch"] == 0.0
@@ -403,7 +421,8 @@ class TestFaceViewEdgeCases:
             right_ear=[0.8, 0.5, 0.0],
             forehead=[0.5, 0.2, 0.0],
             chin=[0.5, 0.8, 0.0],
-            w=10000, h=10000,
+            w=10000,
+            h=10000,
         )
         result = estimate_face_view(face)
         assert np.isfinite(result["yaw"])
@@ -417,7 +436,8 @@ class TestFaceViewEdgeCases:
             right_ear=[0.8, 0.5, 0.0],
             forehead=[0.5, 0.2, 0.0],
             chin=[0.5, 0.8, 0.0],
-            w=1, h=1,
+            w=1,
+            h=1,
         )
         result = estimate_face_view(face)
         # With 1x1, pixel coords are all < 1.0 => total < 1.0 => yaw=0, pitch=0
@@ -481,14 +501,17 @@ class TestFaceViewWarning:
 class TestFaceViewIsFrontal:
     """Test is_frontal boolean correctness."""
 
-    @pytest.mark.parametrize("nose_x,should_be_frontal", [
-        (0.50, True),   # centered
-        (0.48, True),
-        (0.52, True),
-        (0.30, False),  # significantly off center
-        (0.70, False),
-        (0.15, False),  # extreme
-    ])
+    @pytest.mark.parametrize(
+        "nose_x,should_be_frontal",
+        [
+            (0.50, True),  # centered
+            (0.48, True),
+            (0.52, True),
+            (0.30, False),  # significantly off center
+            (0.70, False),
+            (0.15, False),  # extreme
+        ],
+    )
     def test_is_frontal_boolean(self, nose_x, should_be_frontal):
         face = _make_face_with_specific_landmarks(
             nose_tip=[nose_x, 0.5, 0.0],
@@ -556,7 +579,8 @@ class TestFaceViewReturnStructure:
             right_ear=rng.uniform(-1, 2, 3).tolist(),
             forehead=rng.uniform(-1, 2, 3).tolist(),
             chin=rng.uniform(-1, 2, 3).tolist(),
-            w=512, h=512,
+            w=512,
+            h=512,
         )
         result = estimate_face_view(face)
         assert np.isfinite(result["yaw"])
@@ -570,6 +594,7 @@ class TestFaceViewReturnStructure:
 #   AREA 2: IDENTITY LOSS EMBEDDING HANDLING (losses.py)
 #
 # ############################################################################
+
 
 class TestIdentityLossExtractEmbedding:
     """Test _extract_embedding returns (tensor, valid_mask) tuple."""
@@ -764,8 +789,10 @@ class TestCombinedLossWithIdentity:
         pred_img = torch.rand(2, 3, 64, 64)
         target_img = torch.rand(2, 3, 64, 64)
         losses = combined(
-            noise_p, noise_t,
-            pred_image=pred_img, target_image=target_img,
+            noise_p,
+            noise_t,
+            pred_image=pred_img,
+            target_image=target_img,
             procedure="rhinoplasty",
         )
         assert "identity" in losses
@@ -780,8 +807,10 @@ class TestCombinedLossWithIdentity:
         pred_img = torch.rand(2, 3, 64, 64)
         target_img = torch.rand(2, 3, 64, 64)
         losses = combined(
-            noise_p, noise_t,
-            pred_image=pred_img, target_image=target_img,
+            noise_p,
+            noise_t,
+            pred_image=pred_img,
+            target_image=target_img,
         )
         # total should be >= diffusion (identity adds non-negative term)
         assert losses["total"].item() >= losses["diffusion"].item() - 1e-6
@@ -795,13 +824,17 @@ class TestCombinedLossWithIdentity:
         pred_img = torch.rand(2, 3, 64, 64)
         target_img = torch.rand(2, 3, 64, 64)
         losses = combined(
-            noise_p, noise_t,
-            pred_image=pred_img, target_image=target_img,
+            noise_p,
+            noise_t,
+            pred_image=pred_img,
+            target_image=target_img,
         )
         # Identity loss weighted by 0 should be 0
         assert losses["identity"].item() == pytest.approx(0.0, abs=1e-7)
 
-    @pytest.mark.parametrize("procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"])
+    @pytest.mark.parametrize(
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    )
     def test_combined_with_each_procedure(self, procedure):
         combined = CombinedLoss(phase="B")
         combined.identity_loss._has_arcface = False
@@ -810,8 +843,10 @@ class TestCombinedLossWithIdentity:
         pred_img = torch.rand(2, 3, 64, 64)
         target_img = torch.rand(2, 3, 64, 64)
         losses = combined(
-            noise_p, noise_t,
-            pred_image=pred_img, target_image=target_img,
+            noise_p,
+            noise_t,
+            pred_image=pred_img,
+            target_image=target_img,
             procedure=procedure,
         )
         assert torch.isfinite(losses["total"])
@@ -822,6 +857,7 @@ class TestCombinedLossWithIdentity:
 #   AREA 3: MASKING NOISE BEHAVIOR (masking.py)
 #
 # ############################################################################
+
 
 class TestMaskingNoiseUnseeded:
     """Test that default_rng() produces different noise each call."""
@@ -871,14 +907,17 @@ class TestMaskBoundaryNoise:
 class TestMaskProcedureDifferences:
     """Different procedures produce distinctly different masks."""
 
-    @pytest.mark.parametrize("proc_a,proc_b", [
-        ("rhinoplasty", "blepharoplasty"),
-        ("rhinoplasty", "rhytidectomy"),
-        ("rhinoplasty", "orthognathic"),
-        ("blepharoplasty", "rhytidectomy"),
-        ("blepharoplasty", "orthognathic"),
-        ("rhytidectomy", "orthognathic"),
-    ])
+    @pytest.mark.parametrize(
+        "proc_a,proc_b",
+        [
+            ("rhinoplasty", "blepharoplasty"),
+            ("rhinoplasty", "rhytidectomy"),
+            ("rhinoplasty", "orthognathic"),
+            ("blepharoplasty", "rhytidectomy"),
+            ("blepharoplasty", "orthognathic"),
+            ("rhytidectomy", "orthognathic"),
+        ],
+    )
     def test_different_procedures_different_masks(self, face, proc_a, proc_b):
         mask_a = generate_surgical_mask(face, proc_a, 512, 512)
         mask_b = generate_surgical_mask(face, proc_b, 512, 512)
@@ -914,7 +953,7 @@ class TestMaskDilation:
     @pytest.mark.parametrize("procedure", list(MASK_CONFIG.keys()))
     def test_dilation_expands(self, face, procedure):
         """Mask with dilation should cover more area than just the convex hull."""
-        config = MASK_CONFIG[procedure]
+        MASK_CONFIG[procedure]
         # Generate the mask (which includes dilation)
         mask = generate_surgical_mask(face, procedure, 512, 512)
         # The mask should have nonzero area
@@ -1018,6 +1057,7 @@ class TestMaskConfigIntegrity:
 #   AREA 4: F.normalize AND COSINE SIMILARITY (torch)
 #
 # ############################################################################
+
 
 class TestFNormalizeZeroVectors:
     """Test that F.normalize handles zero vectors safely."""
@@ -1232,6 +1272,7 @@ class TestLossNumericalStability:
 #
 # ############################################################################
 
+
 class TestMaskCompositeBasic:
     """Basic mask_composite tests."""
 
@@ -1358,8 +1399,8 @@ class TestSkinToneMatching:
         tgt = _bgr_image(64, 64, seed=2)
         # Create mask with half below threshold
         mask = np.zeros((64, 64), dtype=np.float32)
-        mask[:32, :] = 1.0   # top half above threshold
-        mask[32:, :] = 0.1   # bottom half below threshold
+        mask[:32, :] = 1.0  # top half above threshold
+        mask[32:, :] = 0.1  # bottom half below threshold
         result = _match_skin_tone(src, tgt, mask)
         assert result.dtype == np.uint8
 
@@ -1391,7 +1432,7 @@ class TestMaskCompositeLaplacian:
         result_lap = mask_composite(warped, original, mask, use_laplacian=True)
         result_simple = mask_composite(warped, original, mask, use_laplacian=False)
         # They should differ (Laplacian does multi-band blending)
-        diff = np.abs(result_lap.astype(np.float32) - result_simple.astype(np.float32))
+        np.abs(result_lap.astype(np.float32) - result_simple.astype(np.float32))
         # May or may not differ depending on whether postprocess module loaded
         assert result_lap.dtype == np.uint8
         assert result_simple.dtype == np.uint8
@@ -1454,7 +1495,7 @@ class TestMaskCompositePartialMask:
         warped = _bgr_image(64, 64, seed=1)
         original = _bgr_image(64, 64, seed=2)
         y, x = np.ogrid[:64, :64]
-        mask = ((x - 32) ** 2 + (y - 32) ** 2 < 20 ** 2).astype(np.float32)
+        mask = ((x - 32) ** 2 + (y - 32) ** 2 < 20**2).astype(np.float32)
         result = mask_composite(warped, original, mask, use_laplacian=False)
         assert result.dtype == np.uint8
 
@@ -1509,6 +1550,7 @@ class TestImageConversions:
 #
 # ############################################################################
 
+
 class TestViewEstimationDeterminism:
     """Test that estimate_face_view is deterministic (no random state)."""
 
@@ -1553,18 +1595,21 @@ class TestLossWeightsDataclass:
 
     def test_frozen(self):
         w = LossWeights()
-        with pytest.raises(Exception):
+        with pytest.raises(AttributeError):
             w.diffusion = 5.0
 
-    @pytest.mark.parametrize("d,l,i,p", [
-        (0.0, 0.0, 0.0, 0.0),
-        (1.0, 1.0, 1.0, 1.0),
-        (10.0, 0.01, 0.001, 0.1),
-    ])
-    def test_various_weight_combos(self, d, l, i, p):
-        w = LossWeights(diffusion=d, landmark=l, identity=i, perceptual=p)
+    @pytest.mark.parametrize(
+        "d,lm,i,p",
+        [
+            (0.0, 0.0, 0.0, 0.0),
+            (1.0, 1.0, 1.0, 1.0),
+            (10.0, 0.01, 0.001, 0.1),
+        ],
+    )
+    def test_various_weight_combos(self, d, lm, i, p):
+        w = LossWeights(diffusion=d, landmark=lm, identity=i, perceptual=p)
         assert w.diffusion == d
-        assert w.landmark == l
+        assert w.landmark == lm
         assert w.identity == i
         assert w.perceptual == p
 
@@ -1582,12 +1627,15 @@ class TestDiffusionLossEdgeCases:
         z = torch.zeros(2, 4, 64, 64)
         assert dl(z, z).item() == 0.0
 
-    @pytest.mark.parametrize("shape", [
-        (1, 1, 1, 1),
-        (1, 4, 64, 64),
-        (2, 4, 64, 64),
-        (8, 4, 32, 32),
-    ])
+    @pytest.mark.parametrize(
+        "shape",
+        [
+            (1, 1, 1, 1),
+            (1, 4, 64, 64),
+            (2, 4, 64, 64),
+            (8, 4, 32, 32),
+        ],
+    )
     def test_various_shapes(self, shape):
         dl = DiffusionLoss()
         a = torch.randn(*shape)
@@ -1641,9 +1689,16 @@ class TestLandmarkLossEdgeCases:
 class TestFNormalizeBatchBehavior:
     """Test F.normalize batch processing."""
 
-    @pytest.mark.parametrize("batch,dim", [
-        (1, 64), (2, 128), (4, 256), (8, 512), (16, 1024),
-    ])
+    @pytest.mark.parametrize(
+        "batch,dim",
+        [
+            (1, 64),
+            (2, 128),
+            (4, 256),
+            (8, 512),
+            (16, 1024),
+        ],
+    )
     def test_normalize_shapes(self, batch, dim):
         v = torch.randn(batch, dim)
         normed = F.normalize(v, dim=1)
@@ -1713,7 +1768,7 @@ class TestMaskCompositeImageDtypePreservation:
         if dtype == np.uint8:
             warped = _bgr_image(64, 64, seed=1)
         else:
-            warped = (_bgr_image(64, 64, seed=1).astype(dtype) / 255.0)
+            warped = _bgr_image(64, 64, seed=1).astype(dtype) / 255.0
         original = _bgr_image(64, 64, seed=2)
         mask = np.ones((64, 64), dtype=np.float32) * 0.5
         result = mask_composite(warped, original, mask, use_laplacian=False)
@@ -1725,7 +1780,7 @@ class TestMaskCompositeImageDtypePreservation:
         if dtype == np.uint8:
             original = _bgr_image(64, 64, seed=2)
         else:
-            original = (_bgr_image(64, 64, seed=2).astype(dtype) / 255.0)
+            original = _bgr_image(64, 64, seed=2).astype(dtype) / 255.0
         mask = np.ones((64, 64), dtype=np.float32) * 0.5
         result = mask_composite(warped, original, mask, use_laplacian=False)
         assert result.dtype == np.uint8
@@ -1775,10 +1830,17 @@ class TestMaskCompositeValueRange:
 class TestMaskCompositeConstantImages:
     """Test compositing with constant-color images."""
 
-    @pytest.mark.parametrize("color", [
-        (0, 0, 0), (255, 255, 255), (128, 128, 128),
-        (255, 0, 0), (0, 255, 0), (0, 0, 255),
-    ])
+    @pytest.mark.parametrize(
+        "color",
+        [
+            (0, 0, 0),
+            (255, 255, 255),
+            (128, 128, 128),
+            (255, 0, 0),
+            (0, 255, 0),
+            (0, 0, 255),
+        ],
+    )
     def test_constant_color_compositing(self, color):
         warped = np.full((64, 64, 3), color, dtype=np.uint8)
         original = np.full((64, 64, 3), color, dtype=np.uint8)
@@ -1960,7 +2022,8 @@ class TestCombinedLossPhaseA:
         noise_p = torch.randn(2, 4, 32, 32)
         noise_t = torch.randn(2, 4, 32, 32)
         losses = combined(
-            noise_p, noise_t,
+            noise_p,
+            noise_t,
             pred_image=torch.rand(2, 3, 64, 64),
             target_image=torch.rand(2, 3, 64, 64),
             pred_landmarks=torch.randn(2, 68, 2),
@@ -1986,7 +2049,8 @@ class TestCombinedLossPhaseB:
         noise_p = torch.randn(2, 4, 32, 32)
         noise_t = torch.randn(2, 4, 32, 32)
         losses = combined(
-            noise_p, noise_t,
+            noise_p,
+            noise_t,
             pred_landmarks=torch.randn(2, 68, 2),
             target_landmarks=torch.randn(2, 68, 2),
         )
@@ -2002,7 +2066,8 @@ class TestCombinedLossPhaseB:
         target_img = torch.rand(2, 3, 64, 64)
         mask = torch.rand(2, 1, 64, 64)
         losses = combined(
-            noise_p, noise_t,
+            noise_p,
+            noise_t,
             pred_landmarks=torch.randn(2, 68, 2),
             target_landmarks=torch.randn(2, 68, 2),
             pred_image=pred_img,
@@ -2052,7 +2117,8 @@ class TestNumericalEdgeCasesView:
             right_ear=[0.5, 0.5, 0.0],
             forehead=[0.5, 0.2, 0.0],
             chin=[0.5, 0.8, 0.0],
-            w=1, h=1,  # tiny image so pixel coords are sub-pixel
+            w=1,
+            h=1,  # tiny image so pixel coords are sub-pixel
         )
         result = estimate_face_view(face)
         assert result["yaw"] == 0.0
@@ -2065,7 +2131,8 @@ class TestNumericalEdgeCasesView:
             right_ear=[0.8, 0.5, 0.0],
             forehead=[0.5, 0.5, 0.0],
             chin=[0.5, 0.5, 0.0],
-            w=1, h=1,
+            w=1,
+            h=1,
         )
         result = estimate_face_view(face)
         assert result["pitch"] == 0.0

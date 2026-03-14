@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING
 
 import cv2
 import numpy as np
@@ -21,10 +21,12 @@ import torch
 from PIL import Image
 
 from landmarkdiff.landmarks import FaceLandmarks, extract_landmarks, render_landmark_image
-from landmarkdiff.conditioning import generate_conditioning
 from landmarkdiff.manipulation import apply_procedure_preset
 from landmarkdiff.masking import generate_surgical_mask, mask_to_3channel
 from landmarkdiff.synthetic.tps_warp import warp_image_tps
+
+if TYPE_CHECKING:
+    from landmarkdiff.clinical import ClinicalFlags
 
 
 def get_device() -> torch.device:
@@ -102,6 +104,7 @@ def mask_composite(
     if use_laplacian:
         try:
             from landmarkdiff.postprocess import laplacian_pyramid_blend
+
             return laplacian_pyramid_blend(corrected, original, mask_f)
         except Exception:
             pass
@@ -109,8 +112,7 @@ def mask_composite(
     # Fallback: simple alpha blend
     mask_3ch = mask_to_3channel(mask_f)
     result = (
-        corrected.astype(np.float32) * mask_3ch
-        + original.astype(np.float32) * (1.0 - mask_3ch)
+        corrected.astype(np.float32) * mask_3ch + original.astype(np.float32) * (1.0 - mask_3ch)
     ).astype(np.uint8)
 
     return result
@@ -170,10 +172,10 @@ class LandmarkDiffPipeline:
         controlnet_id: str = "CrucibleAI/ControlNetMediaPipeFace",
         controlnet_checkpoint: str | None = None,
         base_model_id: str | None = None,
-        device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None,
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None,
         ip_adapter_scale: float = 0.6,
-        clinical_flags: Optional["ClinicalFlags"] = None,
+        clinical_flags: ClinicalFlags | None = None,
         displacement_model_path: str | None = None,
     ):
         self.mode = mode
@@ -187,6 +189,7 @@ class LandmarkDiffPipeline:
         if displacement_model_path:
             try:
                 from landmarkdiff.displacement_model import DisplacementModel
+
                 self._displacement_model = DisplacementModel.load(displacement_model_path)
                 print(f"Displacement model loaded: {self._displacement_model.procedures}")
             except Exception as e:
@@ -224,8 +227,8 @@ class LandmarkDiffPipeline:
     def _load_controlnet(self) -> None:
         from diffusers import (
             ControlNetModel,
-            StableDiffusionControlNetPipeline,
             DPMSolverMultistepScheduler,
+            StableDiffusionControlNetPipeline,
         )
 
         if self.controlnet_checkpoint:
@@ -236,12 +239,15 @@ class LandmarkDiffPipeline:
                 ckpt_path = ckpt_path / "controlnet_ema"
             print(f"Loading fine-tuned ControlNet from {ckpt_path}...")
             controlnet = ControlNetModel.from_pretrained(
-                str(ckpt_path), torch_dtype=self.dtype,
+                str(ckpt_path),
+                torch_dtype=self.dtype,
             )
         else:
             print(f"Loading ControlNet from {self.controlnet_id}...")
             controlnet = ControlNetModel.from_pretrained(
-                self.controlnet_id, subfolder="diffusion_sd15", torch_dtype=self.dtype,
+                self.controlnet_id,
+                subfolder="diffusion_sd15",
+                torch_dtype=self.dtype,
             )
         print(f"Loading base model from {self.base_model_id}...")
         self._pipe = StableDiffusionControlNetPipeline.from_pretrained(
@@ -287,8 +293,8 @@ class LandmarkDiffPipeline:
 
     def _load_img2img(self) -> None:
         from diffusers import (
-            StableDiffusionImg2ImgPipeline,
             DPMSolverMultistepScheduler,
+            StableDiffusionImg2ImgPipeline,
         )
 
         print(f"Loading SD1.5 img2img from {self.base_model_id}...")
@@ -298,9 +304,7 @@ class LandmarkDiffPipeline:
             safety_checker=None,
             requires_safety_checker=False,
         )
-        self._pipe.scheduler = DPMSolverMultistepScheduler.from_config(
-            self._pipe.scheduler.config
-        )
+        self._pipe.scheduler = DPMSolverMultistepScheduler.from_config(self._pipe.scheduler.config)
         self._apply_device_optimizations()
 
     def _apply_device_optimizations(self) -> None:
@@ -329,8 +333,8 @@ class LandmarkDiffPipeline:
         guidance_scale: float = 9.0,
         controlnet_conditioning_scale: float = 0.9,
         strength: float = 0.5,
-        seed: Optional[int] = None,
-        clinical_flags: Optional["ClinicalFlags"] = None,
+        seed: int | None = None,
+        clinical_flags: ClinicalFlags | None = None,
         postprocess: bool = True,
         use_gfpgan: bool = False,
     ) -> dict:
@@ -351,12 +355,14 @@ class LandmarkDiffPipeline:
         manipulation_mode = "preset"
         if self._displacement_model and procedure in self._displacement_model.procedures:
             try:
-                from landmarkdiff.displacement_model import DisplacementModel
                 rng = np.random.default_rng(seed) if seed is not None else np.random.default_rng()
                 # Map UI intensity (0-100) to displacement model intensity (0-2)
                 dm_intensity = intensity / 50.0  # 50 -> 1.0x mean displacement
                 displacement = self._displacement_model.get_displacement_field(
-                    procedure, intensity=dm_intensity, noise_scale=0.3, rng=rng,
+                    procedure,
+                    intensity=dm_intensity,
+                    noise_scale=0.3,
+                    rng=rng,
                 )
                 # Apply displacement to landmarks
                 new_lm = face.landmarks.copy()
@@ -367,21 +373,34 @@ class LandmarkDiffPipeline:
                 new_lm[:, 1] = np.clip(new_lm[:, 1], 0.01, 0.99)
                 manipulated = FaceLandmarks(
                     landmarks=new_lm,
-                    image_width=512, image_height=512,
+                    image_width=512,
+                    image_height=512,
                     confidence=face.confidence,
                 )
                 manipulation_mode = "displacement_model"
             except Exception:
                 manipulated = apply_procedure_preset(
-                    face, procedure, intensity, image_size=512, clinical_flags=flags,
+                    face,
+                    procedure,
+                    intensity,
+                    image_size=512,
+                    clinical_flags=flags,
                 )
         else:
             manipulated = apply_procedure_preset(
-                face, procedure, intensity, image_size=512, clinical_flags=flags,
+                face,
+                procedure,
+                intensity,
+                image_size=512,
+                clinical_flags=flags,
             )
         landmark_img = render_landmark_image(manipulated, 512, 512)
         mask = generate_surgical_mask(
-            face, procedure, 512, 512, clinical_flags=flags,
+            face,
+            procedure,
+            512,
+            512,
+            clinical_flags=flags,
         )
 
         generator = None
@@ -398,14 +417,24 @@ class LandmarkDiffPipeline:
         elif self.mode in ("controlnet", "controlnet_ip"):
             ip_image = numpy_to_pil(image_512) if self._ip_adapter_loaded else None
             raw_output = self._generate_controlnet(
-                image_512, landmark_img, prompt, num_inference_steps,
-                guidance_scale, controlnet_conditioning_scale, generator,
+                image_512,
+                landmark_img,
+                prompt,
+                num_inference_steps,
+                guidance_scale,
+                controlnet_conditioning_scale,
+                generator,
                 ip_adapter_image=ip_image,
             )
         else:
             raw_output = self._generate_img2img(
-                tps_warped, mask, prompt, num_inference_steps,
-                guidance_scale, strength, generator,
+                tps_warped,
+                mask,
+                prompt,
+                num_inference_steps,
+                guidance_scale,
+                strength,
+                generator,
             )
 
         # Step 2: Post-processing for photorealism (neural + classical pipeline)
@@ -413,6 +442,7 @@ class LandmarkDiffPipeline:
         restore_used = "none"
         if postprocess and self.mode != "tps":
             from landmarkdiff.postprocess import full_postprocess
+
             pp_result = full_postprocess(
                 generated=raw_output,
                 original=image_512,
@@ -450,8 +480,13 @@ class LandmarkDiffPipeline:
         }
 
     def _generate_controlnet(
-        self, image: np.ndarray, conditioning: np.ndarray,
-        prompt: str, steps: int, cfg: float, cn_scale: float,
+        self,
+        image: np.ndarray,
+        conditioning: np.ndarray,
+        prompt: str,
+        steps: int,
+        cfg: float,
+        cn_scale: float,
         generator: torch.Generator | None,
         ip_adapter_image: Image.Image | None = None,
     ) -> np.ndarray:
@@ -470,8 +505,13 @@ class LandmarkDiffPipeline:
         return pil_to_numpy(result.images[0])
 
     def _generate_img2img(
-        self, image: np.ndarray, mask: np.ndarray,
-        prompt: str, steps: int, cfg: float, strength: float,
+        self,
+        image: np.ndarray,
+        mask: np.ndarray,
+        prompt: str,
+        steps: int,
+        cfg: float,
+        strength: float,
         generator: torch.Generator | None,
     ) -> np.ndarray:
         result = self._pipe(
@@ -558,7 +598,8 @@ def run_inference(
         sys.exit(1)
 
     pipe = LandmarkDiffPipeline(
-        mode=mode, ip_adapter_scale=ip_adapter_scale,
+        mode=mode,
+        ip_adapter_scale=ip_adapter_scale,
         controlnet_checkpoint=controlnet_checkpoint,
         displacement_model_path=displacement_model_path,
     )
@@ -594,18 +635,29 @@ if __name__ == "__main__":
     parser.add_argument("--output", default="scripts/inference_output")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument(
-        "--mode", default="img2img",
+        "--mode",
+        default="img2img",
         choices=["img2img", "controlnet", "controlnet_ip", "tps"],
     )
     parser.add_argument("--ip-adapter-scale", type=float, default=0.6)
-    parser.add_argument("--checkpoint", default=None,
-                        help="Path to fine-tuned ControlNet checkpoint")
-    parser.add_argument("--displacement-model", default=None,
-                        help="Path to displacement_model.npz for data-driven manipulation")
+    parser.add_argument(
+        "--checkpoint", default=None, help="Path to fine-tuned ControlNet checkpoint"
+    )
+    parser.add_argument(
+        "--displacement-model",
+        default=None,
+        help="Path to displacement_model.npz for data-driven manipulation",
+    )
     args = parser.parse_args()
 
     run_inference(
-        args.image, args.procedure, args.intensity, args.output,
-        args.seed, args.mode, args.ip_adapter_scale, args.checkpoint,
+        args.image,
+        args.procedure,
+        args.intensity,
+        args.output,
+        args.seed,
+        args.mode,
+        args.ip_adapter_scale,
+        args.checkpoint,
         args.displacement_model,
     )

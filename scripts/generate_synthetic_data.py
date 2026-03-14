@@ -11,7 +11,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from landmarkdiff.synthetic.pair_generator import generate_pair, save_pair, PROCEDURES
+from landmarkdiff.synthetic.pair_generator import PROCEDURES, generate_pair, save_pair
 
 
 def main(

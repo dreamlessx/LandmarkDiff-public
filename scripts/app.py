@@ -11,19 +11,18 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from landmarkdiff.clinical import ClinicalFlags
+from landmarkdiff.conditioning import generate_conditioning
+from landmarkdiff.evaluation import classify_fitzpatrick_ita
+from landmarkdiff.inference import estimate_face_view, mask_composite
 from landmarkdiff.landmarks import (
-    FaceLandmarks,
     extract_landmarks,
     render_landmark_image,
     visualize_landmarks,
 )
-from landmarkdiff.conditioning import generate_conditioning, render_wireframe
 from landmarkdiff.manipulation import apply_procedure_preset
-from landmarkdiff.masking import generate_surgical_mask, mask_to_3channel
+from landmarkdiff.masking import generate_surgical_mask
 from landmarkdiff.synthetic.tps_warp import warp_image_tps
-from landmarkdiff.inference import mask_composite, estimate_face_view
-from landmarkdiff.evaluation import classify_fitzpatrick_ita
-from landmarkdiff.clinical import ClinicalFlags
 
 
 def bgr_to_rgb(img: np.ndarray) -> np.ndarray:
@@ -72,7 +71,12 @@ def process_image(
         return blank, blank, gray, gray, blank, blank, blank, "Upload an image to begin."
 
     flags = _build_clinical_flags(
-        vitiligo, bells_palsy, bells_side, keloid, keloid_regions, ehlers_danlos,
+        vitiligo,
+        bells_palsy,
+        bells_side,
+        keloid,
+        keloid_regions,
+        ehlers_danlos,
     )
 
     image_bgr = image_rgb[:, :, ::-1].copy()
@@ -83,7 +87,16 @@ def process_image(
     if face is None:
         blank = np.zeros((512, 512, 3), dtype=np.uint8)
         gray = np.zeros((512, 512), dtype=np.uint8)
-        return image_rgb_512, blank, gray, gray, image_rgb_512, image_rgb_512, image_rgb_512, "No face detected."
+        return (
+            image_rgb_512,
+            blank,
+            gray,
+            gray,
+            image_rgb_512,
+            image_rgb_512,
+            image_rgb_512,
+            "No face detected.",
+        )
 
     # Landmarks
     annotated_bgr = visualize_landmarks(image_bgr, face, radius=2)
@@ -91,7 +104,11 @@ def process_image(
 
     # Manipulation with clinical flags
     manipulated = apply_procedure_preset(
-        face, procedure, intensity, image_size=512, clinical_flags=flags,
+        face,
+        procedure,
+        intensity,
+        image_size=512,
+        clinical_flags=flags,
     )
 
     # Conditioning
@@ -100,13 +117,20 @@ def process_image(
 
     # Mask with clinical flags
     mask = generate_surgical_mask(
-        face, procedure, 512, 512, clinical_flags=flags, image=image_bgr,
+        face,
+        procedure,
+        512,
+        512,
+        clinical_flags=flags,
+        image=image_bgr,
     )
     mask_vis = (mask * 255).astype(np.uint8)
 
     # TPS warp + composite
     tps_warped_bgr = warp_image_tps(
-        image_bgr, face.pixel_coords, manipulated.pixel_coords,
+        image_bgr,
+        face.pixel_coords,
+        manipulated.pixel_coords,
     )
     composited_bgr = mask_composite(tps_warped_bgr, image_bgr, mask)
 
@@ -126,9 +150,12 @@ def process_image(
     except Exception:
         fitz_str = "Unknown"
 
-    displacement = np.mean(np.linalg.norm(
-        manipulated.pixel_coords - face.pixel_coords, axis=1,
-    ))
+    displacement = np.mean(
+        np.linalg.norm(
+            manipulated.pixel_coords - face.pixel_coords,
+            axis=1,
+        )
+    )
 
     info_parts = [
         f"Procedure: {procedure}",
@@ -232,31 +259,51 @@ def build_app():
                         height=350,
                     )
                     procedure = gr.Radio(
-                        choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"],
+                        choices=[
+                            "rhinoplasty",
+                            "blepharoplasty",
+                            "rhytidectomy",
+                            "orthognathic",
+                            "brow_lift",
+                            "mentoplasty",
+                        ],
                         value="rhinoplasty",
                         label="Surgical Procedure",
                     )
                     intensity = gr.Slider(
-                        minimum=0, maximum=100, value=50, step=1,
+                        minimum=0,
+                        maximum=100,
+                        value=50,
+                        step=1,
                         label="Intensity (%)",
                         info="0 = no change, 100 = maximum effect",
                     )
 
                     with gr.Accordion("Clinical Flags", open=False):
                         gr.Markdown("Enable for patients with specific conditions:")
-                        cb_vitiligo = gr.Checkbox(label="Vitiligo (preserve depigmented patches)", value=False)
-                        cb_bells = gr.Checkbox(label="Bell's Palsy (disable bilateral symmetry)", value=False)
-                        bells_side = gr.Radio(
-                            ["left", "right"], value="left",
-                            label="Affected side", visible=True,
+                        cb_vitiligo = gr.Checkbox(
+                            label="Vitiligo (preserve depigmented patches)", value=False
                         )
-                        cb_keloid = gr.Checkbox(label="Keloid-prone (soften mask transitions)", value=False)
+                        cb_bells = gr.Checkbox(
+                            label="Bell's Palsy (disable bilateral symmetry)", value=False
+                        )
+                        bells_side = gr.Radio(
+                            ["left", "right"],
+                            value="left",
+                            label="Affected side",
+                            visible=True,
+                        )
+                        cb_keloid = gr.Checkbox(
+                            label="Keloid-prone (soften mask transitions)", value=False
+                        )
                         keloid_regions = gr.Textbox(
                             label="Keloid regions (comma-separated)",
                             value="jawline",
                             placeholder="jawline, nose, lips",
                         )
-                        cb_ehlers = gr.Checkbox(label="Ehlers-Danlos (wider deformation radii)", value=False)
+                        cb_ehlers = gr.Checkbox(
+                            label="Ehlers-Danlos (wider deformation radii)", value=False
+                        )
 
                     run_btn = gr.Button("Generate Preview", variant="primary", size="lg")
                     info_box = gr.Textbox(label="Analysis Info", lines=8, interactive=False)
@@ -279,13 +326,25 @@ def build_app():
                     )
 
             all_inputs = [
-                input_image, procedure, intensity,
-                cb_vitiligo, cb_bells, bells_side,
-                cb_keloid, keloid_regions, cb_ehlers,
+                input_image,
+                procedure,
+                intensity,
+                cb_vitiligo,
+                cb_bells,
+                bells_side,
+                cb_keloid,
+                keloid_regions,
+                cb_ehlers,
             ]
             all_outputs = [
-                out_landmarks, out_manip, out_wireframe, out_mask,
-                out_tps, out_result, out_sidebyside, info_box,
+                out_landmarks,
+                out_manip,
+                out_wireframe,
+                out_mask,
+                out_tps,
+                out_result,
+                out_sidebyside,
+                info_box,
             ]
 
             run_btn.click(fn=process_image, inputs=all_inputs, outputs=all_outputs)
@@ -297,7 +356,9 @@ def build_app():
             gr.Markdown("Adjust each procedure independently. Set to 0 to skip.")
             with gr.Row():
                 with gr.Column(scale=1):
-                    input_image_multi = gr.Image(label="Upload Face Photo", type="numpy", height=300)
+                    input_image_multi = gr.Image(
+                        label="Upload Face Photo", type="numpy", height=300
+                    )
                     slider_rhino = gr.Slider(0, 100, 50, step=1, label="Rhinoplasty")
                     slider_bleph = gr.Slider(0, 100, 0, step=1, label="Blepharoplasty")
                     slider_rhyti = gr.Slider(0, 100, 0, step=1, label="Rhytidectomy")
@@ -311,7 +372,13 @@ def build_app():
                         out_rhyti = gr.Image(label="Rhytidectomy", height=256)
                         out_ortho = gr.Image(label="Orthognathic", height=256)
 
-            multi_inputs = [input_image_multi, slider_rhino, slider_bleph, slider_rhyti, slider_ortho]
+            multi_inputs = [
+                input_image_multi,
+                slider_rhino,
+                slider_bleph,
+                slider_rhyti,
+                slider_ortho,
+            ]
             multi_outputs = [out_rhino, out_bleph, out_rhyti, out_ortho]
             compare_btn.click(fn=create_comparison, inputs=multi_inputs, outputs=multi_outputs)
             for slider in [slider_rhino, slider_bleph, slider_rhyti, slider_ortho]:
@@ -322,10 +389,20 @@ def build_app():
             gr.Markdown("See how a procedure looks across intensity levels (0-100).")
             with gr.Row():
                 with gr.Column(scale=1):
-                    input_image_sweep = gr.Image(label="Upload Face Photo", type="numpy", height=300)
+                    input_image_sweep = gr.Image(
+                        label="Upload Face Photo", type="numpy", height=300
+                    )
                     sweep_procedure = gr.Radio(
-                        choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"],
-                        value="rhinoplasty", label="Procedure",
+                        choices=[
+                            "rhinoplasty",
+                            "blepharoplasty",
+                            "rhytidectomy",
+                            "orthognathic",
+                            "brow_lift",
+                            "mentoplasty",
+                        ],
+                        value="rhinoplasty",
+                        label="Procedure",
                     )
                     sweep_steps = gr.Slider(3, 10, 5, step=1, label="Number of steps")
                     sweep_btn = gr.Button("Generate Sweep", variant="primary", size="lg")
@@ -362,15 +439,16 @@ def build_app():
         # ---- Tab 4: Face Analysis ----
         with gr.Tab("Face Analysis"):
             gr.Markdown(
-                "Analyze face photo: skin tone classification, view angle, "
-                "and landmark quality."
+                "Analyze face photo: skin tone classification, view angle, and landmark quality."
             )
             with gr.Row():
                 with gr.Column(scale=1):
                     analysis_image = gr.Image(label="Upload Face Photo", type="numpy", height=350)
                     analyze_btn = gr.Button("Analyze", variant="primary", size="lg")
                 with gr.Column(scale=1):
-                    analysis_info = gr.Textbox(label="Analysis Results", lines=15, interactive=False)
+                    analysis_info = gr.Textbox(
+                        label="Analysis Results", lines=15, interactive=False
+                    )
                     analysis_landmarks = gr.Image(label="Landmarks", height=350)
 
             def analyze_face(image_rgb):
@@ -402,6 +480,7 @@ def build_app():
                     "Landmark Coverage by Region:",
                 ]
                 from landmarkdiff.landmarks import LANDMARK_REGIONS
+
                 for region, indices in LANDMARK_REGIONS.items():
                     coords = face.pixel_coords[indices]
                     spread = np.std(coords, axis=0).mean()
@@ -423,7 +502,8 @@ def build_app():
             gr.Markdown(
                 "## Guided Multi-Angle Face Capture\n"
                 "Upload photos from multiple angles for more accurate 3D-aware prediction.\n"
-                "Follow the guide: **front -> left 45° -> right 45° -> left profile -> right profile**.\n\n"
+                "Follow the guide: **front -> left 45 -> right 45"
+                " -> left profile -> right profile**.\n\n"
                 "The system validates each angle using landmark-based pose estimation "
                 "and combines all views for the final result."
             )
@@ -434,16 +514,31 @@ def build_app():
                     ma_front = gr.Image(label="Front (0°)", type="numpy", height=200)
                     ma_left45 = gr.Image(label="Left 3/4 (~45°)", type="numpy", height=200)
                     ma_right45 = gr.Image(label="Right 3/4 (~45°)", type="numpy", height=200)
-                    ma_left_profile = gr.Image(label="Left Profile (~90°)", type="numpy", height=200)
-                    ma_right_profile = gr.Image(label="Right Profile (~90°)", type="numpy", height=200)
+                    ma_left_profile = gr.Image(
+                        label="Left Profile (~90°)", type="numpy", height=200
+                    )
+                    ma_right_profile = gr.Image(
+                        label="Right Profile (~90°)", type="numpy", height=200
+                    )
 
                     gr.Markdown("### Step 2: Configure")
                     ma_procedure = gr.Radio(
-                        choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"],
-                        value="rhinoplasty", label="Procedure",
+                        choices=[
+                            "rhinoplasty",
+                            "blepharoplasty",
+                            "rhytidectomy",
+                            "orthognathic",
+                            "brow_lift",
+                            "mentoplasty",
+                        ],
+                        value="rhinoplasty",
+                        label="Procedure",
                     )
                     ma_intensity = gr.Slider(
-                        minimum=0, maximum=100, value=50, step=1,
+                        minimum=0,
+                        maximum=100,
+                        value=50,
+                        step=1,
                         label="Intensity (%)",
                     )
                     ma_validate_btn = gr.Button("Validate Angles", variant="secondary", size="lg")
@@ -451,7 +546,9 @@ def build_app():
 
                 with gr.Column(scale=2):
                     gr.Markdown("### Angle Validation")
-                    ma_validation_info = gr.Textbox(label="Validation Results", lines=10, interactive=False)
+                    ma_validation_info = gr.Textbox(
+                        label="Validation Results", lines=10, interactive=False
+                    )
 
                     gr.Markdown("### Results by Angle")
                     with gr.Row():
@@ -461,7 +558,9 @@ def build_app():
                     with gr.Row():
                         ma_out_left_prof = gr.Image(label="Left Profile Result", height=200)
                         ma_out_right_prof = gr.Image(label="Right Profile Result", height=200)
-                    ma_gallery = gr.Gallery(label="All Views (Before -> After)", columns=5, height=250)
+                    ma_gallery = gr.Gallery(
+                        label="All Views (Before -> After)", columns=5, height=250
+                    )
 
             def _validate_angle(image_rgb, expected_view, label):
                 """Validate a single image's face angle matches expected view."""
@@ -478,15 +577,18 @@ def build_app():
 
                 # Check if the angle is close to what we expect
                 angle_ok = False
-                if expected_view == "frontal" and abs(yaw) < 20:
-                    angle_ok = True
-                elif expected_view == "left_three_quarter" and -60 < yaw < -15:
-                    angle_ok = True
-                elif expected_view == "right_three_quarter" and 15 < yaw < 60:
-                    angle_ok = True
-                elif expected_view == "left_profile" and yaw < -35:
-                    angle_ok = True
-                elif expected_view == "right_profile" and yaw > 35:
+                if (
+                    expected_view == "frontal"
+                    and abs(yaw) < 20
+                    or expected_view == "left_three_quarter"
+                    and -60 < yaw < -15
+                    or expected_view == "right_three_quarter"
+                    and 15 < yaw < 60
+                    or expected_view == "left_profile"
+                    and yaw < -35
+                    or expected_view == "right_profile"
+                    and yaw > 35
+                ):
                     angle_ok = True
 
                 status = "OK" if angle_ok else "ANGLE MISMATCH"
@@ -519,11 +621,15 @@ def build_app():
                 elif n_valid == n_uploaded:
                     lines.append("\nAll angles validated. Ready to generate!")
                 else:
-                    lines.append("\nSome angles don't match expected views. "
-                                 "Results may still work but accuracy could be reduced.")
+                    lines.append(
+                        "\nSome angles don't match expected views. "
+                        "Results may still work but accuracy could be reduced."
+                    )
                 return "\n".join(lines)
 
-            def generate_multi_angle(front, left45, right45, left_prof, right_prof, procedure, intensity):
+            def generate_multi_angle(
+                front, left45, right45, left_prof, right_prof, procedure, intensity
+            ):
                 """Generate surgical outcome prediction for each uploaded angle."""
                 images = [
                     (front, "Front"),
@@ -546,7 +652,9 @@ def build_app():
                         results.append(bgr_to_rgb(image_bgr))
                         continue
 
-                    manip = apply_procedure_preset(face, procedure, float(intensity), image_size=512)
+                    manip = apply_procedure_preset(
+                        face, procedure, float(intensity), image_size=512
+                    )
                     mask = generate_surgical_mask(face, procedure, 512, 512)
                     warped = warp_image_tps(image_bgr, face.pixel_coords, manip.pixel_coords)
                     comp = mask_composite(warped, image_bgr, mask)
@@ -571,7 +679,14 @@ def build_app():
             ma_generate_btn.click(
                 fn=generate_multi_angle,
                 inputs=ma_angle_inputs + [ma_procedure, ma_intensity],
-                outputs=[ma_out_front, ma_out_left45, ma_out_right45, ma_out_left_prof, ma_out_right_prof, ma_gallery],
+                outputs=[
+                    ma_out_front,
+                    ma_out_left45,
+                    ma_out_right45,
+                    ma_out_left_prof,
+                    ma_out_right_prof,
+                    ma_gallery,
+                ],
             )
 
     return app

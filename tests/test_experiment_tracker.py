@@ -211,7 +211,7 @@ class TestGetBest:
         assert best == id2  # 0.92 is highest
 
     def test_get_best_skips_running(self, tracker):
-        id1 = tracker.start("run1", config={})
+        tracker.start("run1", config={})
         id2 = tracker.start("run2", config={})
         tracker.finish(id2, results={"fid": 50.0})
         # id1 is still running

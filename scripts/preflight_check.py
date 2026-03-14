@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import argparse
 import sys
-import time
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -62,6 +61,7 @@ def check_dataset(data_dir: str) -> tuple[bool, dict]:
     info["has_metadata"] = meta_path.exists()
     if meta_path.exists():
         import json
+
         with open(meta_path) as f:
             meta = json.load(f)
         info["metadata_pairs"] = len(meta.get("pairs", {}))
@@ -69,6 +69,7 @@ def check_dataset(data_dir: str) -> tuple[bool, dict]:
     # Check a sample file
     if inputs:
         import cv2
+
         sample = cv2.imread(str(inputs[0]))
         if sample is not None:
             info["sample_shape"] = list(sample.shape)
@@ -83,12 +84,22 @@ def check_imports() -> tuple[bool, list[str]]:
     """Check all required imports."""
     failures = []
     modules = [
-        "torch", "diffusers", "transformers", "cv2", "numpy",
-        "PIL", "lpips", "mediapipe",
-        "landmarkdiff.landmarks", "landmarkdiff.conditioning",
-        "landmarkdiff.losses", "landmarkdiff.evaluation",
-        "landmarkdiff.curriculum", "landmarkdiff.experiment_tracker",
-        "landmarkdiff.augmentation", "landmarkdiff.validation",
+        "torch",
+        "diffusers",
+        "transformers",
+        "cv2",
+        "numpy",
+        "PIL",
+        "lpips",
+        "mediapipe",
+        "landmarkdiff.landmarks",
+        "landmarkdiff.conditioning",
+        "landmarkdiff.losses",
+        "landmarkdiff.evaluation",
+        "landmarkdiff.curriculum",
+        "landmarkdiff.experiment_tracker",
+        "landmarkdiff.augmentation",
+        "landmarkdiff.validation",
         "landmarkdiff.arcface_torch",
     ]
     for mod in modules:
@@ -102,6 +113,7 @@ def check_imports() -> tuple[bool, list[str]]:
 def check_gpu() -> tuple[bool, dict]:
     """Check GPU availability and VRAM."""
     import torch
+
     info = {}
     if not torch.cuda.is_available():
         info["cuda"] = False
@@ -126,6 +138,7 @@ def check_gpu() -> tuple[bool, dict]:
 def check_model_cache() -> tuple[bool, dict]:
     """Check if SD1.5 and ControlNet weights are cached."""
     from pathlib import Path
+
     cache_dir = Path.home() / ".cache" / "huggingface" / "hub"
     info = {}
 
@@ -144,11 +157,11 @@ def check_model_cache() -> tuple[bool, dict]:
 
 def check_forward_pass(data_dir: str, phase: str = "A") -> tuple[bool, dict]:
     """Run a single forward pass to verify the training loop."""
-    import torch
     info = {}
 
     try:
         from scripts.train_controlnet import SyntheticPairDataset
+
         dataset = SyntheticPairDataset(data_dir, resolution=512, geometric_augment=False)
         sample = dataset[0]
         info["sample_keys"] = list(sample.keys())
@@ -157,8 +170,10 @@ def check_forward_pass(data_dir: str, phase: str = "A") -> tuple[bool, dict]:
 
         # Verify shapes
         assert sample["input"].shape == (3, 512, 512), f"Bad input shape: {sample['input'].shape}"
-        assert sample["target"].shape == (3, 512, 512), f"Bad target shape: {sample['target'].shape}"
-        assert sample["conditioning"].shape == (3, 512, 512), f"Bad conditioning shape"
+        assert sample["target"].shape == (3, 512, 512), (
+            f"Bad target shape: {sample['target'].shape}"
+        )
+        assert sample["conditioning"].shape == (3, 512, 512), "Bad conditioning shape"
 
         info["shapes_valid"] = True
         return True, info
@@ -249,8 +264,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Pre-flight training check")
     parser.add_argument("--data_dir", default="data/training_combined")
     parser.add_argument("--phase", default="A", choices=["A", "B"])
-    parser.add_argument("--quick", action="store_true",
-                        help="Skip forward pass check")
+    parser.add_argument("--quick", action="store_true", help="Skip forward pass check")
     args = parser.parse_args()
 
     ok = run_preflight(args.data_dir, args.phase, args.quick)

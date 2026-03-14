@@ -29,7 +29,6 @@ from __future__ import annotations
 import logging
 import warnings
 from pathlib import Path
-from typing import Optional
 
 import torch
 import torch.nn as nn
@@ -41,6 +40,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Building blocks
 # ---------------------------------------------------------------------------
+
 
 class SEModule(nn.Module):
     """Squeeze-and-Excitation channel attention (Hu et al., 2018).
@@ -79,18 +79,28 @@ class IBasicBlock(nn.Module):
         inplanes: int,
         planes: int,
         stride: int = 1,
-        downsample: Optional[nn.Module] = None,
+        downsample: nn.Module | None = None,
         use_se: bool = True,
     ):
         super().__init__()
         self.bn1 = nn.BatchNorm2d(inplanes, eps=1e-5)
         self.conv1 = nn.Conv2d(
-            inplanes, planes, kernel_size=3, stride=1, padding=1, bias=False,
+            inplanes,
+            planes,
+            kernel_size=3,
+            stride=1,
+            padding=1,
+            bias=False,
         )
         self.bn2 = nn.BatchNorm2d(planes, eps=1e-5)
         self.prelu = nn.PReLU(planes)
         self.conv2 = nn.Conv2d(
-            planes, planes, kernel_size=3, stride=stride, padding=1, bias=False,
+            planes,
+            planes,
+            kernel_size=3,
+            stride=stride,
+            padding=1,
+            bias=False,
         )
         self.bn3 = nn.BatchNorm2d(planes, eps=1e-5)
 
@@ -119,6 +129,7 @@ class IBasicBlock(nn.Module):
 # ---------------------------------------------------------------------------
 # Backbone
 # ---------------------------------------------------------------------------
+
 
 class ArcFaceBackbone(nn.Module):
     """IResNet-50 backbone for ArcFace identity embeddings.
@@ -257,7 +268,7 @@ _WEIGHT_URL = (
 )
 
 
-def _find_pretrained_weights() -> Optional[Path]:
+def _find_pretrained_weights() -> Path | None:
     """Search known locations for pretrained IResNet-50 weights."""
     for p in _KNOWN_WEIGHT_PATHS:
         if p.exists() and p.suffix == ".pth":
@@ -269,6 +280,7 @@ def _try_download_weights(dest: Path) -> bool:
     """Attempt to download pretrained weights from the InsightFace release."""
     try:
         import urllib.request
+
         dest.parent.mkdir(parents=True, exist_ok=True)
         logger.info("Downloading ArcFace IResNet-50 weights from %s ...", _WEIGHT_URL)
         urllib.request.urlretrieve(_WEIGHT_URL, str(dest))
@@ -281,7 +293,7 @@ def _try_download_weights(dest: Path) -> bool:
 
 def load_pretrained_weights(
     model: ArcFaceBackbone,
-    weights_path: Optional[str] = None,
+    weights_path: str | None = None,
     download: bool = True,
 ) -> bool:
     """Load pretrained InsightFace IResNet-50 weights into the model.
@@ -300,7 +312,7 @@ def load_pretrained_weights(
         ``True`` if weights were loaded successfully, ``False`` otherwise
         (model keeps random initialization).
     """
-    path: Optional[Path] = None
+    path: Path | None = None
 
     if weights_path is not None:
         path = Path(weights_path)
@@ -368,8 +380,7 @@ def load_pretrained_weights(
         return True
     except Exception as e:
         warnings.warn(
-            f"Failed to load ArcFace weights from {path}: {e}. "
-            "Using random initialization.",
+            f"Failed to load ArcFace weights from {path}: {e}. Using random initialization.",
             UserWarning,
             stacklevel=2,
         )
@@ -379,6 +390,7 @@ def load_pretrained_weights(
 # ---------------------------------------------------------------------------
 # Differentiable face alignment
 # ---------------------------------------------------------------------------
+
 
 def align_face(
     images: torch.Tensor,
@@ -402,7 +414,7 @@ def align_face(
     """
     B, C, H, W = images.shape
 
-    if H == size and W == size:
+    if size == H and size == W:
         return images
 
     # Crop fraction: keep central 80% to remove background padding
@@ -414,13 +426,17 @@ def align_face(
     # grid_sample expects coordinates in [-1, 1] where -1 is top-left, +1 is bottom-right
     # Center crop: map [-1, 1] output range to [-crop_frac, +crop_frac] input range
     theta = torch.zeros(B, 2, 3, device=images.device, dtype=images.dtype)
-    theta[:, 0, 0] = half_crop   # x scale
-    theta[:, 1, 1] = half_crop   # y scale
+    theta[:, 0, 0] = half_crop  # x scale
+    theta[:, 1, 1] = half_crop  # y scale
     # translation stays 0 (centered)
 
     grid = F.affine_grid(theta, [B, C, size, size], align_corners=False)
     aligned = F.grid_sample(
-        images, grid, mode="bilinear", padding_mode="border", align_corners=False,
+        images,
+        grid,
+        mode="bilinear",
+        padding_mode="border",
+        align_corners=False,
     )
     return aligned
 
@@ -444,13 +460,17 @@ def align_face_no_crop(
     if images.shape[-2] == size and images.shape[-1] == size:
         return images
     return F.interpolate(
-        images, size=(size, size), mode="bilinear", align_corners=False,
+        images,
+        size=(size, size),
+        mode="bilinear",
+        align_corners=False,
     )
 
 
 # ---------------------------------------------------------------------------
 # ArcFaceLoss: differentiable identity preservation loss
 # ---------------------------------------------------------------------------
+
 
 class ArcFaceLoss(nn.Module):
     """Differentiable identity loss using PyTorch-native ArcFace.
@@ -474,8 +494,8 @@ class ArcFaceLoss(nn.Module):
 
     def __init__(
         self,
-        device: Optional[torch.device] = None,
-        weights_path: Optional[str] = None,
+        device: torch.device | None = None,
+        weights_path: str | None = None,
         crop_face: bool = True,
     ):
         """
@@ -527,10 +547,7 @@ class ArcFaceLoss(nn.Module):
         Returns:
             (B, 3, 112, 112) in [-1, 1].
         """
-        if self.crop_face:
-            x = align_face(images, size=112)
-        else:
-            x = align_face_no_crop(images, size=112)
+        x = align_face(images, size=112) if self.crop_face else align_face_no_crop(images, size=112)
 
         # Normalize from [0, 1] to [-1, 1]
         x = x * 2.0 - 1.0
@@ -662,9 +679,10 @@ class ArcFaceLoss(nn.Module):
 # Convenience: create a pre-configured loss instance
 # ---------------------------------------------------------------------------
 
+
 def create_arcface_loss(
-    device: Optional[torch.device] = None,
-    weights_path: Optional[str] = None,
+    device: torch.device | None = None,
+    weights_path: str | None = None,
 ) -> ArcFaceLoss:
     """Factory function for creating an ArcFaceLoss with sensible defaults.
 

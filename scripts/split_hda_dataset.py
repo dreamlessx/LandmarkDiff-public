@@ -56,12 +56,12 @@ def stratified_split(
 
     # Group by procedure
     proc_to_prefixes: dict[str, list[str]] = defaultdict(list)
-    for prefix, proc in zip(prefixes, procedures):
+    for prefix, proc in zip(prefixes, procedures, strict=False):
         proc_to_prefixes[proc].append(prefix)
 
     splits: dict[str, list[str]] = {"train": [], "val": [], "test": []}
 
-    for proc, proc_prefixes in proc_to_prefixes.items():
+    for _proc, proc_prefixes in proc_to_prefixes.items():
         shuffled = proc_prefixes.copy()
         rng.shuffle(shuffled)
         n = len(shuffled)
@@ -77,8 +77,8 @@ def stratified_split(
             n_test = n - n_train - n_val
 
         splits["test"].extend(shuffled[:n_test])
-        splits["val"].extend(shuffled[n_test:n_test + n_val])
-        splits["train"].extend(shuffled[n_test + n_val:])
+        splits["val"].extend(shuffled[n_test : n_test + n_val])
+        splits["train"].extend(shuffled[n_test + n_val :])
 
     return splits
 
@@ -134,7 +134,8 @@ def main():
 
     # Split
     splits = stratified_split(
-        prefixes, procedures,
+        prefixes,
+        procedures,
         val_frac=args.val_frac,
         test_frac=args.test_frac,
         seed=args.seed,

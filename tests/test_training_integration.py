@@ -38,14 +38,14 @@ class TestGradientAccumulation:
         # Method 2: Gradient accumulation (2 x batch of 2)
         accum_steps = 2
         for i in range(accum_steps):
-            batch = data[i * 2:(i + 1) * 2]
-            tgts = targets[i * 2:(i + 1) * 2]
+            batch = data[i * 2 : (i + 1) * 2]
+            tgts = targets[i * 2 : (i + 1) * 2]
             out = model(batch)
             loss = F.mse_loss(out, tgts) / accum_steps
             loss.backward()
 
         # Gradients should match
-        for p_ref, p_acc in zip(model_ref.parameters(), model.parameters()):
+        for p_ref, p_acc in zip(model_ref.parameters(), model.parameters(), strict=False):
             torch.testing.assert_close(p_ref.grad, p_acc.grad, atol=1e-5, rtol=1e-5)
 
     def test_accumulation_loss_value(self):
@@ -58,8 +58,8 @@ class TestGradientAccumulation:
 
         total_loss = 0.0
         for i in range(accum_steps):
-            batch = data[i * 2:(i + 1) * 2]
-            tgts = targets[i * 2:(i + 1) * 2]
+            batch = data[i * 2 : (i + 1) * 2]
+            tgts = targets[i * 2 : (i + 1) * 2]
             out = model(batch)
             loss = F.mse_loss(out, tgts)
             total_loss += loss.item()
@@ -102,13 +102,14 @@ class TestCurriculumIntegration:
             weights[i] = curriculum.get_weight(0, proc)
 
         from torch.utils.data import WeightedRandomSampler
+
         sampler = WeightedRandomSampler(weights, n_samples, replacement=True)
         indices = list(sampler)
         assert len(indices) == n_samples
 
         # Blepharoplasty (indices 0-29) should appear more often than orthognathic (60-99)
         bleph_count = sum(1 for i in indices if i < 30)
-        ortho_count = sum(1 for i in indices if i >= 60)
+        sum(1 for i in indices if i >= 60)
         # Not a strict test — but on average blepharoplasty should dominate
         # With 30 easy vs 40 hard, even with weighting blepharoplasty should appear more
         assert bleph_count > 0  # at minimum, some should appear
@@ -164,7 +165,7 @@ class TestDisplacementModelInference:
 
     def test_displacement_field_shapes(self):
         """Displacement model should produce correct shape output."""
-        from landmarkdiff.displacement_model import DisplacementModel, NUM_LANDMARKS
+        from landmarkdiff.displacement_model import NUM_LANDMARKS, DisplacementModel
 
         # Create a mock model
         model = DisplacementModel()
@@ -183,7 +184,7 @@ class TestDisplacementModelInference:
 
     def test_intensity_scaling(self):
         """Higher intensity should produce larger displacements."""
-        from landmarkdiff.displacement_model import DisplacementModel, NUM_LANDMARKS
+        from landmarkdiff.displacement_model import NUM_LANDMARKS, DisplacementModel
 
         model = DisplacementModel()
         mean = np.random.randn(NUM_LANDMARKS, 2).astype(np.float32) * 0.01
@@ -210,6 +211,7 @@ class TestMetricsVisualization:
     def test_load_metrics(self):
         """Should parse JSONL metrics correctly."""
         import sys
+
         sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
         from plot_training_curves import load_metrics
 
@@ -225,6 +227,7 @@ class TestMetricsVisualization:
     def test_smooth(self):
         """EMA smoothing should reduce noise."""
         from plot_training_curves import smooth
+
         noisy = [1.0, 0.5, 1.5, 0.3, 1.2, 0.8, 1.1, 0.6]
         smoothed = smooth(noisy, window=5)
         assert len(smoothed) == len(noisy)
@@ -240,8 +243,12 @@ class TestMonitorTraining:
         from monitor_training import parse_training_log
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".log", delete=False) as f:
-            f.write("Step 100/10000 | Loss: 0.045678 | LR: 1.00e-05 | GradNorm: 1.23 | 5.2 it/s | ETA: 3.5h\n")
-            f.write("Step 200/10000 | Loss: 0.034567 | LR: 9.80e-06 | GradNorm: 0.98 | 5.5 it/s | ETA: 3.1h\n")
+            f.write(
+                "Step 100/10000 | Loss: 0.045678 | LR: 1.00e-05 | GradNorm: 1.23 | 5.2 it/s | ETA: 3.5h\n"
+            )
+            f.write(
+                "Step 200/10000 | Loss: 0.034567 | LR: 9.80e-06 | GradNorm: 0.98 | 5.5 it/s | ETA: 3.1h\n"
+            )
             f.write("Checkpoint saved: checkpoints/checkpoint-200\n")
             f.flush()
 

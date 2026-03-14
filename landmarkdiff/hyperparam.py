@@ -24,7 +24,7 @@ import json
 import math
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 
 def _to_native(val: Any) -> Any:
@@ -99,27 +99,45 @@ class SearchSpace:
         self.params: dict[str, ParamSpec] = {}
 
     def add_float(
-        self, name: str, low: float, high: float, log_scale: bool = False,
+        self,
+        name: str,
+        low: float,
+        high: float,
+        log_scale: bool = False,
     ) -> SearchSpace:
         """Add a continuous float parameter."""
         self.params[name] = ParamSpec(
-            name=name, param_type="float", low=low, high=high, log_scale=log_scale,
+            name=name,
+            param_type="float",
+            low=low,
+            high=high,
+            log_scale=log_scale,
         )
         return self
 
     def add_int(
-        self, name: str, low: int, high: int, step: int = 1,
+        self,
+        name: str,
+        low: int,
+        high: int,
+        step: int = 1,
     ) -> SearchSpace:
         """Add an integer parameter."""
         self.params[name] = ParamSpec(
-            name=name, param_type="int", low=low, high=high, step=step,
+            name=name,
+            param_type="int",
+            low=low,
+            high=high,
+            step=step,
         )
         return self
 
     def add_choice(self, name: str, choices: list[Any]) -> SearchSpace:
         """Add a categorical parameter."""
         self.params[name] = ParamSpec(
-            name=name, param_type="choice", choices=choices,
+            name=name,
+            param_type="choice",
+            choices=choices,
         )
         return self
 
@@ -204,10 +222,7 @@ class HyperparamSearch:
         attempts = 0
         while len(trials) < n_trials and attempts < max_attempts:
             attempts += 1
-            config = {
-                name: spec.sample(rng)
-                for name, spec in self.space.params.items()
-            }
+            config = {name: spec.sample(rng) for name, spec in self.space.params.items()}
             trial = Trial(
                 trial_id=f"trial_{len(trials):04d}",
                 config=config,
@@ -223,14 +238,11 @@ class HyperparamSearch:
         import itertools
 
         param_names = list(self.space.params.keys())
-        param_values = [
-            self.space.params[name].grid_values(grid_points)
-            for name in param_names
-        ]
+        param_values = [self.space.params[name].grid_values(grid_points) for name in param_names]
 
         trials = []
         for combo in itertools.product(*param_values):
-            config = dict(zip(param_names, combo))
+            config = dict(zip(param_names, combo, strict=False))
             trial = Trial(
                 trial_id=f"trial_{len(trials):04d}",
                 config=config,
@@ -240,7 +252,9 @@ class HyperparamSearch:
         return trials
 
     def record_result(
-        self, trial_id: str, metrics: dict[str, float],
+        self,
+        trial_id: str,
+        metrics: dict[str, float],
     ) -> None:
         """Record results for a trial."""
         for trial in self.trials:
@@ -251,7 +265,9 @@ class HyperparamSearch:
         raise KeyError(f"Trial {trial_id} not found")
 
     def best_trial(
-        self, metric: str = "loss", lower_is_better: bool = True,
+        self,
+        metric: str = "loss",
+        lower_is_better: bool = True,
     ) -> Trial | None:
         """Get the best completed trial by a metric."""
         completed = [t for t in self.trials if t.status == "completed" and metric in t.result]
@@ -275,7 +291,8 @@ class HyperparamSearch:
             with open(cfg_path, "w") as f:
                 yaml.safe_dump(
                     {"trial_id": trial.trial_id, **native_config},
-                    f, default_flow_style=False,
+                    f,
+                    default_flow_style=False,
                 )
 
         # Save summary index

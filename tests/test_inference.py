@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import torch
 
-from landmarkdiff.inference import get_device, numpy_to_pil, pil_to_numpy, LandmarkDiffPipeline
+from landmarkdiff.inference import LandmarkDiffPipeline, get_device, numpy_to_pil, pil_to_numpy
 
 
 class TestDeviceSelection:

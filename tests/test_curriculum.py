@@ -7,13 +7,12 @@ import sys
 from pathlib import Path
 
 import numpy as np
-import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from landmarkdiff.curriculum import (
-    TrainingCurriculum,
     ProcedureCurriculum,
+    TrainingCurriculum,
     compute_sample_difficulty,
 )
 
@@ -66,9 +65,7 @@ class TestTrainingCurriculum:
         curriculum = TrainingCurriculum(total_steps=10000, warmup_fraction=0.1)
         rng = np.random.default_rng(42)
         # Very hard sample during warmup should be excluded most of the time
-        included = sum(
-            curriculum.should_include(0, 1.0, rng=rng) for _ in range(100)
-        )
+        included = sum(curriculum.should_include(0, 1.0, rng=rng) for _ in range(100))
         assert included < 20  # should be excluded most times
 
 
@@ -85,14 +82,14 @@ class TestProcedureCurriculum:
         curriculum = ProcedureCurriculum(total_steps=10000)
         weights = curriculum.get_procedure_weights(10000)
         # All procedures should have weight 1.0 at full difficulty
-        for proc, w in weights.items():
+        for _proc, w in weights.items():
             assert w == 1.0
 
     def test_weight_range(self):
         curriculum = ProcedureCurriculum(total_steps=10000)
         for step in range(0, 10001, 500):
             weights = curriculum.get_procedure_weights(step)
-            for proc, w in weights.items():
+            for _proc, w in weights.items():
                 assert 0.1 <= w <= 1.0
 
     def test_custom_difficulty(self):
@@ -139,11 +136,16 @@ class TestComputeSampleDifficulty:
         assert difficulties["orthognathic_000001"] > difficulties["rhinoplasty_000001"]
 
     def test_range(self, tmp_path):
-        meta = {"pairs": {f"sample_{i}": {
-            "procedure": "rhinoplasty",
-            "source": "synthetic",
-            "intensity": float(i) / 10,
-        } for i in range(10)}}
+        meta = {
+            "pairs": {
+                f"sample_{i}": {
+                    "procedure": "rhinoplasty",
+                    "source": "synthetic",
+                    "intensity": float(i) / 10,
+                }
+                for i in range(10)
+            }
+        }
         meta_path = tmp_path / "metadata.json"
         with open(meta_path, "w") as f:
             json.dump(meta, f)

@@ -4,10 +4,7 @@ Covers every function, every edge case, every branch across all modules.
 Target: 1000+ individual test cases via parameterization.
 """
 
-import math
-import tempfile
 from dataclasses import FrozenInstanceError
-from pathlib import Path
 
 import cv2
 import numpy as np
@@ -16,52 +13,45 @@ import torch
 import torch.nn.functional as F
 from PIL import Image
 
-from landmarkdiff.landmarks import (
-    FaceLandmarks,
-    LANDMARK_REGIONS,
-    REGION_COLORS,
-    load_image,
-    render_landmark_image,
-    visualize_landmarks,
-)
 from landmarkdiff.conditioning import (
     ALL_CONTOURS,
+    INNER_LIPS,
     JAWLINE_CONTOUR,
     LEFT_EYE_CONTOUR,
     LEFT_EYEBROW,
     NOSE_BOTTOM,
-    NOSE_BRIDGE,
-    NOSE_TIP,
     OUTER_LIPS,
-    INNER_LIPS,
     RIGHT_EYE_CONTOUR,
     RIGHT_EYEBROW,
     auto_canny,
     generate_conditioning,
     render_wireframe,
 )
-from landmarkdiff.manipulation import (
-    DeformationHandle,
-    PROCEDURE_LANDMARKS,
-    PROCEDURE_RADIUS,
-    apply_procedure_preset,
-    gaussian_rbf_deform,
-)
-from landmarkdiff.masking import (
-    MASK_CONFIG,
-    generate_surgical_mask,
-    mask_to_3channel,
+from landmarkdiff.evaluation import (
+    EvalMetrics,
+    classify_fitzpatrick_ita,
+    compute_nme,
+    compute_ssim,
+    evaluate_batch,
 )
 from landmarkdiff.inference import (
+    NEGATIVE_PROMPT,
+    PROCEDURE_PROMPTS,
+    LandmarkDiffPipeline,
+    _match_skin_tone,
     estimate_face_view,
     get_device,
     mask_composite,
     numpy_to_pil,
     pil_to_numpy,
-    LandmarkDiffPipeline,
-    PROCEDURE_PROMPTS,
-    NEGATIVE_PROMPT,
-    _match_skin_tone,
+)
+from landmarkdiff.landmarks import (
+    LANDMARK_REGIONS,
+    REGION_COLORS,
+    FaceLandmarks,
+    load_image,
+    render_landmark_image,
+    visualize_landmarks,
 )
 from landmarkdiff.losses import (
     CombinedLoss,
@@ -71,25 +61,17 @@ from landmarkdiff.losses import (
     LossWeights,
     PerceptualLoss,
 )
-from landmarkdiff.evaluation import (
-    EvalMetrics,
-    classify_fitzpatrick_ita,
-    compute_nme,
-    compute_ssim,
-    compute_lpips,
-    evaluate_batch,
+from landmarkdiff.manipulation import (
+    PROCEDURE_LANDMARKS,
+    PROCEDURE_RADIUS,
+    DeformationHandle,
+    apply_procedure_preset,
+    gaussian_rbf_deform,
 )
-from landmarkdiff.synthetic.tps_warp import (
-    _apply_rigid_translation,
-    _compute_rigid_translation,
-    _compute_tps_map,
-    _evaluate_tps,
-    _solve_tps_weights,
-    _subsample_control_points,
-    _tps_kernel,
-    compute_tps_transform,
-    generate_random_warp,
-    warp_image_tps,
+from landmarkdiff.masking import (
+    MASK_CONFIG,
+    generate_surgical_mask,
+    mask_to_3channel,
 )
 from landmarkdiff.synthetic.augmentation import (
     AUGMENTATION_POOL,
@@ -107,14 +89,25 @@ from landmarkdiff.synthetic.augmentation import (
 from landmarkdiff.synthetic.pair_generator import (
     PROCEDURES,
     TrainingPair,
-    generate_pair,
     save_pair,
 )
-
+from landmarkdiff.synthetic.tps_warp import (
+    _apply_rigid_translation,
+    _compute_rigid_translation,
+    _compute_tps_map,
+    _evaluate_tps,
+    _solve_tps_weights,
+    _subsample_control_points,
+    _tps_kernel,
+    compute_tps_transform,
+    generate_random_warp,
+    warp_image_tps,
+)
 
 # ============================================================================
 # FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def rng():
@@ -167,6 +160,7 @@ def sample_image_small():
 # ============================================================================
 # 1. LANDMARKS MODULE
 # ============================================================================
+
 
 class TestFaceLandmarksDataclass:
     """Test the FaceLandmarks frozen dataclass."""
@@ -252,8 +246,17 @@ class TestLandmarkRegions:
     """Validate LANDMARK_REGIONS data integrity."""
 
     def test_all_regions_exist(self):
-        expected = {"jawline", "eye_left", "eye_right", "eyebrow_left", "eyebrow_right",
-                    "nose", "lips", "iris_left", "iris_right"}
+        expected = {
+            "jawline",
+            "eye_left",
+            "eye_right",
+            "eyebrow_left",
+            "eyebrow_right",
+            "nose",
+            "lips",
+            "iris_left",
+            "iris_right",
+        }
         assert set(LANDMARK_REGIONS.keys()) == expected
 
     @pytest.mark.parametrize("region", list(LANDMARK_REGIONS.keys()))
@@ -298,7 +301,9 @@ class TestRegionColors:
     def test_region_colors_match_landmark_regions(self):
         """Every REGION_COLORS key should have a matching LANDMARK_REGIONS entry."""
         for key in REGION_COLORS:
-            assert key in LANDMARK_REGIONS, f"REGION_COLORS has '{key}' with no LANDMARK_REGIONS entry"
+            assert key in LANDMARK_REGIONS, (
+                f"REGION_COLORS has '{key}' with no LANDMARK_REGIONS entry"
+            )
 
 
 class TestRenderLandmarkImage:
@@ -387,6 +392,7 @@ class TestLoadImage:
 # ============================================================================
 # 2. CONDITIONING MODULE
 # ============================================================================
+
 
 class TestContourData:
     """Validate static contour definitions."""
@@ -534,6 +540,7 @@ class TestGenerateConditioning:
 # 3. MANIPULATION MODULE
 # ============================================================================
 
+
 class TestDeformationHandle:
     def test_creation(self):
         h = DeformationHandle(
@@ -659,7 +666,9 @@ class TestGaussianRBFDeform:
 
 
 class TestApplyProcedurePreset:
-    @pytest.mark.parametrize("procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"])
+    @pytest.mark.parametrize(
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    )
     def test_all_procedures_work(self, face, procedure):
         result = apply_procedure_preset(face, procedure, intensity=50.0)
         assert isinstance(result, FaceLandmarks)
@@ -708,17 +717,23 @@ class TestApplyProcedurePreset:
         apply_procedure_preset(face, "rhinoplasty", intensity=50.0)
         np.testing.assert_array_equal(face.landmarks, original)
 
-    @pytest.mark.parametrize("procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"])
+    @pytest.mark.parametrize(
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    )
     def test_procedure_landmarks_exist(self, procedure):
         assert procedure in PROCEDURE_LANDMARKS
         assert len(PROCEDURE_LANDMARKS[procedure]) > 0
 
-    @pytest.mark.parametrize("procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"])
+    @pytest.mark.parametrize(
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    )
     def test_procedure_radius_exists(self, procedure):
         assert procedure in PROCEDURE_RADIUS
         assert PROCEDURE_RADIUS[procedure] > 0
 
-    @pytest.mark.parametrize("procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"])
+    @pytest.mark.parametrize(
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    )
     def test_procedure_landmark_indices_valid(self, procedure):
         for idx in PROCEDURE_LANDMARKS[procedure]:
             assert 0 <= idx < 478, f"Index {idx} in {procedure} out of range"
@@ -728,34 +743,47 @@ class TestApplyProcedurePreset:
 # 4. MASKING MODULE
 # ============================================================================
 
+
 class TestMaskConfig:
-    @pytest.mark.parametrize("procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"])
+    @pytest.mark.parametrize(
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    )
     def test_config_exists(self, procedure):
         assert procedure in MASK_CONFIG
 
-    @pytest.mark.parametrize("procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"])
+    @pytest.mark.parametrize(
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    )
     def test_config_has_required_keys(self, procedure):
         config = MASK_CONFIG[procedure]
         assert "landmark_indices" in config
         assert "dilation_px" in config
         assert "feather_sigma" in config
 
-    @pytest.mark.parametrize("procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"])
+    @pytest.mark.parametrize(
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    )
     def test_indices_valid(self, procedure):
         for idx in MASK_CONFIG[procedure]["landmark_indices"]:
             assert 0 <= idx < 478
 
-    @pytest.mark.parametrize("procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"])
+    @pytest.mark.parametrize(
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    )
     def test_dilation_positive(self, procedure):
         assert MASK_CONFIG[procedure]["dilation_px"] > 0
 
-    @pytest.mark.parametrize("procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"])
+    @pytest.mark.parametrize(
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    )
     def test_sigma_positive(self, procedure):
         assert MASK_CONFIG[procedure]["feather_sigma"] > 0
 
 
 class TestGenerateSurgicalMask:
-    @pytest.mark.parametrize("procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"])
+    @pytest.mark.parametrize(
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    )
     def test_all_procedures(self, face, procedure):
         mask = generate_surgical_mask(face, procedure, 512, 512)
         assert mask.shape == (512, 512)
@@ -765,18 +793,24 @@ class TestGenerateSurgicalMask:
         with pytest.raises(ValueError, match="Unknown procedure"):
             generate_surgical_mask(face, "invalid", 512, 512)
 
-    @pytest.mark.parametrize("procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"])
+    @pytest.mark.parametrize(
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    )
     def test_output_range(self, face, procedure):
         mask = generate_surgical_mask(face, procedure, 512, 512)
         assert mask.min() >= 0.0
         assert mask.max() <= 1.0
 
-    @pytest.mark.parametrize("procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"])
+    @pytest.mark.parametrize(
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    )
     def test_mask_has_nonzero(self, face, procedure):
         mask = generate_surgical_mask(face, procedure, 512, 512)
         assert np.any(mask > 0)
 
-    @pytest.mark.parametrize("procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"])
+    @pytest.mark.parametrize(
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    )
     def test_mask_has_full_values(self, face, procedure):
         mask = generate_surgical_mask(face, procedure, 512, 512)
         # Center of mask should be close to 1.0
@@ -824,6 +858,7 @@ class TestMaskTo3Channel:
 # ============================================================================
 # 5. INFERENCE MODULE
 # ============================================================================
+
 
 class TestGetDevice:
     def test_returns_torch_device(self):
@@ -985,7 +1020,7 @@ class TestEstimateFaceView:
         # Ears equidistant
         landmarks[234] = [0.1, 0.5, 0.0]  # left ear
         landmarks[454] = [0.9, 0.5, 0.0]  # right ear
-        landmarks[10] = [0.5, 0.1, 0.0]   # forehead
+        landmarks[10] = [0.5, 0.1, 0.0]  # forehead
         landmarks[152] = [0.5, 0.9, 0.0]  # chin
         f = FaceLandmarks(landmarks=landmarks, image_width=512, image_height=512, confidence=1.0)
         view = estimate_face_view(f)
@@ -996,10 +1031,10 @@ class TestEstimateFaceView:
         """Side-view face should have warning."""
         landmarks = np.zeros((478, 3), dtype=np.float32)
         # Truly asymmetric: nose far right, left ear far left, right ear very close to nose
-        landmarks[1] = [0.8, 0.5, 0.0]    # nose far right
+        landmarks[1] = [0.8, 0.5, 0.0]  # nose far right
         landmarks[234] = [0.2, 0.5, 0.0]  # left ear far from nose
-        landmarks[454] = [0.85, 0.5, 0.0] # right ear very close to nose
-        landmarks[10] = [0.8, 0.1, 0.0]   # forehead
+        landmarks[454] = [0.85, 0.5, 0.0]  # right ear very close to nose
+        landmarks[10] = [0.8, 0.1, 0.0]  # forehead
         landmarks[152] = [0.8, 0.9, 0.0]  # chin
         f = FaceLandmarks(landmarks=landmarks, image_width=512, image_height=512, confidence=1.0)
         view = estimate_face_view(f)
@@ -1049,6 +1084,7 @@ class TestPipelineInit:
 # ============================================================================
 # 6. LOSSES MODULE
 # ============================================================================
+
 
 class TestLossWeights:
     def test_defaults(self):
@@ -1355,6 +1391,7 @@ class TestCombinedLoss:
 # 7. EVALUATION MODULE
 # ============================================================================
 
+
 class TestEvalMetrics:
     def test_default_values(self):
         m = EvalMetrics()
@@ -1536,7 +1573,7 @@ class TestEvaluateBatch:
         assert len(metrics.ssim_by_procedure) > 0
 
     def test_fitzpatrick_stratification(self):
-        rng = np.random.default_rng(0)
+        np.random.default_rng(0)
         # Create images with varying brightness for different Fitzpatrick types
         preds = [np.full((64, 64, 3), b, dtype=np.uint8) for b in [200, 100, 50]]
         targets = [np.full((64, 64, 3), b, dtype=np.uint8) for b in [200, 100, 50]]
@@ -1557,6 +1594,7 @@ class TestEvaluateBatch:
 # ============================================================================
 # 8. TPS WARP MODULE
 # ============================================================================
+
 
 class TestTPSKernel:
     def test_zero_input(self):
@@ -1741,8 +1779,9 @@ class TestGenerateRandomWarp:
 
     def test_modifies_specified_indices(self):
         pts = np.zeros((478, 2))
-        result = generate_random_warp(pts, [0, 1, 2], max_displacement=15.0,
-                                       rng=np.random.default_rng(0))
+        result = generate_random_warp(
+            pts, [0, 1, 2], max_displacement=15.0, rng=np.random.default_rng(0)
+        )
         assert not np.allclose(result[0], pts[0])
 
     def test_preserves_unspecified(self):
@@ -1754,8 +1793,9 @@ class TestGenerateRandomWarp:
     def test_displacement_bound(self):
         pts = np.zeros((478, 2))
         max_d = 10.0
-        result = generate_random_warp(pts, list(range(478)), max_displacement=max_d,
-                                       rng=np.random.default_rng(0))
+        result = generate_random_warp(
+            pts, list(range(478)), max_displacement=max_d, rng=np.random.default_rng(0)
+        )
         displacements = np.abs(result - pts)
         assert displacements.max() <= max_d
 
@@ -1793,6 +1833,7 @@ class TestComputeTpsTransform:
 # ============================================================================
 # 9. AUGMENTATION MODULE
 # ============================================================================
+
 
 class TestAugmentationPool:
     def test_pool_count(self):
@@ -1929,7 +1970,10 @@ class TestApplyClinicalAugmentation:
         for seed in range(20):
             rng = np.random.default_rng(seed)
             result = apply_clinical_augmentation(
-                sample_image_small, min_augmentations=3, max_augmentations=5, rng=rng,
+                sample_image_small,
+                min_augmentations=3,
+                max_augmentations=5,
+                rng=rng,
             )
             assert result.shape == sample_image_small.shape
 
@@ -1941,7 +1985,9 @@ class TestApplyClinicalAugmentation:
     @pytest.mark.parametrize("min_aug,max_aug", [(1, 2), (3, 5), (5, 8)])
     def test_augmentation_count_range(self, sample_image_small, min_aug, max_aug):
         result = apply_clinical_augmentation(
-            sample_image_small, min_augmentations=min_aug, max_augmentations=max_aug,
+            sample_image_small,
+            min_augmentations=min_aug,
+            max_augmentations=max_aug,
             rng=np.random.default_rng(0),
         )
         assert result.shape == sample_image_small.shape
@@ -1950,6 +1996,7 @@ class TestApplyClinicalAugmentation:
 # ============================================================================
 # 10. PAIR GENERATOR MODULE
 # ============================================================================
+
 
 class TestTrainingPair:
     def test_frozen(self):
@@ -2025,16 +2072,21 @@ class TestSavePair:
 # 11. CROSS-MODULE CONSISTENCY TESTS
 # ============================================================================
 
+
 class TestCrossModuleConsistency:
     """Verify consistency across modules."""
 
-    @pytest.mark.parametrize("procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"])
+    @pytest.mark.parametrize(
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    )
     def test_mask_config_matches_procedure_landmarks(self, procedure):
         """Mask and manipulation should use same procedure names."""
         assert procedure in MASK_CONFIG
         assert procedure in PROCEDURE_LANDMARKS
 
-    @pytest.mark.parametrize("procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"])
+    @pytest.mark.parametrize(
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    )
     def test_procedure_prompts_exist(self, procedure):
         assert procedure in PROCEDURE_PROMPTS
 
@@ -2057,7 +2109,9 @@ class TestCrossModuleConsistency:
         missing = manip_indices - mask_indices
         # This is a known bug flagged in DIRAC_REVIEW.md
         if missing:
-            pytest.xfail(f"Orthognathic mask missing {len(missing)} manipulation indices: {missing}")
+            pytest.xfail(
+                f"Orthognathic mask missing {len(missing)} manipulation indices: {missing}"
+            )
 
 
 class TestEndToEndPipeline:
@@ -2080,7 +2134,9 @@ class TestEndToEndPipeline:
         assert mask.shape == (512, 512)
         assert conditioning.shape == (512, 512, 3)
 
-    @pytest.mark.parametrize("procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"])
+    @pytest.mark.parametrize(
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    )
     def test_all_procedures_pipeline(self, face, procedure):
         manipulated = apply_procedure_preset(face, procedure, 50.0)
         mask = generate_surgical_mask(face, procedure, 512, 512)
@@ -2106,12 +2162,15 @@ class TestEndToEndPipeline:
 # 12. EDGE CASES AND STRESS TESTS
 # ============================================================================
 
+
 class TestEdgeCases:
     def test_very_small_image(self):
         """1x1 pixel image should not crash."""
         face = FaceLandmarks(
             landmarks=np.random.rand(478, 3).astype(np.float32),
-            image_width=1, image_height=1, confidence=1.0,
+            image_width=1,
+            image_height=1,
+            confidence=1.0,
         )
         img = render_landmark_image(face, 1, 1)
         assert img.shape == (1, 1, 3)
@@ -2147,7 +2206,7 @@ class TestEdgeCases:
 
     def test_diffusion_loss_nan_input(self):
         loss_fn = DiffusionLoss()
-        a = torch.tensor([float('nan')])
+        a = torch.tensor([float("nan")])
         b = torch.tensor([1.0])
         loss = loss_fn(a.view(1, 1, 1, 1), b.view(1, 1, 1, 1))
         assert torch.isnan(loss)

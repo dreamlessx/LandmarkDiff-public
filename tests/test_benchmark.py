@@ -10,10 +10,10 @@ import pytest
 
 from landmarkdiff.benchmark import BenchmarkResult, InferenceBenchmark, Timer
 
-
 # ---------------------------------------------------------------------------
 # BenchmarkResult
 # ---------------------------------------------------------------------------
+
 
 class TestBenchmarkResult:
     def test_fields(self):
@@ -33,6 +33,7 @@ class TestBenchmarkResult:
 # ---------------------------------------------------------------------------
 # InferenceBenchmark
 # ---------------------------------------------------------------------------
+
 
 class TestInferenceBenchmark:
     def test_add_result(self):
@@ -122,6 +123,7 @@ class TestJson:
 # ---------------------------------------------------------------------------
 # Timer
 # ---------------------------------------------------------------------------
+
 
 class TestTimer:
     def test_timer_measures_time(self):

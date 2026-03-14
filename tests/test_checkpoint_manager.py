@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import pytest
 import torch
@@ -16,10 +15,10 @@ from landmarkdiff.checkpoint_manager import (
     _get_state_dict,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 class TinyModel(nn.Module):
     """Minimal model for testing."""
@@ -67,6 +66,7 @@ def optimizer(model):
 # CheckpointMetadata tests
 # ---------------------------------------------------------------------------
 
+
 class TestCheckpointMetadata:
     def test_to_dict(self):
         meta = CheckpointMetadata(step=100, timestamp=1.0, metrics={"loss": 0.5})
@@ -96,6 +96,7 @@ class TestCheckpointMetadata:
 # CheckpointManager basic tests
 # ---------------------------------------------------------------------------
 
+
 class TestCheckpointManagerInit:
     def test_creates_directory(self, ckpt_dir):
         CheckpointManager(output_dir=ckpt_dir)
@@ -119,25 +120,35 @@ class TestCheckpointManagerInit:
 # Save and metadata tests
 # ---------------------------------------------------------------------------
 
+
 class TestSave:
     def test_save_creates_directory(self, manager, model, ema_model, optimizer):
-        path = manager.save(step=100, controlnet=model, ema_controlnet=ema_model,
-                            optimizer=optimizer, metrics={"loss": 0.5})
+        path = manager.save(
+            step=100,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"loss": 0.5},
+        )
         assert path.exists()
         assert (path / "training_state.pt").exists()
         assert (path / "metadata.json").exists()
 
     def test_save_records_metrics(self, manager, model, ema_model, optimizer):
-        manager.save(step=100, controlnet=model, ema_controlnet=ema_model,
-                     optimizer=optimizer, metrics={"loss": 0.5, "val_ssim": 0.88})
+        manager.save(
+            step=100,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"loss": 0.5, "val_ssim": 0.88},
+        )
         ckpts = manager.list_checkpoints()
         assert len(ckpts) == 1
         assert ckpts[0]["metrics"]["loss"] == 0.5
         assert ckpts[0]["metrics"]["val_ssim"] == 0.88
 
     def test_save_updates_index_file(self, manager, model, ema_model, optimizer):
-        manager.save(step=100, controlnet=model, ema_controlnet=ema_model,
-                     optimizer=optimizer)
+        manager.save(step=100, controlnet=model, ema_controlnet=ema_model, optimizer=optimizer)
         index_path = manager._index_path()
         assert index_path.exists()
         with open(index_path) as f:
@@ -145,8 +156,13 @@ class TestSave:
         assert "checkpoint-100" in data["checkpoints"]
 
     def test_training_state_loadable(self, manager, model, ema_model, optimizer):
-        manager.save(step=500, controlnet=model, ema_controlnet=ema_model,
-                     optimizer=optimizer, metrics={"loss": 0.1})
+        manager.save(
+            step=500,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"loss": 0.1},
+        )
         state = torch.load(
             manager.output_dir / "checkpoint-500" / "training_state.pt",
             map_location="cpu",
@@ -159,8 +175,13 @@ class TestSave:
 
     def test_save_with_scheduler(self, manager, model, ema_model, optimizer):
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=100)
-        manager.save(step=100, controlnet=model, ema_controlnet=ema_model,
-                     optimizer=optimizer, scheduler=scheduler)
+        manager.save(
+            step=100,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            scheduler=scheduler,
+        )
         state = torch.load(
             manager.output_dir / "checkpoint-100" / "training_state.pt",
             map_location="cpu",
@@ -169,14 +190,14 @@ class TestSave:
         assert "scheduler" in state
 
     def test_save_with_phase(self, manager, model, ema_model, optimizer):
-        manager.save(step=100, controlnet=model, ema_controlnet=ema_model,
-                     optimizer=optimizer, phase="A")
+        manager.save(
+            step=100, controlnet=model, ema_controlnet=ema_model, optimizer=optimizer, phase="A"
+        )
         ckpts = manager.list_checkpoints()
         assert ckpts[0]["phase"] == "A"
 
     def test_size_tracked(self, manager, model, ema_model, optimizer):
-        manager.save(step=100, controlnet=model, ema_controlnet=ema_model,
-                     optimizer=optimizer)
+        manager.save(step=100, controlnet=model, ema_controlnet=ema_model, optimizer=optimizer)
         ckpts = manager.list_checkpoints()
         assert ckpts[0]["size_mb"] >= 0  # tiny model may round to 0.0
 
@@ -185,39 +206,79 @@ class TestSave:
 # Best checkpoint tracking
 # ---------------------------------------------------------------------------
 
+
 class TestBestTracking:
     def test_single_checkpoint_is_best(self, manager, model, ema_model, optimizer):
-        manager.save(step=100, controlnet=model, ema_controlnet=ema_model,
-                     optimizer=optimizer, metrics={"loss": 0.5})
+        manager.save(
+            step=100,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"loss": 0.5},
+        )
         assert manager.get_best_checkpoint_name() == "checkpoint-100"
         assert manager.get_best_metric_value() == 0.5
 
     def test_lower_is_better(self, manager, model, ema_model, optimizer):
-        manager.save(step=100, controlnet=model, ema_controlnet=ema_model,
-                     optimizer=optimizer, metrics={"loss": 0.5})
-        manager.save(step=200, controlnet=model, ema_controlnet=ema_model,
-                     optimizer=optimizer, metrics={"loss": 0.3})
-        manager.save(step=300, controlnet=model, ema_controlnet=ema_model,
-                     optimizer=optimizer, metrics={"loss": 0.4})
+        manager.save(
+            step=100,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"loss": 0.5},
+        )
+        manager.save(
+            step=200,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"loss": 0.3},
+        )
+        manager.save(
+            step=300,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"loss": 0.4},
+        )
         assert manager.get_best_checkpoint_name() == "checkpoint-200"
         assert manager.get_best_metric_value() == 0.3
 
     def test_higher_is_better(self, ckpt_dir, model, ema_model, optimizer):
         mgr = CheckpointManager(
-            output_dir=ckpt_dir, metric="val_ssim", lower_is_better=False,
-            keep_best=2, keep_latest=3,
+            output_dir=ckpt_dir,
+            metric="val_ssim",
+            lower_is_better=False,
+            keep_best=2,
+            keep_latest=3,
         )
-        mgr.save(step=100, controlnet=model, ema_controlnet=ema_model,
-                  optimizer=optimizer, metrics={"val_ssim": 0.80})
-        mgr.save(step=200, controlnet=model, ema_controlnet=ema_model,
-                  optimizer=optimizer, metrics={"val_ssim": 0.92})
-        mgr.save(step=300, controlnet=model, ema_controlnet=ema_model,
-                  optimizer=optimizer, metrics={"val_ssim": 0.85})
+        mgr.save(
+            step=100,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"val_ssim": 0.80},
+        )
+        mgr.save(
+            step=200,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"val_ssim": 0.92},
+        )
+        mgr.save(
+            step=300,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"val_ssim": 0.85},
+        )
         assert mgr.get_best_checkpoint_name() == "checkpoint-200"
 
     def test_no_metric_returns_none(self, manager, model, ema_model, optimizer):
-        manager.save(step=100, controlnet=model, ema_controlnet=ema_model,
-                     optimizer=optimizer, metrics={})
+        manager.save(
+            step=100, controlnet=model, ema_controlnet=ema_model, optimizer=optimizer, metrics={}
+        )
         assert manager.get_best_checkpoint_name() is None
         assert manager.get_best_metric_value() is None
 
@@ -226,27 +287,53 @@ class TestBestTracking:
 # Symlink tests
 # ---------------------------------------------------------------------------
 
+
 class TestSymlinks:
     def test_latest_symlink(self, manager, model, ema_model, optimizer):
-        manager.save(step=100, controlnet=model, ema_controlnet=ema_model,
-                     optimizer=optimizer, metrics={"loss": 0.5})
+        manager.save(
+            step=100,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"loss": 0.5},
+        )
         latest = manager.output_dir / "latest"
         assert latest.is_symlink()
         assert latest.resolve().name == "checkpoint-100"
 
     def test_latest_updates(self, manager, model, ema_model, optimizer):
-        manager.save(step=100, controlnet=model, ema_controlnet=ema_model,
-                     optimizer=optimizer, metrics={"loss": 0.5})
-        manager.save(step=200, controlnet=model, ema_controlnet=ema_model,
-                     optimizer=optimizer, metrics={"loss": 0.3})
+        manager.save(
+            step=100,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"loss": 0.5},
+        )
+        manager.save(
+            step=200,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"loss": 0.3},
+        )
         latest = manager.output_dir / "latest"
         assert latest.resolve().name == "checkpoint-200"
 
     def test_best_symlink(self, manager, model, ema_model, optimizer):
-        manager.save(step=100, controlnet=model, ema_controlnet=ema_model,
-                     optimizer=optimizer, metrics={"loss": 0.5})
-        manager.save(step=200, controlnet=model, ema_controlnet=ema_model,
-                     optimizer=optimizer, metrics={"loss": 0.3})
+        manager.save(
+            step=100,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"loss": 0.5},
+        )
+        manager.save(
+            step=200,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"loss": 0.3},
+        )
         best = manager.output_dir / "best"
         assert best.is_symlink()
         assert best.resolve().name == "checkpoint-200"
@@ -256,20 +343,44 @@ class TestSymlinks:
 # Pruning tests
 # ---------------------------------------------------------------------------
 
+
 class TestPruning:
     def test_prunes_old_checkpoints(self, ckpt_dir, model, ema_model, optimizer):
         mgr = CheckpointManager(
-            output_dir=ckpt_dir, keep_best=1, keep_latest=2, metric="loss",
+            output_dir=ckpt_dir,
+            keep_best=1,
+            keep_latest=2,
+            metric="loss",
         )
         # Save 4 checkpoints, keep_latest=2 + keep_best=1
-        mgr.save(step=100, controlnet=model, ema_controlnet=ema_model,
-                  optimizer=optimizer, metrics={"loss": 0.5})
-        mgr.save(step=200, controlnet=model, ema_controlnet=ema_model,
-                  optimizer=optimizer, metrics={"loss": 0.1})  # best
-        mgr.save(step=300, controlnet=model, ema_controlnet=ema_model,
-                  optimizer=optimizer, metrics={"loss": 0.4})
-        mgr.save(step=400, controlnet=model, ema_controlnet=ema_model,
-                  optimizer=optimizer, metrics={"loss": 0.3})
+        mgr.save(
+            step=100,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"loss": 0.5},
+        )
+        mgr.save(
+            step=200,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"loss": 0.1},
+        )  # best
+        mgr.save(
+            step=300,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"loss": 0.4},
+        )
+        mgr.save(
+            step=400,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"loss": 0.3},
+        )
 
         # Should keep: step 200 (best), step 300 + 400 (latest 2)
         # Should prune: step 100
@@ -282,23 +393,51 @@ class TestPruning:
         assert not (ckpt_dir / "checkpoint-100").exists()
 
     def test_no_pruning_when_under_limit(self, manager, model, ema_model, optimizer):
-        manager.save(step=100, controlnet=model, ema_controlnet=ema_model,
-                     optimizer=optimizer, metrics={"loss": 0.5})
-        manager.save(step=200, controlnet=model, ema_controlnet=ema_model,
-                     optimizer=optimizer, metrics={"loss": 0.3})
+        manager.save(
+            step=100,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"loss": 0.5},
+        )
+        manager.save(
+            step=200,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"loss": 0.3},
+        )
         assert len(manager.list_checkpoints()) == 2
 
     def test_best_preserved_over_latest(self, ckpt_dir, model, ema_model, optimizer):
         """Best checkpoint survives even if not in latest N."""
         mgr = CheckpointManager(
-            output_dir=ckpt_dir, keep_best=1, keep_latest=1, metric="loss",
+            output_dir=ckpt_dir,
+            keep_best=1,
+            keep_latest=1,
+            metric="loss",
         )
-        mgr.save(step=100, controlnet=model, ema_controlnet=ema_model,
-                  optimizer=optimizer, metrics={"loss": 0.01})  # best
-        mgr.save(step=200, controlnet=model, ema_controlnet=ema_model,
-                  optimizer=optimizer, metrics={"loss": 0.5})
-        mgr.save(step=300, controlnet=model, ema_controlnet=ema_model,
-                  optimizer=optimizer, metrics={"loss": 0.4})
+        mgr.save(
+            step=100,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"loss": 0.01},
+        )  # best
+        mgr.save(
+            step=200,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"loss": 0.5},
+        )
+        mgr.save(
+            step=300,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"loss": 0.4},
+        )
 
         ckpts = mgr.list_checkpoints()
         steps = [c["step"] for c in ckpts]
@@ -311,33 +450,35 @@ class TestPruning:
 # Summary and queries
 # ---------------------------------------------------------------------------
 
+
 class TestQueries:
     def test_summary_empty(self, manager):
         assert "No checkpoints" in manager.summary()
 
     def test_summary_with_checkpoints(self, manager, model, ema_model, optimizer):
-        manager.save(step=100, controlnet=model, ema_controlnet=ema_model,
-                     optimizer=optimizer, metrics={"loss": 0.5})
+        manager.save(
+            step=100,
+            controlnet=model,
+            ema_controlnet=ema_model,
+            optimizer=optimizer,
+            metrics={"loss": 0.5},
+        )
         s = manager.summary()
         assert "1 saved" in s
         assert "step 100" in s
 
     def test_get_latest_step(self, manager, model, ema_model, optimizer):
-        manager.save(step=100, controlnet=model, ema_controlnet=ema_model,
-                     optimizer=optimizer)
-        manager.save(step=200, controlnet=model, ema_controlnet=ema_model,
-                     optimizer=optimizer)
+        manager.save(step=100, controlnet=model, ema_controlnet=ema_model, optimizer=optimizer)
+        manager.save(step=200, controlnet=model, ema_controlnet=ema_model, optimizer=optimizer)
         assert manager.get_latest_step() == 200
 
     def test_get_checkpoint_path(self, manager, model, ema_model, optimizer):
-        manager.save(step=100, controlnet=model, ema_controlnet=ema_model,
-                     optimizer=optimizer)
+        manager.save(step=100, controlnet=model, ema_controlnet=ema_model, optimizer=optimizer)
         path = manager.get_checkpoint_path("checkpoint-100")
         assert path.exists()
 
     def test_total_size(self, manager, model, ema_model, optimizer):
-        manager.save(step=100, controlnet=model, ema_controlnet=ema_model,
-                     optimizer=optimizer)
+        manager.save(step=100, controlnet=model, ema_controlnet=ema_model, optimizer=optimizer)
         # Size is at least 0 (tiny test model may round to 0.0)
         assert manager.total_size_mb() >= 0
         # But checkpoint files should exist on disk
@@ -347,6 +488,7 @@ class TestQueries:
 # ---------------------------------------------------------------------------
 # Helper function tests
 # ---------------------------------------------------------------------------
+
 
 class TestHelpers:
     def test_get_state_dict_plain(self):

@@ -4,16 +4,15 @@ from __future__ import annotations
 
 import json
 import math
-from pathlib import Path
 
 import pytest
 
-from landmarkdiff.metrics_agg import MetricsAggregator, MetricRecord
-
+from landmarkdiff.metrics_agg import MetricRecord, MetricsAggregator
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def agg():
@@ -37,6 +36,7 @@ def agg():
 # MetricRecord
 # ---------------------------------------------------------------------------
 
+
 class TestMetricRecord:
     def test_fields(self):
         r = MetricRecord(experiment="test", procedure="rhinoplasty", metrics={"ssim": 0.9})
@@ -46,8 +46,10 @@ class TestMetricRecord:
 
     def test_with_metadata(self):
         r = MetricRecord(
-            experiment="test", procedure="rhinoplasty",
-            metrics={"ssim": 0.9}, metadata={"note": "best"},
+            experiment="test",
+            procedure="rhinoplasty",
+            metrics={"ssim": 0.9},
+            metadata={"note": "best"},
         )
         assert r.metadata["note"] == "best"
 
@@ -55,6 +57,7 @@ class TestMetricRecord:
 # ---------------------------------------------------------------------------
 # Add records
 # ---------------------------------------------------------------------------
+
 
 class TestAdd:
     def test_add_single(self):
@@ -64,10 +67,13 @@ class TestAdd:
 
     def test_add_batch(self):
         a = MetricsAggregator()
-        a.add_batch("exp1", [
-            {"procedure": "rhinoplasty", "ssim": 0.9, "lpips": 0.1},
-            {"procedure": "blepharoplasty", "ssim": 0.85, "lpips": 0.15},
-        ])
+        a.add_batch(
+            "exp1",
+            [
+                {"procedure": "rhinoplasty", "ssim": 0.9, "lpips": 0.1},
+                {"procedure": "blepharoplasty", "ssim": 0.85, "lpips": 0.15},
+            ],
+        )
         assert len(a.records) == 2
         assert a.records[0].procedure == "rhinoplasty"
 
@@ -75,6 +81,7 @@ class TestAdd:
 # ---------------------------------------------------------------------------
 # Properties
 # ---------------------------------------------------------------------------
+
 
 class TestProperties:
     def test_experiments(self, agg):
@@ -90,6 +97,7 @@ class TestProperties:
 # ---------------------------------------------------------------------------
 # Statistics
 # ---------------------------------------------------------------------------
+
 
 class TestStatistics:
     def test_mean(self, agg):
@@ -130,6 +138,7 @@ class TestStatistics:
 # Improvement
 # ---------------------------------------------------------------------------
 
+
 class TestImprovement:
     def test_improvement_over(self, agg):
         imp = agg.improvement_over("baseline")
@@ -159,6 +168,7 @@ class TestImprovement:
 # Best experiment
 # ---------------------------------------------------------------------------
 
+
 class TestBestExperiment:
     def test_best_ssim(self, agg):
         assert agg.best_experiment("ssim") == "ours"
@@ -176,6 +186,7 @@ class TestBestExperiment:
 # ---------------------------------------------------------------------------
 # Summary table
 # ---------------------------------------------------------------------------
+
 
 class TestSummaryTable:
     def test_table_has_all_experiments(self, agg):
@@ -195,6 +206,7 @@ class TestSummaryTable:
 # ---------------------------------------------------------------------------
 # JSON serialization
 # ---------------------------------------------------------------------------
+
 
 class TestJson:
     def test_to_json(self, agg):
@@ -219,14 +231,13 @@ class TestJson:
         path = tmp_path / "metrics.json"
         agg.to_json(path)
         loaded = MetricsAggregator.from_json(path)
-        assert loaded.mean("baseline", "ssim") == pytest.approx(
-            agg.mean("baseline", "ssim")
-        )
+        assert loaded.mean("baseline", "ssim") == pytest.approx(agg.mean("baseline", "ssim"))
 
 
 # ---------------------------------------------------------------------------
 # Filter
 # ---------------------------------------------------------------------------
+
 
 class TestFilter:
     def test_filter_by_experiment(self, agg):

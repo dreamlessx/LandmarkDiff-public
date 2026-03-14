@@ -54,13 +54,10 @@ def laplacian_pyramid_blend(
     mask_f = mask.astype(np.float32)
     if mask_f.max() > 1.0:
         mask_f = mask_f / 255.0
-    if mask_f.ndim == 2:
-        mask_3ch = np.stack([mask_f] * 3, axis=-1)
-    else:
-        mask_3ch = mask_f
+    mask_3ch = np.stack([mask_f] * 3, axis=-1) if mask_f.ndim == 2 else mask_f
 
     # Make dimensions divisible by 2^levels
-    factor = 2 ** levels
+    factor = 2**levels
     new_h = (h + factor - 1) // factor * factor
     new_w = (w + factor - 1) // factor * factor
 
@@ -232,24 +229,27 @@ def restore_face_codeformer(
         Restored BGR image, or original if CodeFormer unavailable.
     """
     try:
-        from codeformer.basicsr.utils import img2tensor, tensor2img
-        from codeformer.facelib.utils.face_restoration_helper import FaceRestoreHelper
-        from codeformer.basicsr.utils.download_util import load_file_from_url
         import torch
+        from codeformer.basicsr.utils import img2tensor, tensor2img
+        from codeformer.basicsr.utils.download_util import load_file_from_url
+        from codeformer.facelib.utils.face_restoration_helper import FaceRestoreHelper
         from torchvision.transforms.functional import normalize as tv_normalize
     except ImportError:
         return image
 
     try:
         global _CODEFORMER_MODEL, _CODEFORMER_HELPER
-        from codeformer.inference_codeformer import set_realesrgan as _unused  # noqa: F401
         from codeformer.basicsr.archs.codeformer_arch import CodeFormer as CodeFormerArch
+        from codeformer.inference_codeformer import set_realesrgan as _unused  # noqa: F401
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         if _CODEFORMER_MODEL is None:
             model = CodeFormerArch(
-                dim_embd=512, codebook_size=1024, n_head=8, n_layers=9,
+                dim_embd=512,
+                codebook_size=1024,
+                n_head=8,
+                n_layers=9,
                 connect_list=["32", "64", "128", "256"],
             ).to(device)
 
@@ -316,16 +316,18 @@ def enhance_background_realesrgan(
         Enhanced BGR image at original resolution.
     """
     try:
-        from realesrgan import RealESRGANer
-        from basicsr.archs.rrdbnet_arch import RRDBNet
         import torch
+        from basicsr.archs.rrdbnet_arch import RRDBNet
+        from realesrgan import RealESRGANer
     except ImportError:
         return image
 
     try:
         global _REALESRGAN_UPSAMPLER
         if _REALESRGAN_UPSAMPLER is None:
-            model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=4)
+            model = RRDBNet(
+                num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=4
+            )
             _REALESRGAN_UPSAMPLER = RealESRGANer(
                 scale=4,
                 model_path="https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth",
@@ -345,15 +347,11 @@ def enhance_background_realesrgan(
         mask_f = mask.astype(np.float32)
         if mask_f.max() > 1.0:
             mask_f /= 255.0
-        if mask_f.ndim == 2:
-            mask_3ch = np.stack([mask_f] * 3, axis=-1)
-        else:
-            mask_3ch = mask_f
+        mask_3ch = np.stack([mask_f] * 3, axis=-1) if mask_f.ndim == 2 else mask_f
 
         # Keep face region from original, use enhanced for background
         result = (
-            image.astype(np.float32) * mask_3ch
-            + enhanced.astype(np.float32) * (1.0 - mask_3ch)
+            image.astype(np.float32) * mask_3ch + enhanced.astype(np.float32) * (1.0 - mask_3ch)
         ).astype(np.uint8)
         return result
     except Exception:
@@ -414,9 +412,10 @@ def verify_identity_arcface(
         orig_emb = orig_faces[0].embedding
         result_emb = result_faces[0].embedding
 
-        sim = float(np.dot(orig_emb, result_emb) / (
-            np.linalg.norm(orig_emb) * np.linalg.norm(result_emb) + 1e-8
-        ))
+        sim = float(
+            np.dot(orig_emb, result_emb)
+            / (np.linalg.norm(orig_emb) * np.linalg.norm(result_emb) + 1e-8)
+        )
         sim = float(np.clip(sim, 0, 1))
 
         passed = sim >= threshold
@@ -437,6 +436,7 @@ def verify_identity_arcface(
 def _has_cuda() -> bool:
     try:
         import torch
+
         return torch.cuda.is_available()
     except ImportError:
         return False
@@ -465,7 +465,7 @@ def histogram_match_skin(
     if not np.any(mask_bool):
         return source
 
-    result = source.copy()
+    source.copy()
     src_lab = cv2.cvtColor(source, cv2.COLOR_BGR2LAB).astype(np.float32)
     ref_lab = cv2.cvtColor(reference, cv2.COLOR_BGR2LAB).astype(np.float32)
 
@@ -574,20 +574,18 @@ def full_postprocess(
         mask_f = mask.astype(np.float32)
         if mask_f.max() > 1.0:
             mask_f /= 255.0
-        if mask_f.ndim == 2:
-            mask_3ch = np.stack([mask_f] * 3, axis=-1)
-        else:
-            mask_3ch = mask_f
+        mask_3ch = np.stack([mask_f] * 3, axis=-1) if mask_f.ndim == 2 else mask_f
         composited = (
-            result.astype(np.float32) * mask_3ch
-            + original.astype(np.float32) * (1.0 - mask_3ch)
+            result.astype(np.float32) * mask_3ch + original.astype(np.float32) * (1.0 - mask_3ch)
         ).astype(np.uint8)
 
     # Step 6: Neural identity verification
     identity_check = {"similarity": -1.0, "passed": True, "message": "skipped"}
     if verify_identity:
         identity_check = verify_identity_arcface(
-            original, composited, threshold=identity_threshold,
+            original,
+            composited,
+            threshold=identity_threshold,
         )
 
     return {

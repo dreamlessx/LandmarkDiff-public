@@ -5,25 +5,24 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-import pytest
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from landmarkdiff.config import (
-    ExperimentConfig,
-    ModelConfig,
-    TrainingConfig,
     DataConfig,
-    InferenceConfig,
     EvaluationConfig,
-    WandbConfig,
-    SlurmConfig,
+    ExperimentConfig,
+    InferenceConfig,
+    ModelConfig,
     SafetyConfig,
+    SlurmConfig,
+    TrainingConfig,
+    WandbConfig,
+    _convert_tuples,
+    _from_dict,
     load_config,
     validate_config,
-    _from_dict,
-    _convert_tuples,
 )
 
 
@@ -126,10 +125,14 @@ class TestYAMLSerialization:
 
     def test_load_partial_yaml(self, tmp_path):
         yaml_path = tmp_path / "partial.yaml"
-        yaml_path.write_text(yaml.dump({
-            "experiment_name": "partial_test",
-            "training": {"learning_rate": 1e-4},
-        }))
+        yaml_path.write_text(
+            yaml.dump(
+                {
+                    "experiment_name": "partial_test",
+                    "training": {"learning_rate": 1e-4},
+                }
+            )
+        )
         cfg = ExperimentConfig.from_yaml(yaml_path)
         assert cfg.experiment_name == "partial_test"
         assert cfg.training.learning_rate == 1e-4
@@ -137,13 +140,17 @@ class TestYAMLSerialization:
 
     def test_unknown_keys_ignored(self, tmp_path):
         yaml_path = tmp_path / "extra.yaml"
-        yaml_path.write_text(yaml.dump({
-            "experiment_name": "extra",
-            "training": {
-                "learning_rate": 1e-4,
-                "nonexistent_key": 999,
-            },
-        }))
+        yaml_path.write_text(
+            yaml.dump(
+                {
+                    "experiment_name": "extra",
+                    "training": {
+                        "learning_rate": 1e-4,
+                        "nonexistent_key": 999,
+                    },
+                }
+            )
+        )
         cfg = ExperimentConfig.from_yaml(yaml_path)
         assert cfg.training.learning_rate == 1e-4
         assert not hasattr(cfg.training, "nonexistent_key")
@@ -182,21 +189,27 @@ class TestLoadConfig:
         assert cfg.training.learning_rate == 1e-5
 
     def test_load_with_overrides(self):
-        cfg = load_config(overrides={
-            "training.learning_rate": 5e-6,
-            "training.batch_size": 8,
-            "data.image_size": 256,
-        })
+        cfg = load_config(
+            overrides={
+                "training.learning_rate": 5e-6,
+                "training.batch_size": 8,
+                "data.image_size": 256,
+            }
+        )
         assert cfg.training.learning_rate == 5e-6
         assert cfg.training.batch_size == 8
         assert cfg.data.image_size == 256
 
     def test_load_from_yaml_with_overrides(self, tmp_path):
         yaml_path = tmp_path / "base.yaml"
-        yaml_path.write_text(yaml.dump({
-            "experiment_name": "base",
-            "training": {"learning_rate": 1e-5},
-        }))
+        yaml_path.write_text(
+            yaml.dump(
+                {
+                    "experiment_name": "base",
+                    "training": {"learning_rate": 1e-5},
+                }
+            )
+        )
         cfg = load_config(
             config_path=yaml_path,
             overrides={"training.learning_rate": 3e-6},
@@ -210,10 +223,12 @@ class TestLoadConfig:
         assert cfg.experiment_name == "default"
 
     def test_override_safety_config(self):
-        cfg = load_config(overrides={
-            "safety.identity_threshold": 0.8,
-            "safety.watermark_enabled": False,
-        })
+        cfg = load_config(
+            overrides={
+                "safety.identity_threshold": 0.8,
+                "safety.watermark_enabled": False,
+            }
+        )
         assert cfg.safety.identity_threshold == 0.8
         assert cfg.safety.watermark_enabled is False
 

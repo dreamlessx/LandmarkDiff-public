@@ -7,8 +7,8 @@ Applied from day 1 - domain gap prevention, not afterthought.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 import cv2
 import numpy as np
@@ -35,7 +35,7 @@ def point_source_lighting(image: np.ndarray, rng: np.random.Generator) -> np.nda
     # Distance-based falloff
     y_grid, x_grid = np.mgrid[0:h, 0:w].astype(np.float32)
     dist = np.sqrt((x_grid - lx) ** 2 + (y_grid - ly) ** 2)
-    max_dist = np.sqrt(w ** 2 + h ** 2)
+    max_dist = np.sqrt(w**2 + h**2)
     light_map = 1.0 - (dist / max_dist) * intensity
 
     light_map = np.clip(light_map, 0.3, 1.0)
@@ -132,7 +132,7 @@ def vignette(image: np.ndarray, rng: np.random.Generator) -> np.ndarray:
     y, x = np.mgrid[0:h, 0:w].astype(np.float32)
     cx, cy = w / 2, h / 2
     dist = np.sqrt((x - cx) ** 2 + (y - cy) ** 2)
-    max_dist = np.sqrt(cx ** 2 + cy ** 2)
+    max_dist = np.sqrt(cx**2 + cy**2)
 
     mask = 1 - strength * (dist / max_dist) ** 2
     mask = np.clip(mask, 0.3, 1.0)

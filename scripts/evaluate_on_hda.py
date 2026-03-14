@@ -28,15 +28,12 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-import torch
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from landmarkdiff.evaluation import compute_ssim, compute_lpips, compute_nme
-from landmarkdiff.landmarks import extract_landmarks, FaceLandmarks
-from landmarkdiff.conditioning import generate_conditioning
-from landmarkdiff.masking import generate_surgical_mask, MASK_CONFIG
+from landmarkdiff.evaluation import compute_lpips, compute_nme, compute_ssim
+from landmarkdiff.landmarks import extract_landmarks
 
 logging.basicConfig(
     level=logging.INFO,
@@ -72,13 +69,15 @@ def load_hda_eval_pairs(data_dir: Path) -> list[dict]:
         input_path = data_dir / f"{prefix}_input.png"
         target_path = data_dir / f"{prefix}_target.png"
         if input_path.exists() and target_path.exists():
-            pairs.append({
-                "prefix": prefix,
-                "input_path": input_path,
-                "target_path": target_path,
-                "conditioning_path": data_dir / f"{prefix}_conditioning.png",
-                "procedure": info.get("procedure", "unknown"),
-            })
+            pairs.append(
+                {
+                    "prefix": prefix,
+                    "input_path": input_path,
+                    "target_path": target_path,
+                    "conditioning_path": data_dir / f"{prefix}_conditioning.png",
+                    "procedure": info.get("procedure", "unknown"),
+                }
+            )
 
     return pairs
 
@@ -162,6 +161,7 @@ def evaluate_pair(
     # Identity similarity (ArcFace)
     try:
         from landmarkdiff.arcface_torch import ArcFaceEncoder
+
         encoder = ArcFaceEncoder()
         id_sim = encoder.compute_similarity(predicted, ground_truth)
         metrics["identity_sim"] = float(id_sim)
@@ -227,9 +227,13 @@ def print_results_table(summary: dict) -> None:
     # Overall
     print("\nOverall Metrics:")
     print(f"  {'Metric':<20} {'Mean':>10} {'Std':>10} {'Median':>10} {'N':>6}")
-    print(f"  {'-'*56}")
+    print(f"  {'-' * 56}")
     for key, stats in summary.get("overall", {}).items():
-        print(f"  {key:<20} {stats['mean']:>10.4f} {stats['std']:>10.4f} {stats['median']:>10.4f} {stats['n']:>6}")
+        print(
+            f"  {key:<20} {stats['mean']:>10.4f}"
+            f" {stats['std']:>10.4f} {stats['median']:>10.4f}"
+            f" {stats['n']:>6}"
+        )
 
     # Per-procedure
     print("\nPer-Procedure Breakdown:")
@@ -247,12 +251,14 @@ def main():
     parser = argparse.ArgumentParser(description="Evaluate on HDA real surgery data")
     parser.add_argument("--checkpoint", type=Path, help="Model checkpoint directory")
     parser.add_argument(
-        "--data-dir", type=Path,
+        "--data-dir",
+        type=Path,
         default=ROOT / "data" / "hda_splits" / "test",
         help="HDA evaluation data directory",
     )
     parser.add_argument(
-        "--fallback-dir", type=Path,
+        "--fallback-dir",
+        type=Path,
         default=ROOT / "data" / "hda_processed",
         help="Fallback if splits don't exist",
     )
@@ -261,8 +267,11 @@ def main():
     parser.add_argument("--num-steps", type=int, default=30)
     parser.add_argument("--guidance-scale", type=float, default=7.5)
     parser.add_argument("--max-pairs", type=int, default=0, help="Limit evaluation pairs (0=all)")
-    parser.add_argument("--metrics-only", action="store_true",
-                        help="Skip inference, compute metrics on existing predictions")
+    parser.add_argument(
+        "--metrics-only",
+        action="store_true",
+        help="Skip inference, compute metrics on existing predictions",
+    )
     args = parser.parse_args()
 
     # Select data directory
@@ -277,7 +286,7 @@ def main():
     # Load evaluation pairs
     pairs = load_hda_eval_pairs(data_dir)
     if args.max_pairs > 0:
-        pairs = pairs[:args.max_pairs]
+        pairs = pairs[: args.max_pairs]
 
     logger.info("Found %d evaluation pairs", len(pairs))
 
@@ -330,7 +339,9 @@ def main():
             elapsed = time.time() - start_time
             logger.info(
                 "Progress: %d/%d (%.0f%%) | %.1f s/pair",
-                i + 1, len(pairs), 100 * (i + 1) / len(pairs),
+                i + 1,
+                len(pairs),
+                100 * (i + 1) / len(pairs),
                 elapsed / (i + 1),
             )
 

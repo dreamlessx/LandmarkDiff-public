@@ -22,11 +22,13 @@ def augment_pair(
     results = []
 
     # 1. Horizontal flip
-    results.append((
-        cv2.flip(before, 1),
-        cv2.flip(after, 1),
-        "hflip",
-    ))
+    results.append(
+        (
+            cv2.flip(before, 1),
+            cv2.flip(after, 1),
+            "hflip",
+        )
+    )
 
     for i in range(augmentations_per_pair - 1):
         aug_name_parts = []
@@ -78,8 +80,8 @@ def augment_pair(
             ch, cw = int(h * crop_frac), int(w * crop_frac)
             y = random.randint(0, h - ch)
             x = random.randint(0, w - cw)
-            b = cv2.resize(b[y:y+ch, x:x+cw], (target_size, target_size))
-            a = cv2.resize(a[y:y+ch, x:x+cw], (target_size, target_size))
+            b = cv2.resize(b[y : y + ch, x : x + cw], (target_size, target_size))
+            a = cv2.resize(a[y : y + ch, x : x + cw], (target_size, target_size))
             aug_name_parts.append(f"crop{crop_frac:.2f}")
 
         # Gaussian noise (different for each image - represents sensor noise)
@@ -94,8 +96,9 @@ def augment_pair(
         # Gamma correction (same for both)
         if random.random() < 0.3:
             gamma = random.uniform(0.8, 1.3)
-            table = np.array([((i / 255.0) ** (1.0 / gamma)) * 255
-                              for i in np.arange(256)]).astype(np.uint8)
+            table = np.array([((i / 255.0) ** (1.0 / gamma)) * 255 for i in np.arange(256)]).astype(
+                np.uint8
+            )
             b = cv2.LUT(b, table)
             a = cv2.LUT(a, table)
             aug_name_parts.append(f"gam{gamma:.1f}")
@@ -113,14 +116,24 @@ def augment_pair(
 
 def main():
     parser = argparse.ArgumentParser(description="Augment surgery before/after pairs")
-    parser.add_argument("--pairs_dir", type=str, default="data/real_surgery_pairs/pairs",
-                        help="Directory with validated pairs")
-    parser.add_argument("--metadata", type=str, default="data/real_surgery_pairs/pairs_metadata.json",
-                        help="Pairs metadata JSON")
-    parser.add_argument("--output", type=str, default="data/real_surgery_pairs/augmented",
-                        help="Output directory")
-    parser.add_argument("--target_per_proc", type=int, default=50000,
-                        help="Target pairs per procedure")
+    parser.add_argument(
+        "--pairs_dir",
+        type=str,
+        default="data/real_surgery_pairs/pairs",
+        help="Directory with validated pairs",
+    )
+    parser.add_argument(
+        "--metadata",
+        type=str,
+        default="data/real_surgery_pairs/pairs_metadata.json",
+        help="Pairs metadata JSON",
+    )
+    parser.add_argument(
+        "--output", type=str, default="data/real_surgery_pairs/augmented", help="Output directory"
+    )
+    parser.add_argument(
+        "--target_per_proc", type=int, default=50000, help="Target pairs per procedure"
+    )
     parser.add_argument("--size", type=int, default=512, help="Image size")
     args = parser.parse_args()
 
@@ -178,14 +191,16 @@ def main():
                 cv2.imwrite(str(before_out), b_aug)
                 cv2.imwrite(str(after_out), a_aug)
 
-                all_augmented.append({
-                    "idx": aug_idx,
-                    "procedure": proc,
-                    "source_pair": pair.get("pair_id", pair_i),
-                    "augmentation": aug_name,
-                    "before_path": str(before_out),
-                    "after_path": str(after_out),
-                })
+                all_augmented.append(
+                    {
+                        "idx": aug_idx,
+                        "procedure": proc,
+                        "source_pair": pair.get("pair_id", pair_i),
+                        "augmentation": aug_name,
+                        "before_path": str(before_out),
+                        "after_path": str(after_out),
+                    }
+                )
                 aug_idx += 1
 
             if (pair_i + 1) % 10 == 0:

@@ -10,8 +10,8 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from landmarkdiff.landmarks import extract_landmarks, render_landmark_image
 from landmarkdiff.conditioning import generate_conditioning
+from landmarkdiff.landmarks import extract_landmarks, render_landmark_image
 
 
 def split_grid_image(image: np.ndarray, min_panel_size: int = 100) -> list[np.ndarray]:
@@ -122,7 +122,7 @@ def process_directory(
             panels = split_grid_image(image)
             print(f"  {img_path.name}: {len(panels)} panels")
 
-            for pi, panel in enumerate(panels):
+            for _pi, panel in enumerate(panels):
                 # Resize to 512x512
                 panel_512 = cv2.resize(panel, (512, 512))
 
@@ -148,6 +148,7 @@ def process_directory(
 
                 # Save annotated
                 from landmarkdiff.landmarks import visualize_landmarks
+
                 annotated = visualize_landmarks(panel_512, face, radius=2)
                 cv2.imwrite(str(proc_out / f"{prefix}_annotated.png"), annotated)
 
