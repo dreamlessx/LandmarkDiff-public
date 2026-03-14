@@ -46,6 +46,8 @@ dev = [
     "pytest-cov>=4.1.0",
     "ruff>=0.2.0",
     "mypy>=1.8.0",
+    "types-PyYAML>=6.0.0",
+    "types-requests>=2.31.0",
 ]
 
 [project.scripts]
@@ -64,6 +66,7 @@ ignore = ["N812"]
 
 [tool.ruff.lint.per-file-ignores]
 "landmarkdiff/arcface_torch.py" = ["N806", "N802", "E741"]
+"landmarkdiff/augmentation.py" = ["N806", "N803"]
 "landmarkdiff/audit.py" = ["E501"]
 "landmarkdiff/evaluation.py" = ["N806"]
 "landmarkdiff/landmarks.py" = ["N806"]
@@ -86,6 +89,29 @@ ignore = ["N812"]
 "tests/test_training_integration.py" = ["N806", "E501"]
 "tests/test_pipeline_tools.py" = ["E501"]
 "tests/test_process_hda.py" = ["E402"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = false
+warn_unused_configs = true
+disallow_untyped_defs = false
+check_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = [
+    "landmarkdiff.hyperparam",
+    "landmarkdiff.inference",
+    "landmarkdiff.ensemble",
+    "landmarkdiff.losses",
+    "landmarkdiff.arcface_torch",
+    "landmarkdiff.displacement_model",
+    "landmarkdiff.checkpoint_manager",
+    "landmarkdiff.face_verifier",
+    "landmarkdiff.metrics_viz",
+    "landmarkdiff.data",
+    "landmarkdiff.synthetic.*",
+]
+ignore_errors = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

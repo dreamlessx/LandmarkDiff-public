@@ -28,7 +28,8 @@ COPY scripts/ scripts/
 COPY configs/ configs/
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -e ".[app]"
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir ".[app]"
 
 # Pre-download MediaPipe model on build
 RUN python -c "import mediapipe" 2>/dev/null || true
