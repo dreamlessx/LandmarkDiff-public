@@ -686,8 +686,12 @@ with gr.Blocks(
         outputs = [out_wireframe, out_mask, out_result, out_original, info_box]
         _inputs = [input_image, procedure, intensity]
         run_btn.click(fn=process_image, inputs=_inputs, outputs=outputs)
-        for trigger in _inputs:
-            trigger.change(fn=process_image, inputs=_inputs, outputs=outputs)
+        # Auto-trigger on image upload and procedure change, but not on every
+        # slider tick during drag (each tick would re-run TPS on free CPU,
+        # causing severe lag). Use .release so it fires once on mouse-up.
+        input_image.change(fn=process_image, inputs=_inputs, outputs=outputs)
+        procedure.change(fn=process_image, inputs=_inputs, outputs=outputs)
+        intensity.release(fn=process_image, inputs=_inputs, outputs=outputs)
 
     # -- Tab 2: Compare Procedures --
     with gr.Tab("Compare All"):
@@ -839,7 +843,7 @@ with gr.Blocks(
 
     gr.Markdown(
         f"<div style='text-align:center;color:#999;font-size:0.8em;padding:8px'>"
-        f"LandmarkDiff v0.2.3 | TPS on CPU | MediaPipe 478-point mesh | "
+        f"LandmarkDiff v0.2.2 | TPS on CPU | MediaPipe 478-point mesh | "
         f"<a href='{GITHUB_URL}'>GitHub</a> | MIT License</div>"
     )
 
