@@ -70,12 +70,33 @@ def test_model(controlnet, label, test_images, output_dir):
     torch.cuda.empty_cache()
 
 
-def main():
-    output_dir = Path("checkpoints_v2/comparison")
-    output_dir.mkdir(parents=True, exist_ok=True)
+def main(
+    checkpoint_dir: str = "checkpoints_v2",
+    test_image_dir: str = "data/ffhq",
+    output_dir: str = "checkpoints_v2/comparison",
+    device: str = "cuda",
+    num_test_images: int = 8,
+):
+    """Test pre-trained vs fine-tuned ControlNet models.
+
+    Args:
+        checkpoint_dir: Directory containing model checkpoints
+        test_image_dir: Directory with test images
+        output_dir: Directory to save comparison results
+        device: Device to use (cuda or cpu)
+        num_test_images: Number of test images to use
+    """
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
 
     # Test images
-    test_images = sorted(Path("data/ffhq").glob("*.png"))[:8]
+    test_images = sorted(Path(test_image_dir).glob("*.png"))[:num_test_images]
+    if not test_images:
+        test_images = sorted(Path(test_image_dir).glob("*.jpg"))[:num_test_images]
+
+    if not test_images:
+        print(f"No test images found in {test_image_dir}")
+        return
 
     # 1. Pre-trained CrucibleAI (no fine-tuning)
     print("Loading pre-trained CrucibleAI...")
@@ -84,34 +105,71 @@ def main():
         subfolder="diffusion_sd15",
         torch_dtype=torch.float16,
     )
-    test_model(pretrained, "pretrained", test_images, output_dir)
+    test_model(pretrained, "pretrained", test_images, out)
     del pretrained
     torch.cuda.empty_cache()
 
     # 2. Fine-tuned (our 50K step model)
-    finetuned_path = Path("checkpoints_v2/final/controlnet_ema")
+    finetuned_path = Path(checkpoint_dir) / "final" / "controlnet_ema"
     if finetuned_path.exists():
         print("Loading fine-tuned model...")
         finetuned = ControlNetModel.from_pretrained(
             str(finetuned_path),
             torch_dtype=torch.float16,
         )
-        test_model(finetuned, "finetuned_50k", test_images, output_dir)
+        test_model(finetuned, "finetuned_50k", test_images, out)
         del finetuned
         torch.cuda.empty_cache()
 
     # 3. Early checkpoint (10K steps - less fine-tuning)
-    early_path = Path("checkpoints_v2/checkpoint-10000/controlnet_ema")
+    early_path = Path(checkpoint_dir) / "checkpoint-10000" / "controlnet_ema"
     if early_path.exists():
         print("Loading early checkpoint (10K)...")
         early = ControlNetModel.from_pretrained(
             str(early_path),
             torch_dtype=torch.float16,
         )
-        test_model(early, "finetuned_10k", test_images, output_dir)
+        test_model(early, "finetuned_10k", test_images, out)
 
-    print("\nDone! Results in", output_dir)
+    print(f"\nDone! Results in {out}")
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Test pre-trained CrucibleAI ControlNet vs fine-tuned on our mesh conditioning."
+    )
+    parser.add_argument(
+        "--checkpoint",
+        type=str,
+        default="checkpoints_v2",
+        help="Checkpoint directory (default: checkpoints_v2)",
+    )
+    parser.add_argument(
+        "--device",
+        type=str,
+        choices=["cuda", "cpu"],
+        default="cuda",
+        help="Device to use (default: cuda)",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="checkpoints_v2/comparison",
+        help="Output directory for comparison results (default: checkpoints_v2/comparison)",
+    )
+    parser.add_argument(
+        "--num_images",
+        type=int,
+        default=8,
+        help="Number of test images to use (default: 8)",
+    )
+
+    args = parser.parse_args()
+    main(
+        checkpoint_dir=args.checkpoint,
+        output_dir=args.output,
+        device=args.device,
+        num_test_images=args.num_images,
+    )

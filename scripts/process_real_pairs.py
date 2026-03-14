@@ -199,4 +199,23 @@ def _build_gallery(out: Path, total: int) -> None:
 
 
 if __name__ == "__main__":
-    process_directory()
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Split multi-panel clinical photos into before/after pairs for training."
+    )
+    parser.add_argument(
+        "--input",
+        type=str,
+        default="data/real_pairs",
+        help="Input directory containing procedure subdirectories (default: data/real_pairs)",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="data/real_processed",
+        help="Output directory for processed images (default: data/real_processed)",
+    )
+
+    args = parser.parse_args()
+    process_directory(input_dir=args.input, output_dir=args.output)

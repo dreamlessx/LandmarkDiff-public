@@ -620,27 +620,63 @@ def generate_intensity_sweep(
     print(f"Intensity sweep figure saved: {out}")
 
 
-def main():
+def main(output_dir: str = "paper", output_format: str = "png"):
+    """Generate all publication-quality figures.
+
+    Args:
+        output_dir: Directory to save figures to (default: paper)
+        output_format: Output image format (default: png)
+    """
     print("Generating LandmarkDiff paper figures...")
     print("=" * 50)
 
+    out_path = Path(output_dir)
+    out_path.mkdir(parents=True, exist_ok=True)
+
+    # Build output paths with format
+    arch_out = f"{output_dir}/fig_architecture.{output_format}"
+    cond_out = f"{output_dir}/fig_conditioning.{output_format}"
+    deform_out = f"{output_dir}/fig_deformation.{output_format}"
+    tps_out = f"{output_dir}/fig_tps_baseline.{output_format}"
+    intensity_out = f"{output_dir}/fig_intensity_sweep.{output_format}"
+
     # 1. Architecture diagram (no face images needed)
-    generate_architecture_diagram()
+    generate_architecture_diagram(arch_out)
 
     # 2. Conditioning signal visualization
-    generate_conditioning_figure()
+    generate_conditioning_figure(output_path=cond_out)
 
     # 3. Deformation visualization
-    generate_deformation_figure()
+    generate_deformation_figure(output_path=deform_out)
 
     # 4. TPS baseline comparison
-    generate_tps_baseline_figure()
+    generate_tps_baseline_figure(output_path=tps_out)
 
     # 5. Intensity sweep
-    generate_intensity_sweep()
+    generate_intensity_sweep(output_path=intensity_out)
 
-    print("\nAll figures generated!")
+    print(f"\nAll figures generated in {output_dir}!")
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Generate publication-quality figures for the LandmarkDiff paper."
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="paper",
+        help="Output directory for figure images (default: paper)",
+    )
+    parser.add_argument(
+        "--format",
+        type=str,
+        choices=["png", "pdf"],
+        default="png",
+        help="Output image format (default: png)",
+    )
+
+    args = parser.parse_args()
+    main(output_dir=args.output, output_format=args.format)

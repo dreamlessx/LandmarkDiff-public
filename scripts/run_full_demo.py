@@ -38,12 +38,29 @@ def add_text(img: np.ndarray, text: str, pos: str = "bottom") -> np.ndarray:
     return result
 
 
-def run() -> None:
-    out = Path("scripts/final_output/results")
+def run(
+    input_dir: str = "data/ffhq_samples",
+    output_dir: str = "scripts/final_output/results",
+    procedures: list[str] | None = None,
+    num_images: int = 5,
+) -> None:
+    """Run full demo inference on multiple faces.
+
+    Args:
+        input_dir: Directory containing input face images
+        output_dir: Directory to save results
+        procedures: List of procedures to run (default: all 4)
+        num_images: Number of images to process
+    """
+    if procedures is None:
+        procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+
+    out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
 
-    ffhq = sorted(Path("data/ffhq_samples").glob("*.png"))[:5]
-    procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    ffhq = sorted(Path(input_dir).glob("*.png"))[:num_images]
+    if not ffhq:
+        ffhq = sorted(Path(input_dir).glob("*.jpg"))[:num_images]
 
     print("Loading pipeline...")
     pipe = LandmarkDiffPipeline(mode="img2img")
@@ -153,4 +170,40 @@ def run() -> None:
 
 
 if __name__ == "__main__":
-    run()
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Full demo - run inference on multiple faces.")
+    parser.add_argument(
+        "--input",
+        type=str,
+        default="data/ffhq_samples",
+        help="Input directory with face images (default: data/ffhq_samples)",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="scripts/final_output/results",
+        help="Output directory for results (default: scripts/final_output/results)",
+    )
+    parser.add_argument(
+        "--procedures",
+        type=str,
+        nargs="+",
+        choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"],
+        default=None,
+        help="Procedures to apply (default: all 4)",
+    )
+    parser.add_argument(
+        "--num_images",
+        type=int,
+        default=5,
+        help="Number of input images to process (default: 5)",
+    )
+
+    args = parser.parse_args()
+    run(
+        input_dir=args.input,
+        output_dir=args.output,
+        procedures=args.procedures,
+        num_images=args.num_images,
+    )

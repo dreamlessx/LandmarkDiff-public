@@ -227,17 +227,57 @@ def make_before_after_grid(face_dirs: list[str], output_path: str) -> None:
 
 
 if __name__ == "__main__":
-    out = Path("scripts/final_output")
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Generate visual result galleries (grid composites per procedure)."
+    )
+    parser.add_argument(
+        "--input",
+        type=Path,
+        default=Path("scripts/final_output"),
+        help="Input directory containing demo output folders (default: scripts/final_output)",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path("scripts/final_output"),
+        help="Output directory for gallery images (default: scripts/final_output)",
+    )
+    parser.add_argument(
+        "--procedure",
+        type=str,
+        choices=["all", "rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"],
+        default="all",
+        help="Specific procedure to generate intensity sweep for (default: all)",
+    )
+    parser.add_argument(
+        "--num_images",
+        type=int,
+        default=10,
+        help="Number of images to include in training pair gallery (default: 10)",
+    )
+
+    args = parser.parse_args()
+
+    out = args.output
     out.mkdir(parents=True, exist_ok=True)
 
     # 1. Procedure comparison grid
-    make_procedure_comparison("scripts/final_output", str(out / "gallery_procedures.png"))
+    make_procedure_comparison(str(args.input), str(out / "gallery_procedures.png"))
 
     # 2. Training pair gallery
-    make_training_pair_gallery("data/synthetic_pairs", str(out / "gallery_training_pairs.png"))
+    make_training_pair_gallery(
+        "data/synthetic_pairs", str(out / "gallery_training_pairs.png"), max_pairs=args.num_images
+    )
 
     # 3. Intensity sweeps
-    for proc in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]:
+    procedures = (
+        ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+        if args.procedure == "all"
+        else [args.procedure]
+    )
+    for proc in procedures:
         make_intensity_sweep(
             "data/ffhq_samples/000001.png",
             proc,
@@ -250,4 +290,4 @@ if __name__ == "__main__":
             "data/demo_pairs", str(out / "gallery_demo_pairs.png"), max_pairs=4
         )
 
-    print("\nAll galleries saved to scripts/final_output/")
+    print(f"\nAll galleries saved to {out}/")
