@@ -176,6 +176,30 @@ class FaceLandmarks:
         coords[:, 1] *= self.image_height
         return coords
 
+    def pixel_coords_at(self, width: int, height: int) -> np.ndarray:
+        """Convert normalized landmarks to pixel coordinates at a given size.
+
+        Use this when the image has been resized after landmark extraction.
+        """
+        coords = self.landmarks[:, :2].copy()
+        coords[:, 0] *= width
+        coords[:, 1] *= height
+        return coords
+
+    def rescale(self, width: int, height: int) -> FaceLandmarks:
+        """Return a copy with updated image dimensions.
+
+        Landmarks stay in normalized [0,1] space; only the stored
+        width/height change, so ``pixel_coords`` returns values at
+        the new resolution.
+        """
+        return FaceLandmarks(
+            landmarks=self.landmarks.copy(),
+            image_width=width,
+            image_height=height,
+            confidence=self.confidence,
+        )
+
     def get_region(self, region: str) -> np.ndarray:
         """Get landmark indices for a named region."""
         indices = LANDMARK_REGIONS.get(region, [])
