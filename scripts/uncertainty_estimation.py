@@ -247,7 +247,14 @@ def main():
     for inp_file in input_files:
         prefix = inp_file.stem.replace("_input", "")
         proc = "unknown"
-        for p in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]:
+        for p in [
+            "rhinoplasty",
+            "blepharoplasty",
+            "rhytidectomy",
+            "orthognathic",
+            "brow_lift",
+            "mentoplasty",
+        ]:
             if p in prefix:
                 proc = p
                 break

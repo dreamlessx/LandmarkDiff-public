@@ -98,7 +98,14 @@ def process_directory(
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
 
-    procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
+    procedures = [
+        "rhinoplasty",
+        "blepharoplasty",
+        "rhytidectomy",
+        "orthognathic",
+        "brow_lift",
+        "mentoplasty",
+    ]
     total_processed = 0
     total_faces = 0
 

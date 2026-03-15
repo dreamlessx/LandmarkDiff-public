@@ -72,7 +72,14 @@ class TestProcedureCurriculum:
 
         pc = ProcedureCurriculum(total_steps=10000)
         for step in range(0, 10001, 1000):
-            for proc in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]:
+            for proc in [
+                "rhinoplasty",
+                "blepharoplasty",
+                "rhytidectomy",
+                "orthognathic",
+                "brow_lift",
+                "mentoplasty",
+            ]:
                 w = pc.get_weight(step, proc)
                 assert 0.1 <= w <= 1.0, f"Weight out of bounds for {proc} at step {step}: {w}"
 
@@ -104,7 +111,14 @@ class TestDataSplitting:
     def mock_dataset(self, tmp_path):
         """Create a mock dataset with multiple procedures."""
         rng = np.random.default_rng(42)
-        for proc in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]:
+        for proc in [
+            "rhinoplasty",
+            "blepharoplasty",
+            "rhytidectomy",
+            "orthognathic",
+            "brow_lift",
+            "mentoplasty",
+        ]:
             for i in range(20):
                 prefix = f"{proc}_{i:03d}"
                 img = rng.integers(0, 255, (64, 64, 3), dtype=np.uint8)

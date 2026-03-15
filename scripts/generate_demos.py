@@ -29,7 +29,14 @@ from landmarkdiff.masking import generate_surgical_mask
 from landmarkdiff.postprocess import full_postprocess
 from landmarkdiff.synthetic.tps_warp import warp_image_tps
 
-PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
+PROCEDURES = [
+    "rhinoplasty",
+    "blepharoplasty",
+    "rhytidectomy",
+    "orthognathic",
+    "brow_lift",
+    "mentoplasty",
+]
 INTENSITIES = [40, 65, 90]
 
 

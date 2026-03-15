@@ -262,7 +262,14 @@ def generate_conditioning_figure(
         print("Face detection failed, trying next image...")
         return
 
-    procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
+    procedures = [
+        "rhinoplasty",
+        "blepharoplasty",
+        "rhytidectomy",
+        "orthognathic",
+        "brow_lift",
+        "mentoplasty",
+    ]
     intensity = 65.0
 
     fig, axes = plt.subplots(4, 5, figsize=(LNCS_WIDTH_IN * 2, LNCS_WIDTH_IN * 1.6), dpi=300)
@@ -362,7 +369,14 @@ def generate_deformation_figure(
     if face is None:
         return
 
-    procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
+    procedures = [
+        "rhinoplasty",
+        "blepharoplasty",
+        "rhytidectomy",
+        "orthognathic",
+        "brow_lift",
+        "mentoplasty",
+    ]
     fig, axes = plt.subplots(1, 4, figsize=(LNCS_WIDTH_IN * 2, LNCS_WIDTH_IN * 0.55), dpi=300)
     fig.patch.set_facecolor("white")
 
@@ -462,7 +476,14 @@ def generate_tps_baseline_figure(
         print("Not enough face images, skipping TPS baseline figure")
         return
 
-    procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
+    procedures = [
+        "rhinoplasty",
+        "blepharoplasty",
+        "rhytidectomy",
+        "orthognathic",
+        "brow_lift",
+        "mentoplasty",
+    ]
     size = 512
 
     fig, axes = plt.subplots(

@@ -96,7 +96,14 @@ def main():
         "--procedure",
         type=str,
         required=True,
-        choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"],
+        choices=[
+            "rhinoplasty",
+            "blepharoplasty",
+            "rhytidectomy",
+            "orthognathic",
+            "brow_lift",
+            "mentoplasty",
+        ],
         help="Procedure to generate pairs for",
     )
     parser.add_argument("--target", type=int, default=50000, help="Target number of pairs")

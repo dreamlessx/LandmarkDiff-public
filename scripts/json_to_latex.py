@@ -17,7 +17,14 @@ import argparse
 import json
 from pathlib import Path
 
-PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
+PROCEDURES = [
+    "rhinoplasty",
+    "blepharoplasty",
+    "rhytidectomy",
+    "orthognathic",
+    "brow_lift",
+    "mentoplasty",
+]
 PROCEDURE_NAMES = {
     "rhinoplasty": "Rhinoplasty",
     "blepharoplasty": "Blepharoplasty",

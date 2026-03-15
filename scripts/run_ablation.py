@@ -213,7 +213,14 @@ def evaluate_ablation(
 
             # Infer procedure
             procedure = "rhinoplasty"
-            for proc in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]:
+            for proc in [
+                "rhinoplasty",
+                "blepharoplasty",
+                "rhytidectomy",
+                "orthognathic",
+                "brow_lift",
+                "mentoplasty",
+            ]:
                 if proc in prefix:
                     procedure = proc
                     break

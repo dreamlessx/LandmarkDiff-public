@@ -119,7 +119,14 @@ class PipelineVerifier:
         try:
             from landmarkdiff.manipulation import apply_procedure_preset
 
-            for proc in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]:
+            for proc in [
+                "rhinoplasty",
+                "blepharoplasty",
+                "rhytidectomy",
+                "orthognathic",
+                "brow_lift",
+                "mentoplasty",
+            ]:
                 result = apply_procedure_preset(face, proc, 50.0, image_size=512)
                 manip_landmarks = result.landmarks
                 self.check(
@@ -156,7 +163,14 @@ class PipelineVerifier:
         try:
             from landmarkdiff.masking import generate_surgical_mask
 
-            for proc in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]:
+            for proc in [
+                "rhinoplasty",
+                "blepharoplasty",
+                "rhytidectomy",
+                "orthognathic",
+                "brow_lift",
+                "mentoplasty",
+            ]:
                 mask = generate_surgical_mask(face, proc)
                 self.check(
                     f"mask_{proc}_shape",

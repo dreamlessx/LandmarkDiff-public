@@ -24,7 +24,14 @@ from landmarkdiff.masking import generate_surgical_mask
 from landmarkdiff.synthetic.tps_warp import warp_image_tps
 
 # Procedures supported by the masking module
-MASKABLE_PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
+MASKABLE_PROCEDURES = [
+    "rhinoplasty",
+    "blepharoplasty",
+    "rhytidectomy",
+    "orthognathic",
+    "brow_lift",
+    "mentoplasty",
+]
 
 # All 6 procedures for manipulation tests
 ALL_PROCEDURES = [

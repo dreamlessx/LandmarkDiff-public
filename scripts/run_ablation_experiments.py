@@ -53,7 +53,14 @@ from landmarkdiff.manipulation import apply_procedure_preset
 from landmarkdiff.masking import generate_surgical_mask
 from landmarkdiff.synthetic.tps_warp import warp_image_tps
 
-PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
+PROCEDURES = [
+    "rhinoplasty",
+    "blepharoplasty",
+    "rhytidectomy",
+    "orthognathic",
+    "brow_lift",
+    "mentoplasty",
+]
 
 
 def load_test_images(test_dir: str, max_samples: int = 0) -> list[dict]:

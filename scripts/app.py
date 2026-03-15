@@ -199,11 +199,13 @@ def create_comparison(
     blepharoplasty: float,
     rhytidectomy: float,
     orthognathic: float,
+    brow_lift: float,
+    mentoplasty: float,
 ) -> tuple:
     """Multi-procedure comparison."""
     if image_rgb is None:
         blank = np.zeros((512, 512, 3), dtype=np.uint8)
-        return blank, blank, blank, blank
+        return blank, blank, blank, blank, blank, blank
 
     image_bgr = image_rgb[:, :, ::-1].copy()
     image_bgr = cv2.resize(image_bgr, (512, 512))
@@ -211,7 +213,7 @@ def create_comparison(
     face = extract_landmarks(image_bgr)
     if face is None:
         rgb = bgr_to_rgb(image_bgr)
-        return rgb, rgb, rgb, rgb
+        return rgb, rgb, rgb, rgb, rgb, rgb
 
     results = []
     for proc, inten in [
@@ -219,6 +221,8 @@ def create_comparison(
         ("blepharoplasty", blepharoplasty),
         ("rhytidectomy", rhytidectomy),
         ("orthognathic", orthognathic),
+        ("brow_lift", brow_lift),
+        ("mentoplasty", mentoplasty),
     ]:
         if inten < 1.0:
             results.append(bgr_to_rgb(image_bgr))
@@ -363,6 +367,8 @@ def build_app():
                     slider_bleph = gr.Slider(0, 100, 0, step=1, label="Blepharoplasty")
                     slider_rhyti = gr.Slider(0, 100, 0, step=1, label="Rhytidectomy")
                     slider_ortho = gr.Slider(0, 100, 0, step=1, label="Orthognathic")
+                    slider_brow = gr.Slider(0, 100, 0, step=1, label="Brow Lift")
+                    slider_mento = gr.Slider(0, 100, 0, step=1, label="Mentoplasty")
                     compare_btn = gr.Button("Compare All", variant="primary", size="lg")
                 with gr.Column(scale=2):
                     with gr.Row():
@@ -371,6 +377,9 @@ def build_app():
                     with gr.Row():
                         out_rhyti = gr.Image(label="Rhytidectomy", height=256)
                         out_ortho = gr.Image(label="Orthognathic", height=256)
+                    with gr.Row():
+                        out_brow = gr.Image(label="Brow Lift", height=256)
+                        out_mento = gr.Image(label="Mentoplasty", height=256)
 
             multi_inputs = [
                 input_image_multi,
@@ -378,10 +387,19 @@ def build_app():
                 slider_bleph,
                 slider_rhyti,
                 slider_ortho,
+                slider_brow,
+                slider_mento,
             ]
-            multi_outputs = [out_rhino, out_bleph, out_rhyti, out_ortho]
+            multi_outputs = [out_rhino, out_bleph, out_rhyti, out_ortho, out_brow, out_mento]
             compare_btn.click(fn=create_comparison, inputs=multi_inputs, outputs=multi_outputs)
-            for slider in [slider_rhino, slider_bleph, slider_rhyti, slider_ortho]:
+            for slider in [
+                slider_rhino,
+                slider_bleph,
+                slider_rhyti,
+                slider_ortho,
+                slider_brow,
+                slider_mento,
+            ]:
                 slider.change(fn=create_comparison, inputs=multi_inputs, outputs=multi_outputs)
 
         # ---- Tab 3: Intensity Sweep ----

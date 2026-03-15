@@ -479,7 +479,14 @@ def main():
 
     if args.all_procedures:
         # Process each procedure subdirectory
-        procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
+        procedures = [
+            "rhinoplasty",
+            "blepharoplasty",
+            "rhytidectomy",
+            "orthognathic",
+            "brow_lift",
+            "mentoplasty",
+        ]
         all_stats = {}
 
         for proc in procedures:

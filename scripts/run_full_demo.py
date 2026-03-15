@@ -53,7 +53,14 @@ def run(
         num_images: Number of images to process
     """
     if procedures is None:
-        procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
+        procedures = [
+            "rhinoplasty",
+            "blepharoplasty",
+            "rhytidectomy",
+            "orthognathic",
+            "brow_lift",
+            "mentoplasty",
+        ]
 
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -189,7 +196,14 @@ if __name__ == "__main__":
         "--procedures",
         type=str,
         nargs="+",
-        choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"],
+        choices=[
+            "rhinoplasty",
+            "blepharoplasty",
+            "rhytidectomy",
+            "orthognathic",
+            "brow_lift",
+            "mentoplasty",
+        ],
         default=None,
         help="Procedures to apply (default: all 6)",
     )

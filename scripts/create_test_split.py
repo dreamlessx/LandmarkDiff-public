@@ -37,7 +37,14 @@ import shutil
 from collections import defaultdict
 from pathlib import Path
 
-PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
+PROCEDURES = [
+    "rhinoplasty",
+    "blepharoplasty",
+    "rhytidectomy",
+    "orthognathic",
+    "brow_lift",
+    "mentoplasty",
+]
 
 
 def extract_source_id(prefix: str, meta: dict) -> str:

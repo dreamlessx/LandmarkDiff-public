@@ -48,13 +48,13 @@ class FileEntry:
         # Infer procedure from filename
         proc = ""
         for p in [
-                "rhinoplasty",
-                "blepharoplasty",
-                "rhytidectomy",
-                "orthognathic",
-                "brow_lift",
-                "mentoplasty",
-            ]:
+            "rhinoplasty",
+            "blepharoplasty",
+            "rhytidectomy",
+            "orthognathic",
+            "brow_lift",
+            "mentoplasty",
+        ]:
             if p in filepath.name or p in str(filepath.parent):
                 proc = p
                 break

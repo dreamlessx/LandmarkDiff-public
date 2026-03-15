@@ -123,7 +123,14 @@ def main():
     all_pairs = []
     pair_idx = 0
 
-    procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
+    procedures = [
+        "rhinoplasty",
+        "blepharoplasty",
+        "rhytidectomy",
+        "orthognathic",
+        "brow_lift",
+        "mentoplasty",
+    ]
 
     for proc in procedures:
         proc_dir = raw_dir / proc

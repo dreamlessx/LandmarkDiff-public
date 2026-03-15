@@ -349,7 +349,14 @@ def create_comparison_figure(
 ) -> None:
     """Create a 4-panel comparison figure for the paper."""
     panels = []
-    for proc in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]:
+    for proc in [
+        "rhinoplasty",
+        "blepharoplasty",
+        "rhytidectomy",
+        "orthognathic",
+        "brow_lift",
+        "mentoplasty",
+    ]:
         if proc in model.procedures:
             panel = create_procedure_visualization(model, proc, size)
             panels.append(panel)
@@ -388,7 +395,14 @@ def create_magnitude_chart(
         "Chin": [152, 377, 400, 378, 379, 365, 397, 288, 361],
     }
 
-    procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
+    procedures = [
+        "rhinoplasty",
+        "blepharoplasty",
+        "rhytidectomy",
+        "orthognathic",
+        "brow_lift",
+        "mentoplasty",
+    ]
     fig, axes = plt.subplots(1, len(procedures), figsize=(16, 5), sharey=True)
 
     for ax, proc in zip(axes, procedures):

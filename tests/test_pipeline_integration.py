@@ -80,7 +80,14 @@ class TestEndToEndPipeline:
         if face is None:
             pytest.skip("No face detected")
 
-        for proc in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]:
+        for proc in [
+            "rhinoplasty",
+            "blepharoplasty",
+            "rhytidectomy",
+            "orthognathic",
+            "brow_lift",
+            "mentoplasty",
+        ]:
             manip = apply_procedure_preset(face, proc, 65.0, image_size=512)
             assert manip is not None
             assert manip.pixel_coords.shape == face.pixel_coords.shape

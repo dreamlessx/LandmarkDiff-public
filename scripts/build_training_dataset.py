@@ -136,7 +136,14 @@ def _copy_v3_pairs(v3_dir: Path, output_dir: Path, start_idx: int) -> tuple[int,
 
         # Infer procedure from prefix (e.g. "rhinoplasty_000042")
         proc = "unknown"
-        for p in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]:
+        for p in [
+            "rhinoplasty",
+            "blepharoplasty",
+            "rhytidectomy",
+            "orthognathic",
+            "brow_lift",
+            "mentoplasty",
+        ]:
             if prefix.startswith(p):
                 proc = p
                 break
@@ -319,7 +326,14 @@ def build_dataset(
 
             # Infer procedure from real pair filename
             real_proc = "unknown"
-            for p in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]:
+            for p in [
+                "rhinoplasty",
+                "blepharoplasty",
+                "rhytidectomy",
+                "orthognathic",
+                "brow_lift",
+                "mentoplasty",
+            ]:
                 if p in prefix.lower():
                     real_proc = p
                     break
@@ -460,7 +474,14 @@ def main():
     parser.add_argument(
         "--procedures",
         nargs="+",
-        default=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"],
+        default=[
+            "rhinoplasty",
+            "blepharoplasty",
+            "rhytidectomy",
+            "orthognathic",
+            "brow_lift",
+            "mentoplasty",
+        ],
     )
     parser.add_argument("--no_augment", action="store_true", help="Skip augmenting real pairs")
     parser.add_argument(

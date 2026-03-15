@@ -91,7 +91,14 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # All six supported surgical procedures
 # ---------------------------------------------------------------------------
-PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
+PROCEDURES = [
+    "rhinoplasty",
+    "blepharoplasty",
+    "rhytidectomy",
+    "orthognathic",
+    "brow_lift",
+    "mentoplasty",
+]
 
 # ---------------------------------------------------------------------------
 # Checkpoint auto-discovery order (most preferred first)

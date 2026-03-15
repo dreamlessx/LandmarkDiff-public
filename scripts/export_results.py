@@ -33,7 +33,14 @@ from pathlib import Path
 
 import numpy as np
 
-PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
+PROCEDURES = [
+    "rhinoplasty",
+    "blepharoplasty",
+    "rhytidectomy",
+    "orthognathic",
+    "brow_lift",
+    "mentoplasty",
+]
 FITZ_TYPES = ["I", "II", "III", "IV", "V", "VI"]
 
 

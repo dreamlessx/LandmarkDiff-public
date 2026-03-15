@@ -139,7 +139,14 @@ def bold_best(
 # ====================================================================
 
 # The canonical order of procedures in Table 1
-PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
+PROCEDURES = [
+    "rhinoplasty",
+    "blepharoplasty",
+    "rhytidectomy",
+    "orthognathic",
+    "brow_lift",
+    "mentoplasty",
+]
 
 # Sample sizes per procedure (from baseline_results.json, also hardcoded in
 # the LaTeX template).  Will be overridden from actual data if available.

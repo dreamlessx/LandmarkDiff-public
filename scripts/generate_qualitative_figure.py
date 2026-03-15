@@ -99,7 +99,14 @@ def generate_main_figure(
     for f in comp_files:
         name = f.stem.replace("_comparison", "")
         proc = "unknown"
-        for p in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]:
+        for p in [
+            "rhinoplasty",
+            "blepharoplasty",
+            "rhytidectomy",
+            "orthognathic",
+            "brow_lift",
+            "mentoplasty",
+        ]:
             if p in name:
                 proc = p
                 break
@@ -326,7 +333,14 @@ if __name__ == "__main__":
     )
 
     # Per-procedure details
-    for proc in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]:
+    for proc in [
+        "rhinoplasty",
+        "blepharoplasty",
+        "rhytidectomy",
+        "orthognathic",
+        "brow_lift",
+        "mentoplasty",
+    ]:
         generate_procedure_detail(
             args.eval_images,
             str(out / "detail"),
