@@ -70,6 +70,24 @@ def warp_image_tps(
     # Subsample control points for speed (478 -> ~80)
     src_sub, dst_sub = _subsample_control_points(src_pts, dst_pts)
 
+    # Add edge anchor points to prevent stretching near image boundaries.
+    # These identity-mapped corners and edge midpoints keep the border stable.
+    edge_pts = np.array(
+        [
+            [0, 0],
+            [w - 1, 0],
+            [0, h - 1],
+            [w - 1, h - 1],
+            [w // 2, 0],
+            [w // 2, h - 1],
+            [0, h // 2],
+            [w - 1, h // 2],
+        ],
+        dtype=np.float32,
+    )
+    src_sub = np.vstack([src_sub, edge_pts])
+    dst_sub = np.vstack([dst_sub, edge_pts])
+
     # Compute TPS coefficients on subsampled points
     map_x, map_y = _compute_tps_map(src_sub, dst_sub, w, h)
 
