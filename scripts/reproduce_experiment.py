@@ -27,7 +27,7 @@ def load_checkpoint_metadata(checkpoint_path: Path) -> dict:
     import torch
 
     # Only load metadata keys, not the full state dict
-    ckpt = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
+    ckpt = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
 
     meta = {}
     if "metadata" in ckpt:
@@ -110,7 +110,7 @@ def run_evaluation(checkpoint_path: Path, config: ExperimentConfig) -> dict:
     import torch
 
     print(f"  Loading checkpoint: {checkpoint_path.name}")
-    ckpt = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
+    ckpt = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
 
     # Basic evaluation metrics
     metrics = ckpt.get("metrics", {})

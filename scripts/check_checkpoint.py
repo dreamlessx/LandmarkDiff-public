@@ -137,7 +137,7 @@ def check_optimizer(ckpt_dir: Path) -> dict:
             "detail": f"{len(shards)} optimizer shard(s) found",
         }
     try:
-        opt_state = torch.load(optimizer_path, map_location="cpu", weights_only=False)
+        opt_state = torch.load(optimizer_path, map_location="cpu", weights_only=True)
         n_groups = len(opt_state.get("param_groups", []))
         return {
             "found": True,
