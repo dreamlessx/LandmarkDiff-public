@@ -237,7 +237,7 @@ def _get_tessellation_triangles() -> list[tuple[int, int, int]]:
     edges = [(c.start, c.end) for c in FaceLandmarksConnections.FACE_LANDMARKS_TESSELATION]
     triangles = []
     for i in range(0, len(edges), 3):
-        verts = set()
+        verts: set[int] = set()
         for e in edges[i : i + 3]:
             verts.update(e)
         if len(verts) == 3:
