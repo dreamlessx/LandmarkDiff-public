@@ -241,7 +241,8 @@ def _get_tessellation_triangles() -> list[tuple[int, int, int]]:
         for e in edges[i : i + 3]:
             verts.update(e)
         if len(verts) == 3:
-            triangles.append(tuple(sorted(verts)))
+            v = sorted(verts)
+            triangles.append((v[0], v[1], v[2]))
     return triangles
 
 
