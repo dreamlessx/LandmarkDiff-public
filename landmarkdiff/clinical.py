@@ -838,3 +838,87 @@ def visualize_septum_deviation(
     cv2.putText(canvas, text, (5, h - 5), font, scale, (255, 255, 255), 1, cv2.LINE_AA)
 
     return canvas
+
+
+# ---------------------------------------------------------------------------
+# Age-aware deformation scaling
+# ---------------------------------------------------------------------------
+
+# Elasticity scaling factors by age decade.
+# Based on skin biomechanics: collagen density decreases ~1% per year after 30,
+# tissue becomes less compliant and recovers slower from deformation.
+# Values represent multiplicative scaling on displacement magnitudes.
+AGE_ELASTICITY_SCALE: dict[str, float] = {
+    "pediatric": 1.3,  # <18: very elastic, larger natural range
+    "young_adult": 1.15,  # 18-29: high elasticity
+    "adult": 1.0,  # 30-44: baseline calibration
+    "middle_age": 0.85,  # 45-59: reduced elasticity
+    "senior": 0.7,  # 60+: significantly reduced compliance
+}
+
+# Mapping from numeric age to bracket name
+_AGE_BRACKETS = [
+    (18, "pediatric"),
+    (30, "young_adult"),
+    (45, "adult"),
+    (60, "middle_age"),
+]
+
+
+def classify_age_bracket(age: int) -> str:
+    """Map a numeric age to an elasticity bracket.
+
+    Args:
+        age: Patient age in years.
+
+    Returns:
+        Age bracket name (e.g. "adult", "senior").
+    """
+    for threshold, bracket in _AGE_BRACKETS:
+        if age < threshold:
+            return bracket
+    return "senior"
+
+
+def get_age_scale_factor(age: int) -> float:
+    """Get the deformation scaling factor for a given age.
+
+    Younger patients get higher scaling (more elastic tissue allows
+    larger realistic deformations), while older patients get lower
+    scaling (less compliant tissue = more conservative predictions).
+
+    Args:
+        age: Patient age in years.
+
+    Returns:
+        Multiplicative scale factor for displacement magnitudes.
+    """
+    bracket = classify_age_bracket(age)
+    return AGE_ELASTICITY_SCALE[bracket]
+
+
+def scale_intensity_for_age(
+    intensity: float,
+    age: int,
+    clamp: bool = True,
+) -> float:
+    """Adjust procedure intensity based on patient age.
+
+    Modulates the requested intensity by an age-dependent elasticity
+    factor. This produces more conservative predictions for older
+    patients and allows slightly more aggressive predictions for
+    younger patients with more elastic tissue.
+
+    Args:
+        intensity: Requested intensity (0-100).
+        age: Patient age in years.
+        clamp: If True, clamp result to [0, 100].
+
+    Returns:
+        Age-adjusted intensity value.
+    """
+    factor = get_age_scale_factor(age)
+    scaled = intensity * factor
+    if clamp:
+        scaled = max(0.0, min(100.0, scaled))
+    return scaled
