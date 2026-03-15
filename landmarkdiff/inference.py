@@ -404,9 +404,15 @@ class LandmarkDiffPipeline:
         clinical_flags: ClinicalFlags | None = None,
         postprocess: bool = True,
         use_gfpgan: bool = False,
+        deterministic: bool = False,
     ) -> dict:
         if not self.is_loaded:
             raise RuntimeError("Pipeline not loaded. Call .load() first.")
+
+        if deterministic:
+            torch.backends.cudnn.deterministic = True
+            torch.backends.cudnn.benchmark = False
+            torch.use_deterministic_algorithms(True, warn_only=True)
 
         flags = clinical_flags or self.clinical_flags
         res = _SD15_RESOLUTION
@@ -685,6 +691,7 @@ def run_inference(
     ip_adapter_scale: float = 0.6,
     controlnet_checkpoint: str | None = None,
     displacement_model_path: str | None = None,
+    deterministic: bool = False,
 ) -> None:
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -703,7 +710,9 @@ def run_inference(
     pipe.load()
 
     logger.info("Generating %s prediction (intensity=%s, mode=%s)", procedure, intensity, mode)
-    result = pipe.generate(image, procedure=procedure, intensity=intensity, seed=seed)
+    result = pipe.generate(
+        image, procedure=procedure, intensity=intensity, seed=seed, deterministic=deterministic
+    )
 
     cv2.imwrite(str(out / "input.png"), result["input"])
     cv2.imwrite(str(out / "output.png"), result["output"])
@@ -745,6 +754,11 @@ if __name__ == "__main__":
         default=None,
         help="Path to displacement_model.npz for data-driven manipulation",
     )
+    parser.add_argument(
+        "--deterministic",
+        action="store_true",
+        help="Enable fully deterministic mode (slower, but reproducible across GPUs)",
+    )
     args = parser.parse_args()
 
     run_inference(
@@ -757,4 +771,5 @@ if __name__ == "__main__":
         args.ip_adapter_scale,
         args.checkpoint,
         args.displacement_model,
+        args.deterministic,
     )

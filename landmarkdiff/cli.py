@@ -45,6 +45,7 @@ def cmd_infer(args: argparse.Namespace) -> None:
         procedure=args.procedure,
         intensity=args.intensity,
         seed=args.seed,
+        deterministic=getattr(args, "deterministic", False),
     )
 
     out_path = Path(args.output)
@@ -188,6 +189,11 @@ def main(argv: list[str] | None = None) -> None:
     p_infer.add_argument("--displacement-model", default=None)
     p_infer.add_argument("--seed", type=int, default=42)
     p_infer.add_argument("--watermark", action="store_true")
+    p_infer.add_argument(
+        "--deterministic",
+        action="store_true",
+        help="Enable fully deterministic mode (slower, but reproducible across GPUs)",
+    )
     p_infer.set_defaults(func=cmd_infer)
 
     # --- ensemble ---
