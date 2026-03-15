@@ -47,7 +47,6 @@ import argparse
 import hashlib
 import json
 import logging
-import re
 import sys
 import time
 from pathlib import Path
@@ -194,10 +193,7 @@ def check_face_quality(
     # Check for mostly black/white (failed crop)
     gray = cv2.cvtColor(face_crop, cv2.COLOR_BGR2GRAY)
     mean_val = gray.mean()
-    if mean_val < 20 or mean_val > 240:
-        return False
-
-    return True
+    return not (mean_val < 20 or mean_val > 240)
 
 
 # ============================================================
@@ -314,8 +310,8 @@ def align_and_crop_face(
     center = ((left_eye[0] + right_eye[0]) / 2, (left_eye[1] + right_eye[1]) / 2)
 
     # Rotate
-    M = cv2.getRotationMatrix2D(center, angle, 1.0)
-    rotated = cv2.warpAffine(image, M, (w, h), flags=cv2.INTER_LANCZOS4)
+    rot_mat = cv2.getRotationMatrix2D(center, angle, 1.0)
+    rotated = cv2.warpAffine(image, rot_mat, (w, h), flags=cv2.INTER_LANCZOS4)
 
     # Re-detect on rotated image for tight crop
     faces_r = detect_faces(rotated)
@@ -393,10 +389,7 @@ def process_image(
         procedure = classify_procedure(caption)
 
     # Determine output subdirectory (by procedure for mega_scrape compat)
-    if procedure:
-        proc_dir = output_dir / procedure
-    else:
-        proc_dir = output_dir / "unclassified"
+    proc_dir = output_dir / procedure if procedure else output_dir / "unclassified"
     proc_dir.mkdir(parents=True, exist_ok=True)
 
     # Content hash for dedup
