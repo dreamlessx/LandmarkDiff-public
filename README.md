@@ -79,6 +79,7 @@ python scripts/run_inference.py photo.jpg --procedure rhinoplasty --intensity 60
 - [Model Zoo](#model-zoo)
 - [Requirements](#requirements)
 - [Docker](#docker)
+- [Make Targets](#make-targets)
 - [Roadmap](#roadmap)
 - [Citation](#citation)
 - [Contributors](#contributors)
