@@ -3,7 +3,7 @@
 project = "LandmarkDiff"
 author = "dreamlessx"
 copyright = "2024-2026, dreamlessx"
-release = "0.2.0"
+release = "0.2.2"
 
 extensions = [
     "sphinx.ext.autodoc",
