@@ -292,7 +292,7 @@ class CheckpointManager:
                 ckpt_dir = self.output_dir / name
                 if ckpt_dir.exists():
                     shutil.rmtree(ckpt_dir)
-                del self._index["checkpoints"][name]
+                self._index["checkpoints"].pop(name, None)
 
         self._save_index()
 

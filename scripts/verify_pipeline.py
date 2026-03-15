@@ -145,7 +145,7 @@ class PipelineVerifier:
         try:
             from landmarkdiff.conditioning import generate_conditioning
 
-            cond = generate_conditioning(face, image.shape[1], image.shape[0])
+            cond, canny, wireframe = generate_conditioning(face, image.shape[1], image.shape[0])
             self.check(
                 "cond_shape",
                 cond.shape[:2] == image.shape[:2],

@@ -6,6 +6,7 @@ mm inputs only in v3+ with FLAME calibrated metric space.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -15,6 +16,8 @@ from landmarkdiff.landmarks import FaceLandmarks
 
 if TYPE_CHECKING:
     from landmarkdiff.clinical import ClinicalFlags
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -266,15 +269,25 @@ def apply_procedure_preset(
     landmarks = face.landmarks.copy()
     scale = intensity / 100.0
 
-    # Data-driven displacement mode
+    # Data-driven displacement mode (fall back to RBF if procedure not in model)
+    # Map UI intensity (0-100) to displacement model intensity (0-2):
+    # 50 -> 1.0x mean displacement, matching inference.py scaling
     if displacement_model_path is not None:
-        return _apply_data_driven(
-            face,
-            procedure,
-            scale,
-            displacement_model_path,
-            noise_scale,
-        )
+        dm_scale = intensity / 50.0
+        try:
+            return _apply_data_driven(
+                face,
+                procedure,
+                dm_scale,
+                displacement_model_path,
+                noise_scale,
+            )
+        except KeyError:
+            logger.warning(
+                "Procedure '%s' not in displacement model, falling back to RBF preset",
+                procedure,
+            )
+            # Fall through to RBF-based preset below
 
     indices = PROCEDURE_LANDMARKS[procedure]
     radius = PROCEDURE_RADIUS[procedure]

@@ -123,9 +123,8 @@ def predict(
         dict with: prediction, conditioning, landmarks_before, landmarks_after,
                    processing_time, metrics
     """
-    from landmarkdiff.displacement import apply_displacement_field
-
     from landmarkdiff.landmarks import extract_landmarks, render_landmark_image
+    from landmarkdiff.manipulation import apply_procedure_preset
     from landmarkdiff.masking import generate_surgical_mask
     from landmarkdiff.postprocess import histogram_match_skin
 
@@ -147,18 +146,18 @@ def predict(
         }
 
     # 2. Apply procedure-specific deformation
-    displaced_landmarks = apply_displacement_field(
-        landmarks.pixel_coords,
+    manipulated = apply_procedure_preset(
+        landmarks,
         procedure,
-        intensity=intensity,
+        intensity=intensity * 100.0,
         image_size=512,
     )
 
     # 3. Render conditioning image (MediaPipe mesh wireframe)
-    conditioning = render_landmark_image(displaced_landmarks, (512, 512))
+    conditioning = render_landmark_image(manipulated, 512, 512)
 
     # 4. Also render the "before" mesh for comparison
-    before_mesh = render_landmark_image(landmarks.pixel_coords, (512, 512))
+    before_mesh = render_landmark_image(landmarks, 512, 512)
 
     # 5. Run ControlNet inference
     cond_rgb = cv2.cvtColor(conditioning, cv2.COLOR_BGR2RGB)
@@ -182,7 +181,7 @@ def predict(
 
     # 6. Post-processing: mask compositing + color matching
     try:
-        mask = generate_surgical_mask(input_resized, displaced_landmarks, procedure)
+        mask = generate_surgical_mask(manipulated, procedure, 512, 512)
         mask_f = mask.astype(np.float32) / 255.0 if mask.max() > 1 else mask.astype(np.float32)
 
         try:

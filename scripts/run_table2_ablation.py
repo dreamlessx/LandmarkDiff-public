@@ -48,9 +48,7 @@ def evaluate_pair(pred: np.ndarray, target: np.ndarray) -> dict:
     face_pred = extract_landmarks(pred)
     face_target = extract_landmarks(target)
     if face_pred is not None and face_target is not None:
-        metrics["nme"] = float(
-            compute_nme(face_pred.pixel_coords, face_target.pixel_coords, pred.shape)
-        )
+        metrics["nme"] = float(compute_nme(face_pred.pixel_coords, face_target.pixel_coords))
     else:
         metrics["nme"] = float("nan")
 
