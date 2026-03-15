@@ -170,6 +170,65 @@ def frequency_aware_sharpen(
     return cv2.cvtColor(lab.astype(np.uint8), cv2.COLOR_LAB2BGR)
 
 
+def texture_aware_blend(
+    original: np.ndarray,
+    generated: np.ndarray,
+    mask: np.ndarray,
+    texture_weight: float = 0.6,
+    detail_radius: int = 5,
+) -> np.ndarray:
+    """Blend generated result with original while preserving skin texture.
+
+    Decomposes both images into base (low-frequency color/shape) and detail
+    (high-frequency texture) layers. Uses the generated base but retains
+    the original's detail layer in the mask region, preserving pores,
+    freckles, and fine skin texture that diffusion models tend to smooth out.
+
+    Args:
+        original: BGR original image.
+        generated: BGR generated/predicted image (same dimensions).
+        mask: Float32 mask [0-1] where 1 = modified region.
+        texture_weight: How much original texture to preserve (0-1).
+            0 = use generated texture entirely, 1 = use original texture entirely.
+        detail_radius: Bilateral filter radius for base/detail decomposition.
+            Larger values capture coarser texture in the detail layer.
+
+    Returns:
+        Blended BGR image preserving original skin detail.
+    """
+    h, w = original.shape[:2]
+    gen = cv2.resize(generated, (w, h)) if generated.shape[:2] != (h, w) else generated
+
+    mask_f = mask.astype(np.float32)
+    if mask_f.max() > 1.0:
+        mask_f = mask_f / 255.0
+    mask_3ch = np.stack([mask_f] * 3, axis=-1) if mask_f.ndim == 2 else mask_f
+
+    orig_f = original.astype(np.float32)
+    gen_f = gen.astype(np.float32)
+
+    # Decompose into base (bilateral filtered) and detail (residual)
+    d = detail_radius * 2 + 1
+    sigma_color = 75.0
+    sigma_space = float(detail_radius)
+
+    orig_base = cv2.bilateralFilter(orig_f, d, sigma_color, sigma_space)
+    gen_base = cv2.bilateralFilter(gen_f, d, sigma_color, sigma_space)
+
+    orig_detail = orig_f - orig_base
+    gen_detail = gen_f - gen_base
+
+    # In the mask region: use generated base + blend of original/generated detail
+    blended_detail = orig_detail * texture_weight + gen_detail * (1.0 - texture_weight)
+
+    # Composite: inside mask use generated base + blended detail,
+    # outside mask use original
+    result = gen_base + blended_detail
+    result = result * mask_3ch + orig_f * (1.0 - mask_3ch)
+
+    return np.clip(result, 0, 255).astype(np.uint8)
+
+
 def restore_face_gfpgan(
     image: np.ndarray,
     upscale: int = 1,
