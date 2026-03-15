@@ -709,7 +709,11 @@ def get_face_embedding(image: np.ndarray) -> np.ndarray | None:
     try:
         faces = app.get(image)
         if faces:
-            return faces[0].embedding
+            emb = faces[0].embedding
+            if np.linalg.norm(emb) < 1e-6:
+                logger.warning("ArcFace returned near-zero embedding (occluded face?)")
+                return None
+            return emb
     except Exception:
         pass
     return None
