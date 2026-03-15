@@ -141,27 +141,22 @@ class TestHistogramMatchSkin:
     """Tests for skin histogram matching."""
 
     def test_pixels_outside_mask_not_modified(self):
-            """Pixels outside the mask must not be changed significantly."""
-            rng = np.random.default_rng(7)
-            h, w = 64, 64
-            source = rng.integers(100, 200, (h, w, 3), dtype=np.uint8)
-            target = rng.integers(80, 180, (h, w, 3), dtype=np.uint8)
+        """Pixels outside the mask must not be changed significantly."""
+        rng = np.random.default_rng(7)
+        h, w = 64, 64
+        source = rng.integers(100, 200, (h, w, 3), dtype=np.uint8)
+        target = rng.integers(80, 180, (h, w, 3), dtype=np.uint8)
 
-            # Only top-left 32x32 is masked -- boundary test
-            mask = np.zeros((h, w), dtype=np.float32)
-            mask[:32, :32] = 1.0
+        # Only top-left 32x32 is masked -- boundary test
+        mask = np.zeros((h, w), dtype=np.float32)
+        mask[:32, :32] = 1.0
 
-            result = histogram_match_skin(source, target, mask)
+        result = histogram_match_skin(source, target, mask)
 
-            # Allow tolerance of 3 -- function may have minor
-            # boundary blending effects on adjacent pixels
-            diff = np.abs(
-                result[40:, 40:].astype(int) - source[40:, 40:].astype(int)
-            ).max()
-            assert diff <= 3, (
-                f"Pixels well outside mask should not change. Max diff: {diff}"
-            )
-
+        # Allow tolerance of 3 -- function may have minor
+        # boundary blending effects on adjacent pixels
+        diff = np.abs(result[40:, 40:].astype(int) - source[40:, 40:].astype(int)).max()
+        assert diff <= 3, f"Pixels well outside mask should not change. Max diff: {diff}"
 
     def test_small_image_8x8(self):
         """Very small 8x8 image should work without errors."""
@@ -172,7 +167,7 @@ class TestHistogramMatchSkin:
         result = histogram_match_skin(source, target, mask)
         assert result.shape == source.shape
         assert result.dtype == np.uint8
-    
+
     def test_output_shape(self, face_images):
         source, target, mask = face_images
         result = histogram_match_skin(source, target, mask)
