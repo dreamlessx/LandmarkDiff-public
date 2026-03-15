@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
   <defs>
-    <radialGradient id="bg" cx="50%" cy="45%" r="58%">
+    <radialGradient id="bg" cx="50%" cy="50%" r="58%">
       <stop offset="0%" stop-color="#1e293b"/>
       <stop offset="100%" stop-color="#0f172a"/>
     </radialGradient>
@@ -12,52 +12,57 @@
 
   <circle cx="64" cy="64" r="60" fill="url(#bg)" stroke="#1e40af" stroke-width="1"/>
 
-  <!-- Left half: mask contour (blue, "original") -->
-  <path d="M 64,18 C 54,18 46,22 40,28 C 34,34 31,42 30,50 C 29,58 31,66 35,74 C 39,82 48,88 56,90 L 64,92"
-        fill="none" stroke="#3b82f6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+  <!-- Mask content, centered vertically in the circle -->
+  <g transform="translate(0, 9)">
 
-  <!-- Right half: mask contour (amber, "deformed") -->
-  <path d="M 64,18 C 74,18 82,22 88,28 C 94,34 97,42 98,50 C 99,58 97,66 93,74 C 89,82 80,88 72,90 L 64,92"
-        fill="none" stroke="#f59e0b" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+    <!-- Left half: mask contour (blue, "original") -->
+    <path d="M 64,18 C 54,18 46,22 40,28 C 34,34 31,42 30,50 C 29,58 31,66 35,74 C 39,82 48,88 56,90 L 64,92"
+          fill="none" stroke="#3b82f6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
 
-  <!-- Center divide -->
-  <line x1="64" y1="18" x2="64" y2="92" stroke="#60a5fa" stroke-width="0.5" opacity="0.3"/>
+    <!-- Right half: mask contour (amber, "deformed") -->
+    <path d="M 64,18 C 74,18 82,22 88,28 C 94,34 97,42 98,50 C 99,58 97,66 93,74 C 89,82 80,88 72,90 L 64,92"
+          fill="none" stroke="#f59e0b" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
 
-  <!-- Left eye (narrow angular slit) -->
-  <path d="M 42,44 C 44,40 52,39 56,42 C 52,44 44,45 42,44 Z"
-        fill="none" stroke="#60a5fa" stroke-width="1" opacity="0.85"/>
-  <ellipse cx="49" cy="42" rx="4" ry="1.5" fill="#60a5fa" opacity="0.15"/>
+    <!-- Center divide -->
+    <line x1="64" y1="18" x2="64" y2="92" stroke="#60a5fa" stroke-width="0.5" opacity="0.3"/>
 
-  <!-- Right eye -->
-  <path d="M 86,44 C 84,40 76,39 72,42 C 76,44 84,45 86,44 Z"
-        fill="none" stroke="#f59e0b" stroke-width="1" opacity="0.75"/>
-  <ellipse cx="79" cy="42" rx="4" ry="1.5" fill="#f59e0b" opacity="0.12"/>
+    <!-- Left eye (narrow angular slit) -->
+    <path d="M 42,44 C 44,40 52,39 56,42 C 52,44 44,45 42,44 Z"
+          fill="none" stroke="#60a5fa" stroke-width="1" opacity="0.85"/>
+    <ellipse cx="49" cy="42" rx="4" ry="1.5" fill="#60a5fa" opacity="0.15"/>
 
-  <!-- Nose bridge -->
-  <path d="M 64,35 L 62,48 C 60,54 60,56 61,58 L 64,60 L 67,58 C 68,56 68,54 66,48 L 64,35"
-        fill="none" stroke="#60a5fa" stroke-width="0.8" opacity="0.5"/>
+    <!-- Right eye -->
+    <path d="M 86,44 C 84,40 76,39 72,42 C 76,44 84,45 86,44 Z"
+          fill="none" stroke="#f59e0b" stroke-width="1" opacity="0.75"/>
+    <ellipse cx="79" cy="42" rx="4" ry="1.5" fill="#f59e0b" opacity="0.12"/>
 
-  <!-- Brow ridges -->
-  <path d="M 36,38 C 40,33 50,32 58,35" fill="none" stroke="#3b82f6" stroke-width="0.7" opacity="0.45"/>
-  <path d="M 92,38 C 88,33 78,32 70,35" fill="none" stroke="#3b82f6" stroke-width="0.7" opacity="0.45"/>
+    <!-- Nose bridge -->
+    <path d="M 64,35 L 62,48 C 60,54 60,56 61,58 L 64,60 L 67,58 C 68,56 68,54 66,48 L 64,35"
+          fill="none" stroke="#60a5fa" stroke-width="0.8" opacity="0.5"/>
 
-  <!-- Cheekbone contours -->
-  <path d="M 34,50 C 38,52 44,54 50,54" fill="none" stroke="#3b82f6" stroke-width="0.6" opacity="0.3"/>
-  <path d="M 94,50 C 90,52 84,54 78,54" fill="none" stroke="#3b82f6" stroke-width="0.6" opacity="0.3"/>
+    <!-- Brow ridges -->
+    <path d="M 36,38 C 40,33 50,32 58,35" fill="none" stroke="#3b82f6" stroke-width="0.7" opacity="0.45"/>
+    <path d="M 92,38 C 88,33 78,32 70,35" fill="none" stroke="#3b82f6" stroke-width="0.7" opacity="0.45"/>
 
-  <!-- Mouth hint -->
-  <path d="M 52,70 C 56,68 60,67 64,67 C 68,67 72,68 76,70"
-        fill="none" stroke="#60a5fa" stroke-width="0.6" opacity="0.25"/>
+    <!-- Cheekbone contours -->
+    <path d="M 34,50 C 38,52 44,54 50,54" fill="none" stroke="#3b82f6" stroke-width="0.6" opacity="0.3"/>
+    <path d="M 94,50 C 90,52 84,54 78,54" fill="none" stroke="#3b82f6" stroke-width="0.6" opacity="0.3"/>
 
-  <!-- Jaw contours -->
-  <path d="M 38,68 C 42,76 50,82 58,86" fill="none" stroke="#3b82f6" stroke-width="0.5" opacity="0.25"/>
-  <path d="M 90,68 C 86,76 78,82 70,86" fill="none" stroke="#3b82f6" stroke-width="0.5" opacity="0.25"/>
+    <!-- Mouth hint -->
+    <path d="M 52,70 C 56,68 60,67 64,67 C 68,67 72,68 76,70"
+          fill="none" stroke="#60a5fa" stroke-width="0.6" opacity="0.25"/>
 
-  <!-- Golden ratio proportion guides (very subtle) -->
-  <g stroke="#3b82f6" stroke-width="0.3" opacity="0.12">
-    <line x1="34" y1="35" x2="94" y2="35"/>
-    <line x1="32" y1="50" x2="96" y2="50"/>
-    <line x1="34" y1="60" x2="94" y2="60"/>
-    <line x1="40" y1="74" x2="88" y2="74"/>
+    <!-- Jaw contours -->
+    <path d="M 38,68 C 42,76 50,82 58,86" fill="none" stroke="#3b82f6" stroke-width="0.5" opacity="0.25"/>
+    <path d="M 90,68 C 86,76 78,82 70,86" fill="none" stroke="#3b82f6" stroke-width="0.5" opacity="0.25"/>
+
+    <!-- Golden ratio proportion guides -->
+    <g stroke="#3b82f6" stroke-width="0.3" opacity="0.12">
+      <line x1="34" y1="35" x2="94" y2="35"/>
+      <line x1="32" y1="50" x2="96" y2="50"/>
+      <line x1="34" y1="60" x2="94" y2="60"/>
+      <line x1="40" y1="74" x2="88" y2="74"/>
+    </g>
+
   </g>
 </svg>
