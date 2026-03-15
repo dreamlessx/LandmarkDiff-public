@@ -14,8 +14,16 @@ Classical components:
 
 from __future__ import annotations
 
+import logging
+
 import cv2
 import numpy as np
+
+logger = logging.getLogger(__name__)
+
+# Minimum CodeFormer fidelity weight: below this the codebook dominates
+# and output becomes unacceptably blurry
+_CODEFORMER_MIN_FIDELITY = 0.1
 
 # Singleton model caches -- load once, reuse across calls
 _CODEFORMER_MODEL = None
@@ -233,6 +241,15 @@ def restore_face_codeformer(
     Returns:
         Restored BGR image, or original if CodeFormer unavailable.
     """
+    if fidelity < _CODEFORMER_MIN_FIDELITY:
+        logger.warning(
+            "CodeFormer fidelity_weight=%.2f is below minimum %.2f; "
+            "clamping to avoid blurry output from codebook dominance",
+            fidelity,
+            _CODEFORMER_MIN_FIDELITY,
+        )
+        fidelity = _CODEFORMER_MIN_FIDELITY
+
     try:
         import torch
         from codeformer.basicsr.utils import img2tensor, tensor2img
