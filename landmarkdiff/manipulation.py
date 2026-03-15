@@ -206,6 +206,67 @@ PROCEDURE_LANDMARKS: dict[str, list[int]] = {
         176,
         377,
     ],
+    "alarplasty": [
+        94,
+        141,
+        236,
+        240,
+        274,
+        275,
+        278,
+        279,
+        360,
+        363,
+        370,
+        456,
+        460,
+    ],
+    "canthoplasty": [
+        33,
+        133,
+        155,
+        160,
+        161,
+        173,
+        246,
+        263,
+        362,
+        384,
+        385,
+        390,
+        398,
+        466,
+    ],
+    "buccal_fat_removal": [
+        116,
+        117,
+        118,
+        119,
+        120,
+        121,
+        187,
+        205,
+        206,
+        207,
+        213,
+        345,
+        346,
+        347,
+        348,
+        349,
+        350,
+        411,
+        425,
+        426,
+        427,
+        435,
+    ],
+    "dimpleplasty": [
+        205,
+        206,
+        425,
+        426,
+    ],
 }
 # Default influence radii per procedure (in pixels at 512x512)
 PROCEDURE_RADIUS: dict[str, float] = {
@@ -215,6 +276,10 @@ PROCEDURE_RADIUS: dict[str, float] = {
     "orthognathic": 35.0,
     "brow_lift": 25.0,
     "mentoplasty": 25.0,
+    "alarplasty": 20.0,
+    "canthoplasty": 15.0,
+    "buccal_fat_removal": 30.0,
+    "dimpleplasty": 10.0,
 }
 
 
@@ -700,4 +765,137 @@ def _get_procedure_handles(
                         influence_radius=radius * 0.6,
                     )
                 )
+
+    elif procedure == "alarplasty":
+        # Alar base reduction: narrow nostrils without modifying bridge or tip.
+        # Left alar -> move right (toward midline)
+        left_alar = [240, 236, 141, 363, 370]
+        for idx in left_alar:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([3.0 * scale, 0.0]),
+                        influence_radius=radius,
+                    )
+                )
+        # Right alar -> move left (toward midline)
+        right_alar = [460, 456, 274, 275, 278, 279]
+        for idx in right_alar:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([-3.0 * scale, 0.0]),
+                        influence_radius=radius,
+                    )
+                )
+        # Nose base anchor: very mild inward pull
+        base = [94, 360]
+        for idx in base:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([0.0, 0.3 * scale]),
+                        influence_radius=radius * 0.5,
+                    )
+                )
+
+    elif procedure == "canthoplasty":
+        # Lateral canthoplasty: lift outer eye corners for almond shape.
+        # Left lateral canthus -> move up and slightly outward
+        left_lateral = [33, 246, 161, 160]
+        for idx in left_lateral:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([-1.0 * scale, -2.5 * scale]),
+                        influence_radius=radius,
+                    )
+                )
+        # Right lateral canthus -> move up and slightly outward
+        right_lateral = [263, 466, 384, 385]
+        for idx in right_lateral:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([1.0 * scale, -2.5 * scale]),
+                        influence_radius=radius,
+                    )
+                )
+        # Medial corners: subtle elongation pull outward
+        left_medial = [133, 173, 155]
+        for idx in left_medial:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([-0.5 * scale, -0.5 * scale]),
+                        influence_radius=radius * 0.6,
+                    )
+                )
+        right_medial = [362, 398, 390]
+        for idx in right_medial:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([0.5 * scale, -0.5 * scale]),
+                        influence_radius=radius * 0.6,
+                    )
+                )
+
+    elif procedure == "buccal_fat_removal":
+        # Move lower cheek landmarks medially to simulate reduced buccal volume.
+        # Left cheek -> move right (inward)
+        left_cheek = [116, 117, 118, 119, 120, 121, 205, 206, 207, 213, 187]
+        for idx in left_cheek:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([2.0 * scale, 0.5 * scale]),
+                        influence_radius=radius,
+                    )
+                )
+        # Right cheek -> move left (inward)
+        right_cheek = [345, 346, 347, 348, 349, 350, 425, 426, 427, 435, 411]
+        for idx in right_cheek:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([-2.0 * scale, 0.5 * scale]),
+                        influence_radius=radius,
+                    )
+                )
+
+    elif procedure == "dimpleplasty":
+        # Localized concavity at typical dimple positions on each cheek.
+        # Left dimple: slight inward pull
+        left_dimple = [205, 206]
+        for idx in left_dimple:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([1.5 * scale, 0.5 * scale]),
+                        influence_radius=radius,
+                    )
+                )
+        # Right dimple: slight inward pull
+        right_dimple = [425, 426]
+        for idx in right_dimple:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([-1.5 * scale, 0.5 * scale]),
+                        influence_radius=radius,
+                    )
+                )
+
     return handles

@@ -31,9 +31,13 @@ MASKABLE_PROCEDURES = [
     "orthognathic",
     "brow_lift",
     "mentoplasty",
+    "alarplasty",
+    "canthoplasty",
+    "buccal_fat_removal",
+    "dimpleplasty",
 ]
 
-# All 6 procedures for manipulation tests
+# All procedures for manipulation tests
 ALL_PROCEDURES = [
     "rhinoplasty",
     "blepharoplasty",
@@ -41,6 +45,10 @@ ALL_PROCEDURES = [
     "orthognathic",
     "brow_lift",
     "mentoplasty",
+    "alarplasty",
+    "canthoplasty",
+    "buccal_fat_removal",
+    "dimpleplasty",
 ]
 
 

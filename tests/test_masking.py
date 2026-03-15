@@ -43,7 +43,7 @@ def mock_face():
 class TestMaskConfig:
     """Tests for mask configuration."""
 
-    def test_all_six_procedures_defined(self):
+    def test_all_procedures_defined(self):
         expected = [
             "rhinoplasty",
             "blepharoplasty",
@@ -51,6 +51,10 @@ class TestMaskConfig:
             "orthognathic",
             "brow_lift",
             "mentoplasty",
+            "alarplasty",
+            "canthoplasty",
+            "buccal_fat_removal",
+            "dimpleplasty",
         ]
         assert set(expected) == set(MASK_CONFIG.keys())
         for proc in expected:

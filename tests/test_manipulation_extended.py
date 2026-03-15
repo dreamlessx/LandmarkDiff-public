@@ -60,7 +60,7 @@ class TestDeformationHandle:
 
 
 class TestProcedureData:
-    def test_all_six_procedures_defined(self):
+    def test_all_procedures_defined(self):
         expected = {
             "rhinoplasty",
             "blepharoplasty",
@@ -68,6 +68,10 @@ class TestProcedureData:
             "orthognathic",
             "brow_lift",
             "mentoplasty",
+            "alarplasty",
+            "canthoplasty",
+            "buccal_fat_removal",
+            "dimpleplasty",
         }
         assert set(PROCEDURE_LANDMARKS.keys()) == expected
         assert set(PROCEDURE_RADIUS.keys()) == expected
