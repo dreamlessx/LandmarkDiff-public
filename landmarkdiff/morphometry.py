@@ -136,17 +136,12 @@ class NasalMorphometry:
         chin = pts[CHIN]
         glabella = pts[GLABELLA]
 
-        # Distances
-        alar_width = np.linalg.norm(left_nostril - right_nostril)
-        intercanthal = np.linalg.norm(left_inner_eye - right_inner_eye)
-        face_width = np.linalg.norm(left_cheek - right_cheek)
-        face_height = np.linalg.norm(forehead - chin)
-        nose_length = np.linalg.norm(glabella - nose_tip)
-
-        # Guard against zero division
-        intercanthal = float(max(intercanthal, 1e-6))
-        face_width = float(max(face_width, 1e-6))
-        face_height = float(max(face_height, 1e-6))
+        # Distances (cast to float for mypy compatibility)
+        alar_width: float = float(np.linalg.norm(left_nostril - right_nostril))
+        intercanthal: float = max(float(np.linalg.norm(left_inner_eye - right_inner_eye)), 1e-6)
+        face_width: float = max(float(np.linalg.norm(left_cheek - right_cheek)), 1e-6)
+        face_height: float = max(float(np.linalg.norm(forehead - chin)), 1e-6)
+        nose_length: float = float(np.linalg.norm(glabella - nose_tip))
 
         # Facial midline (between outer eye corners)
         midline_x = (pts[LEFT_OUTER_EYE][0] + pts[RIGHT_OUTER_EYE][0]) / 2
