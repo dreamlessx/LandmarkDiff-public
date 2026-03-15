@@ -78,6 +78,7 @@ class TestProcedureData:
             "lip_augmentation",
             "forehead_reduction",
             "submental_liposuction",
+            "otoplasty",
         }
         assert set(PROCEDURE_LANDMARKS.keys()) == expected
         assert set(PROCEDURE_RADIUS.keys()) == expected

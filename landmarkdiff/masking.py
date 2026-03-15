@@ -444,6 +444,24 @@ MASK_CONFIG: dict[str, MaskParams] = {
         "dilation_px": 30,
         "feather_sigma": 15.0,
     },
+    "otoplasty": {
+        "landmark_indices": [
+            234,
+            127,
+            93,
+            132,
+            162,
+            21,
+            454,
+            356,
+            323,
+            361,
+            389,
+            251,
+        ],
+        "dilation_px": 40,
+        "feather_sigma": 20.0,
+    },
 }
 
 

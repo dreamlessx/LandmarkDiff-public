@@ -41,6 +41,7 @@ MASKABLE_PROCEDURES = [
     "lip_augmentation",
     "forehead_reduction",
     "submental_liposuction",
+    "otoplasty",
 ]
 
 # All procedures for manipulation tests
@@ -61,6 +62,7 @@ ALL_PROCEDURES = [
     "lip_augmentation",
     "forehead_reduction",
     "submental_liposuction",
+    "otoplasty",
 ]
 
 
