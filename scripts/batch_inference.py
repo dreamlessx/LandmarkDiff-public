@@ -39,6 +39,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import gc
 import json
 import logging
 import sys
@@ -404,6 +405,16 @@ def main():
                     lpips,
                     elapsed,
                 )
+
+        # Free memory between images to prevent accumulation
+        gc.collect()
+        try:
+            import torch
+
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+        except ImportError:
+            pass
 
     total_time = time.time() - t_start
 

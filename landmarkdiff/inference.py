@@ -391,6 +391,7 @@ class LandmarkDiffPipeline:
     def is_loaded(self) -> bool:
         return self._pipe is not None or self.mode == "tps"
 
+    @torch.no_grad()
     def generate(
         self,
         image: np.ndarray,
@@ -596,7 +597,9 @@ class LandmarkDiffPipeline:
         if ip_adapter_image is not None and self._ip_adapter_loaded:
             kwargs["ip_adapter_image"] = ip_adapter_image
         result = self._pipe(**kwargs)
-        return pil_to_numpy(result.images[0])
+        output = pil_to_numpy(result.images[0])
+        del result
+        return output
 
     def _generate_img2img(
         self,
@@ -617,7 +620,9 @@ class LandmarkDiffPipeline:
             strength=strength,
             generator=generator,
         )
-        return pil_to_numpy(result.images[0])
+        output = pil_to_numpy(result.images[0])
+        del result
+        return output
 
 
 def estimate_face_view(face: FaceLandmarks) -> dict:
