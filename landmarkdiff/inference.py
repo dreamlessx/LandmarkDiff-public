@@ -4,7 +4,7 @@ Four modes:
 1. ControlNet: CrucibleAI/ControlNetMediaPipeFace + SD1.5 (requires HF auth + GPU)
 2. ControlNet + IP-Adapter: ControlNet with identity preservation via face embeddings
 3. Img2Img: SD1.5 img2img with mask compositing (runs on MPS, no auth needed)
-4. TPS-only: Pure geometric warp — no diffusion model, instant results
+4. TPS-only: Pure geometric warp -- no diffusion model, instant results
 
 Supports MPS (Apple Silicon), CUDA, and CPU backends.
 """
@@ -17,11 +17,6 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-logger = logging.getLogger(__name__)
-
-if TYPE_CHECKING:
-    from landmarkdiff.clinical import ClinicalFlags
-
 import cv2
 import numpy as np
 import torch
@@ -31,6 +26,9 @@ from landmarkdiff.landmarks import FaceLandmarks, extract_landmarks, render_land
 from landmarkdiff.manipulation import apply_procedure_preset
 from landmarkdiff.masking import generate_surgical_mask, mask_to_3channel
 from landmarkdiff.synthetic.tps_warp import warp_image_tps
+
+if TYPE_CHECKING:
+    from landmarkdiff.clinical import ClinicalFlags
 
 logger = logging.getLogger(__name__)
 
@@ -293,13 +291,13 @@ class LandmarkDiffPipeline:
             requires_safety_checker=False,
             **_kw,
         )
-        # DPM++ 2M Karras — produces more photorealistic output than UniPC
+        # DPM++ 2M Karras -- produces more photorealistic output than UniPC
         self._pipe.scheduler = DPMSolverMultistepScheduler.from_config(
             self._pipe.scheduler.config,
             algorithm_type="dpmsolver++",
             use_karras_sigmas=True,
         )
-        # FP32 VAE decode — prevents color banding artifacts on skin tones
+        # FP32 VAE decode -- prevents color banding artifacts on skin tones
         if hasattr(self._pipe, "vae") and self._pipe.vae is not None:
             self._pipe.vae.config.force_upcast = True
         self._apply_device_optimizations()
