@@ -1,7 +1,7 @@
-"""Data cleaning pipeline: scraped images → verified faces → training pairs.
+"""Data cleaning pipeline: raw images -> verified faces -> training pairs.
 
 Integrates the neural face verifier into the data pipeline:
-1. Scan scraped image directories for face quality issues
+1. Scan image directories for face quality issues
 2. Restore fixable images (CodeFormer/GFPGAN/Real-ESRGAN)
 3. Reject unusable images (too distorted, no face, wrong content)
 4. Verify identity preservation after restoration
@@ -9,18 +9,18 @@ Integrates the neural face verifier into the data pipeline:
 6. Output clean, verified face dataset ready for pair generation
 
 Usage:
-    # Clean a single procedure's scraped images
-    python scripts/clean_data.py data/scraped/rhinoplasty/ --output data/clean/rhinoplasty/
+    # Clean a single procedure's images
+    python scripts/clean_data.py data/raw/rhinoplasty/ --output data/clean/rhinoplasty/
 
     # Clean all procedures
-    python scripts/clean_data.py data/scraped/ --all-procedures --output data/clean/
+    python scripts/clean_data.py data/raw/ --all-procedures --output data/clean/
 
     # Dedup + clean
-    python scripts/clean_data.py data/scraped/ --all-procedures --dedup --output data/clean/
+    python scripts/clean_data.py data/raw/ --all-procedures --dedup --output data/clean/
 
 SLURM:
-    sbatch --partition=batch_gpu --gres=gpu:1 --mem=32G --time=8:00:00 \
-           --wrap="python scripts/clean_data.py data/scraped/ --all-procedures --dedup --output data/clean/"
+    sbatch --partition=gpu --gres=gpu:1 --mem=32G --time=8:00:00 \
+           --wrap="python scripts/clean_data.py data/raw/ --all-procedures --dedup --output data/clean/"
 """
 
 from __future__ import annotations
@@ -57,7 +57,7 @@ def validate_face_image(image: np.ndarray) -> dict:
     - Multiple faces (ambiguous — which is the patient?)
     - Face too small (<100px inter-ocular distance)
     - Face occluded (missing key landmarks)
-    - Non-face images that slipped through scraping
+    - Non-face images that slipped through collection
     """
     result = {
         "valid": False,
@@ -231,7 +231,7 @@ def clean_directory(
     dedup_threshold: float = 0.85,
     extensions: tuple[str, ...] = (".jpg", ".jpeg", ".png", ".webp", ".bmp"),
 ) -> dict:
-    """Full data cleaning pipeline for a directory of scraped face images.
+    """Full data cleaning pipeline for a directory of raw face images.
 
     Pipeline:
     1. Validate each image (face detected? usable quality?)
@@ -242,7 +242,7 @@ def clean_directory(
     6. Output clean dataset + comprehensive report
 
     Args:
-        input_dir: Directory of raw scraped images.
+        input_dir: Directory of raw images.
         output_dir: Where to save cleaned images.
         quality_threshold: Min quality score to pass without restoration.
         identity_threshold: Min ArcFace similarity after restoration.
@@ -437,11 +437,11 @@ def _format_report(stats: dict, name: str) -> str:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Clean scraped face images for training",
+        description="Clean raw face images for training",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
-    parser.add_argument("input", help="Input directory of scraped images")
+    parser.add_argument("input", help="Input directory of raw images")
     parser.add_argument("--output", "-o", help="Output directory for clean images")
     parser.add_argument(
         "--all-procedures", action="store_true", help="Process all procedure subdirectories"
