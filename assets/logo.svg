@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="60" fill="#0f172a" stroke="#1e40af" stroke-width="2"/>
+
+  <!-- Simplified face mesh wireframe -->
+  <g stroke="#3b82f6" stroke-width="1" fill="none" opacity="0.7">
+    <!-- Forehead region -->
+    <polygon points="44,30 64,25 54,45"/>
+    <polygon points="64,25 84,30 74,45"/>
+    <polygon points="54,45 64,40 74,45"/>
+    <!-- Cheek / temple region -->
+    <polygon points="44,30 54,45 38,50"/>
+    <polygon points="84,30 74,45 90,50"/>
+    <!-- Mid-face -->
+    <polygon points="38,50 54,45 48,65"/>
+    <polygon points="90,50 74,45 80,65"/>
+    <polygon points="54,45 64,55 48,65"/>
+    <polygon points="74,45 64,55 80,65"/>
+    <!-- Nose bridge -->
+    <polygon points="48,65 64,55 80,65"/>
+    <!-- Lower face -->
+    <polygon points="48,65 64,75 56,85"/>
+    <polygon points="80,65 64,75 72,85"/>
+    <polygon points="64,75 56,85 72,85"/>
+    <!-- Chin -->
+    <polygon points="56,85 64,95 72,85"/>
+  </g>
+
+  <!-- Highlight nodes on right side (deformed) -->
+  <g fill="#60a5fa">
+    <circle cx="84" cy="30" r="2.5"/>
+    <circle cx="90" cy="50" r="2.5"/>
+    <circle cx="80" cy="65" r="2.5"/>
+    <circle cx="72" cy="85" r="2.5"/>
+  </g>
+
+  <!-- Subtle arrow suggesting transformation -->
+  <path d="M 95,60 L 105,60 L 102,56 M 105,60 L 102,64" stroke="#f59e0b" stroke-width="2" fill="none"/>
+
+  <!-- Deformation indicator dots -->
+  <g fill="#f59e0b" opacity="0.6">
+    <circle cx="87" cy="32" r="1.5"/>
+    <circle cx="93" cy="52" r="1.5"/>
+    <circle cx="83" cy="67" r="1.5"/>
+  </g>
+</svg>
