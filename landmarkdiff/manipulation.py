@@ -30,6 +30,42 @@ class DeformationHandle:
     influence_radius: float  # Gaussian RBF radius in pixels
 
 
+@dataclass
+class RegionalIntensity:
+    """Per-sub-region intensity overrides for fine-grained control.
+
+    Each field is a multiplier (0.0 to 2.0) applied to the base
+    intensity for that anatomical sub-region. Default 1.0 means
+    no override (use base intensity as-is).
+
+    Available sub-regions vary by procedure:
+    - rhinoplasty: tip, bridge, alar
+    - blepharoplasty: upper_lid, lower_lid, corners
+    - rhytidectomy: jowl, chin, temple
+    - orthognathic: jaw, chin_projection, lateral_jaw
+    - brow_lift: brow, forehead
+    - mentoplasty: chin_tip, contour, jaw_angle
+    """
+
+    tip: float = 1.0
+    bridge: float = 1.0
+    alar: float = 1.0
+    upper_lid: float = 1.0
+    lower_lid: float = 1.0
+    corners: float = 1.0
+    jowl: float = 1.0
+    chin: float = 1.0
+    temple: float = 1.0
+    jaw: float = 1.0
+    chin_projection: float = 1.0
+    lateral_jaw: float = 1.0
+    brow: float = 1.0
+    forehead: float = 1.0
+    chin_tip: float = 1.0
+    contour: float = 1.0
+    jaw_angle: float = 1.0
+
+
 # Procedure-specific landmark indices from the technical specification
 PROCEDURE_LANDMARKS: dict[str, list[int]] = {
     "rhinoplasty": [
@@ -492,6 +528,7 @@ def apply_procedure_preset(
     clinical_flags: ClinicalFlags | None = None,
     displacement_model_path: str | None = None,
     noise_scale: float = 0.0,
+    regional_intensity: RegionalIntensity | None = None,
 ) -> FaceLandmarks:
     """Apply a surgical procedure preset to landmarks.
 
@@ -547,7 +584,9 @@ def apply_procedure_preset(
     # non-square inputs without asymmetric deformation.
     geo_mean = math.sqrt(face.image_width * face.image_height)
     pixel_scale = geo_mean / 512.0
-    handles = _get_procedure_handles(procedure, indices, scale, radius * pixel_scale)
+    handles = _get_procedure_handles(
+        procedure, indices, scale, radius * pixel_scale, regional_intensity
+    )
 
     # Bell's palsy: remove handles on the affected (paralyzed) side
     if clinical_flags and clinical_flags.bells_palsy:
@@ -639,12 +678,25 @@ def _get_procedure_handles(
     indices: list[int],
     scale: float,
     radius: float,
+    regional: RegionalIntensity | None = None,
 ) -> list[DeformationHandle]:
-    """Build deformation handles per procedure. 2D pixel displacements, calibrated at 512x512."""
+    """Build deformation handles per procedure. 2D pixel displacements, calibrated at 512x512.
+
+    When ``regional`` is provided, per-sub-region multipliers are applied
+    to the displacement magnitudes, allowing fine-grained control over
+    which anatomical areas receive more or less deformation.
+    """
     handles = []
+
+    def _r(region_name: str) -> float:
+        """Get regional multiplier (1.0 if no regional overrides)."""
+        if regional is None:
+            return 1.0
+        return getattr(regional, region_name, 1.0)
 
     if procedure == "rhinoplasty":
         # --- Alar base narrowing: move nostrils inward (toward midline) ---
+        alar_m = _r("alar")
         # left nostril -> move RIGHT (+X)
         left_alar = [240, 236, 141, 363, 370]
         for idx in left_alar:
@@ -652,7 +704,7 @@ def _get_procedure_handles(
                 handles.append(
                     DeformationHandle(
                         landmark_index=idx,
-                        displacement=np.array([2.5 * scale, 0.0]),
+                        displacement=np.array([2.5 * scale * alar_m, 0.0]),
                         influence_radius=radius * 0.6,
                     )
                 )
@@ -663,31 +715,33 @@ def _get_procedure_handles(
                 handles.append(
                     DeformationHandle(
                         landmark_index=idx,
-                        displacement=np.array([-2.5 * scale, 0.0]),
+                        displacement=np.array([-2.5 * scale * alar_m, 0.0]),
                         influence_radius=radius * 0.6,
                     )
                 )
 
         # --- Tip refinement: subtle upward rotation + narrowing ---
+        tip_m = _r("tip")
         tip_indices = [1, 2, 94, 19]
         for idx in tip_indices:
             if idx in indices:
                 handles.append(
                     DeformationHandle(
                         landmark_index=idx,
-                        displacement=np.array([0.0, -2.0 * scale]),
+                        displacement=np.array([0.0, -2.0 * scale * tip_m]),
                         influence_radius=radius * 0.5,
                     )
                 )
 
         # --- Dorsum narrowing: bilateral squeeze of nasal bridge ---
+        bridge_m = _r("bridge")
         dorsum_left = [195, 197, 236]
         for idx in dorsum_left:
             if idx in indices:
                 handles.append(
                     DeformationHandle(
                         landmark_index=idx,
-                        displacement=np.array([1.5 * scale, 0.0]),
+                        displacement=np.array([1.5 * scale * bridge_m, 0.0]),
                         influence_radius=radius * 0.5,
                     )
                 )
@@ -697,13 +751,14 @@ def _get_procedure_handles(
                 handles.append(
                     DeformationHandle(
                         landmark_index=idx,
-                        displacement=np.array([-1.5 * scale, 0.0]),
+                        displacement=np.array([-1.5 * scale * bridge_m, 0.0]),
                         influence_radius=radius * 0.5,
                     )
                 )
 
     elif procedure == "blepharoplasty":
         # --- Upper lid elevation (primary effect) ---
+        ul_m = _r("upper_lid")
         upper_lid_left = [159, 160, 161]  # central upper lid
         upper_lid_right = [386, 385, 384]
         for idx in upper_lid_left + upper_lid_right:
@@ -711,11 +766,12 @@ def _get_procedure_handles(
                 handles.append(
                     DeformationHandle(
                         landmark_index=idx,
-                        displacement=np.array([0.0, -2.0 * scale]),
+                        displacement=np.array([0.0, -2.0 * scale * ul_m]),
                         influence_radius=radius,
                     )
                 )
         # --- Medial/lateral lid corners: less displacement (tapered) ---
+        co_m = _r("corners")
         corner_left = [158, 157, 133, 33]
         corner_right = [387, 388, 362, 263]
         for idx in corner_left + corner_right:
@@ -723,11 +779,12 @@ def _get_procedure_handles(
                 handles.append(
                     DeformationHandle(
                         landmark_index=idx,
-                        displacement=np.array([0.0, -0.8 * scale]),
+                        displacement=np.array([0.0, -0.8 * scale * co_m]),
                         influence_radius=radius * 0.7,
                     )
                 )
         # --- Subtle lower lid tightening ---
+        ll_m = _r("lower_lid")
         lower_lid_left = [145, 153, 154]
         lower_lid_right = [374, 380, 381]
         for idx in lower_lid_left + lower_lid_right:
@@ -735,7 +792,7 @@ def _get_procedure_handles(
                 handles.append(
                     DeformationHandle(
                         landmark_index=idx,
-                        displacement=np.array([0.0, 0.5 * scale]),
+                        displacement=np.array([0.0, 0.5 * scale * ll_m]),
                         influence_radius=radius * 0.5,
                     )
                 )
@@ -743,13 +800,14 @@ def _get_procedure_handles(
     elif procedure == "rhytidectomy":
         # Different displacement vectors by anatomical sub-region.
         # Jowl area: strongest lift (upward + toward ear)
+        jw_m = _r("jowl")
         jowl_left = [132, 136, 172, 58, 150, 176]
         for idx in jowl_left:
             if idx in indices:
                 handles.append(
                     DeformationHandle(
                         landmark_index=idx,
-                        displacement=np.array([-2.5 * scale, -3.0 * scale]),
+                        displacement=np.array([-2.5 * scale * jw_m, -3.0 * scale * jw_m]),
                         influence_radius=radius,
                     )
                 )
@@ -759,22 +817,24 @@ def _get_procedure_handles(
                 handles.append(
                     DeformationHandle(
                         landmark_index=idx,
-                        displacement=np.array([2.5 * scale, -3.0 * scale]),
+                        displacement=np.array([2.5 * scale * jw_m, -3.0 * scale * jw_m]),
                         influence_radius=radius,
                     )
                 )
         # Chin/submental: upward only (no lateral)
+        ch_m = _r("chin")
         chin = [152, 148, 377, 378]
         for idx in chin:
             if idx in indices:
                 handles.append(
                     DeformationHandle(
                         landmark_index=idx,
-                        displacement=np.array([0.0, -2.0 * scale]),
+                        displacement=np.array([0.0, -2.0 * scale * ch_m]),
                         influence_radius=radius * 0.8,
                     )
                 )
         # Temple/upper face: very mild lift
+        tm_m = _r("temple")
         temple_left = [10, 21, 54, 67, 103, 109, 162, 127]
         temple_right = [284, 297, 332, 338, 323, 356, 389, 454]
         for idx in temple_left:
@@ -782,7 +842,7 @@ def _get_procedure_handles(
                 handles.append(
                     DeformationHandle(
                         landmark_index=idx,
-                        displacement=np.array([-0.5 * scale, -1.0 * scale]),
+                        displacement=np.array([-0.5 * scale * tm_m, -1.0 * scale * tm_m]),
                         influence_radius=radius * 0.6,
                     )
                 )
@@ -791,7 +851,7 @@ def _get_procedure_handles(
                 handles.append(
                     DeformationHandle(
                         landmark_index=idx,
-                        displacement=np.array([0.5 * scale, -1.0 * scale]),
+                        displacement=np.array([0.5 * scale * tm_m, -1.0 * scale * tm_m]),
                         influence_radius=radius * 0.6,
                     )
                 )
