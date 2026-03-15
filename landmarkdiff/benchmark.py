@@ -211,3 +211,153 @@ class Timer:
 
     def __exit__(self, *args: Any) -> None:
         self.end_time = time.perf_counter()
+
+
+# ---------------------------------------------------------------------------
+# Pipeline profiler
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class StageProfile:
+    """Timing profile for a single pipeline stage."""
+
+    name: str
+    times_ms: list[float] = field(default_factory=list)
+
+    @property
+    def mean_ms(self) -> float:
+        return sum(self.times_ms) / len(self.times_ms) if self.times_ms else 0.0
+
+    @property
+    def min_ms(self) -> float:
+        return min(self.times_ms) if self.times_ms else 0.0
+
+    @property
+    def max_ms(self) -> float:
+        return max(self.times_ms) if self.times_ms else 0.0
+
+    @property
+    def total_ms(self) -> float:
+        return sum(self.times_ms)
+
+    @property
+    def count(self) -> int:
+        return len(self.times_ms)
+
+
+class PipelineProfiler:
+    """Profile each stage of the LandmarkDiff pipeline.
+
+    Collects per-stage wall-clock timings to identify bottlenecks
+    across landmark extraction, manipulation, masking, and inference.
+
+    Usage:
+        profiler = PipelineProfiler()
+        with profiler.stage("landmark_extraction"):
+            face = extract_landmarks(image)
+        with profiler.stage("manipulation"):
+            modified = apply_procedure_preset(face, "rhinoplasty")
+        print(profiler.summary())
+    """
+
+    def __init__(self) -> None:
+        self._stages: dict[str, StageProfile] = {}
+        self._order: list[str] = []
+
+    def stage(self, name: str) -> _StageTimer:
+        """Context manager that times a named pipeline stage."""
+        if name not in self._stages:
+            self._stages[name] = StageProfile(name=name)
+            self._order.append(name)
+        return _StageTimer(self._stages[name])
+
+    def record(self, name: str, elapsed_ms: float) -> None:
+        """Manually record a stage timing."""
+        if name not in self._stages:
+            self._stages[name] = StageProfile(name=name)
+            self._order.append(name)
+        self._stages[name].times_ms.append(elapsed_ms)
+
+    @property
+    def stages(self) -> list[StageProfile]:
+        return [self._stages[n] for n in self._order]
+
+    @property
+    def total_ms(self) -> float:
+        return sum(s.total_ms for s in self._stages.values())
+
+    def bottleneck(self) -> str | None:
+        """Name of the slowest stage by mean time."""
+        if not self._stages:
+            return None
+        return max(self._stages.values(), key=lambda s: s.mean_ms).name
+
+    def summary(self) -> str:
+        """Text summary of pipeline stage timings."""
+        if not self._stages:
+            return "No profile data."
+
+        total = self.total_ms
+        header = (
+            f"{'Stage':>25s} | {'Mean(ms)':>10s} | {'Min':>8s}"
+            f" | {'Max':>8s} | {'%':>6s} | {'N':>4s}"
+        )
+        lines = ["Pipeline Profile", header, "-" * len(header)]
+
+        for name in self._order:
+            s = self._stages[name]
+            pct = (s.total_ms / total * 100) if total > 0 else 0
+            lines.append(
+                f"{s.name:>25s} | "
+                f"{s.mean_ms:>10.1f} | "
+                f"{s.min_ms:>8.1f} | "
+                f"{s.max_ms:>8.1f} | "
+                f"{pct:>5.1f}% | "
+                f"{s.count:>4d}"
+            )
+
+        lines.append("-" * len(header))
+        lines.append(f"{'Total':>25s} | {total:>10.1f}")
+        bn = self.bottleneck()
+        if bn:
+            lines.append(f"Bottleneck: {bn}")
+        return "\n".join(lines)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Export profile data as a dictionary."""
+        return {
+            "stages": {
+                name: {
+                    "mean_ms": round(self._stages[name].mean_ms, 2),
+                    "min_ms": round(self._stages[name].min_ms, 2),
+                    "max_ms": round(self._stages[name].max_ms, 2),
+                    "total_ms": round(self._stages[name].total_ms, 2),
+                    "count": self._stages[name].count,
+                }
+                for name in self._order
+            },
+            "total_ms": round(self.total_ms, 2),
+            "bottleneck": self.bottleneck(),
+        }
+
+    def reset(self) -> None:
+        """Clear all recorded timings."""
+        self._stages.clear()
+        self._order.clear()
+
+
+class _StageTimer:
+    """Internal context manager for PipelineProfiler.stage()."""
+
+    def __init__(self, profile: StageProfile) -> None:
+        self._profile = profile
+        self._start: float = 0.0
+
+    def __enter__(self) -> _StageTimer:
+        self._start = time.perf_counter()
+        return self
+
+    def __exit__(self, *args: Any) -> None:
+        elapsed = (time.perf_counter() - self._start) * 1000
+        self._profile.times_ms.append(elapsed)
