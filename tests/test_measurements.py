@@ -10,6 +10,7 @@ from landmarkdiff.measurements import (
     PROCEDURE_CALIBRATION,
     calibrate_intensity,
     compute_canthal_tilt,
+    compute_cephalometric,
     compute_cervicomental_angle,
     compute_dental_show,
     compute_facial_fifths,
@@ -301,3 +302,29 @@ class TestCalibrateIntensity:
         mid = calibrate_intensity("rhinoplasty", 50.0)
         high = calibrate_intensity("rhinoplasty", 80.0)
         assert low < mid < high
+
+
+class TestCephalometric:
+    def test_returns_dataclass(self, mock_face):
+        result = compute_cephalometric(mock_face)
+        assert hasattr(result, "sna_angle")
+        assert hasattr(result, "snb_angle")
+        assert hasattr(result, "anb_angle")
+        assert hasattr(result, "skeletal_class")
+
+    def test_angles_positive(self, mock_face):
+        result = compute_cephalometric(mock_face)
+        assert result.sna_angle > 0
+        assert result.snb_angle > 0
+
+    def test_anb_is_difference(self, mock_face):
+        result = compute_cephalometric(mock_face)
+        assert abs(result.anb_angle - (result.sna_angle - result.snb_angle)) < 1e-5
+
+    def test_skeletal_class_valid(self, mock_face):
+        result = compute_cephalometric(mock_face)
+        assert result.skeletal_class in ("I", "II", "III")
+
+    def test_wits_nonnegative(self, mock_face):
+        result = compute_cephalometric(mock_face)
+        assert result.wits_appraisal_px >= 0

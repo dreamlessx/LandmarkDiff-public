@@ -741,3 +741,94 @@ def calibrate_intensity(
         return displacement_mm * px_per_mm
 
     return displacement_mm
+
+
+# ---------------------------------------------------------------------------
+# Cephalometric analysis (orthognathic)
+# ---------------------------------------------------------------------------
+
+# MediaPipe proxies for cephalometric points:
+# Sella (S): approximated by mid-skull depth (not visible in photos,
+#   but we use the nasion-to-ear midpoint as a rough proxy)
+# Nasion (N): bridge of nose = landmark 168
+# Point A: deepest concavity of maxilla = subnasale area, landmark 164
+# Point B: deepest concavity of mandible = chin area, landmark 18
+_CEPH_NASION = 168
+_CEPH_POINT_A = 164  # maxillary concavity near subnasale
+_CEPH_POINT_B = 18  # mandibular concavity near chin
+
+
+@dataclass
+class CephalometricAnalysis:
+    """Cephalometric angle measurements for orthognathic planning.
+
+    Standard cephalometric angles:
+    - SNA: maxillary position relative to cranial base (normal: 82 +/- 2)
+    - SNB: mandibular position relative to cranial base (normal: 80 +/- 2)
+    - ANB: skeletal relationship (normal: 2 +/- 2)
+      - ANB > 4: Class II (retrognathic mandible)
+      - ANB < 0: Class III (prognathic mandible)
+    """
+
+    sna_angle: float  # degrees
+    snb_angle: float  # degrees
+    anb_angle: float  # SNA - SNB
+    skeletal_class: str  # "I", "II", or "III"
+    wits_appraisal_px: float  # A-B distance along occlusal plane (pixels)
+
+
+def compute_cephalometric(face: FaceLandmarks) -> CephalometricAnalysis:
+    """Compute basic cephalometric angles from frontal landmarks.
+
+    Note: true cephalometric analysis requires a lateral cephalogram.
+    This function approximates SNA/SNB/ANB using frontal photo landmarks
+    with depth (z-coordinate) as a proxy for AP position.
+
+    The approximation uses:
+    - Sella: midpoint between left and right ear (landmarks 234, 454)
+    - Nasion: bridge of nose (landmark 168)
+    - Point A: maxillary concavity (landmark 164)
+    - Point B: mandibular concavity (landmark 18)
+
+    Args:
+        face: Extracted face landmarks.
+
+    Returns:
+        CephalometricAnalysis with angle measurements.
+    """
+    nasion = _pixel(face, _CEPH_NASION)
+    point_a = _pixel(face, _CEPH_POINT_A)
+    point_b = _pixel(face, _CEPH_POINT_B)
+
+    # Sella approximation: midpoint of ear landmarks
+    left_ear = _pixel(face, 234)
+    right_ear = _pixel(face, 454)
+    sella = (left_ear + right_ear) / 2.0
+
+    # SNA angle: Sella-Nasion-Point_A
+    sna = _angle_between(sella, nasion, point_a)
+
+    # SNB angle: Sella-Nasion-Point_B
+    snb = _angle_between(sella, nasion, point_b)
+
+    # ANB = SNA - SNB (simplified)
+    anb = sna - snb
+
+    # Skeletal classification
+    if anb > 4.0:
+        skeletal_class = "II"
+    elif anb < 0.0:
+        skeletal_class = "III"
+    else:
+        skeletal_class = "I"
+
+    # Wits appraisal: horizontal distance between A and B
+    wits = float(abs(point_a[0] - point_b[0]))
+
+    return CephalometricAnalysis(
+        sna_angle=float(sna),
+        snb_angle=float(snb),
+        anb_angle=float(anb),
+        skeletal_class=skeletal_class,
+        wits_appraisal_px=wits,
+    )
