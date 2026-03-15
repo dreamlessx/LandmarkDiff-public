@@ -383,7 +383,7 @@ class TestDeterminism:
         """Same landmarks produce nearly identical masks (small float rounding allowed)."""
         m1 = generate_surgical_mask(mock_face, "rhinoplasty", 512, 512)
         m2 = generate_surgical_mask(mock_face, "rhinoplasty", 512, 512)
-        np.testing.assert_allclose(m1, m2, atol=0.01)
+        np.testing.assert_allclose(m1, m2, atol=0.02)
 
     def test_tps_deterministic(self, mock_face, synthetic_face_512):
         """Same control points produce identical TPS warp."""

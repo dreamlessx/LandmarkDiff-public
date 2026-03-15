@@ -1,145 +1,135 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
   <defs>
-    <!-- Background gradient -->
-    <radialGradient id="bgGrad" cx="50%" cy="45%" r="55%">
+    <radialGradient id="bg" cx="50%" cy="42%" r="62%">
       <stop offset="0%" stop-color="#1e293b"/>
       <stop offset="100%" stop-color="#0f172a"/>
     </radialGradient>
-    <!-- Outer ring gradient -->
-    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1e40af"/>
-      <stop offset="50%" stop-color="#3b82f6"/>
-      <stop offset="100%" stop-color="#1e40af"/>
-    </linearGradient>
-    <!-- Soft amber glow -->
-    <filter id="amberGlow" x="-80%" y="-80%" width="260%" height="260%">
-      <feGaussianBlur stdDeviation="3" result="blur"/>
-      <feFlood flood-color="#f59e0b" flood-opacity="0.35" result="color"/>
-      <feComposite in="color" in2="blur" operator="in" result="shadow"/>
-      <feComposite in="SourceGraphic" in2="shadow" operator="over"/>
+    <filter id="glow">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-    <!-- Subtle mesh glow -->
-    <filter id="meshGlow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="1" result="blur"/>
-      <feFlood flood-color="#3b82f6" flood-opacity="0.15" result="color"/>
-      <feComposite in="color" in2="blur" operator="in" result="shadow"/>
-      <feComposite in="SourceGraphic" in2="shadow" operator="over"/>
+    <filter id="soft">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
 
-  <!-- Background circle with gradient -->
-  <circle cx="64" cy="64" r="60" fill="url(#bgGrad)" stroke="url(#ringGrad)" stroke-width="2"/>
+  <!-- Background -->
+  <circle cx="64" cy="64" r="60" fill="url(#bg)" stroke="#1e40af" stroke-width="1.2"/>
+  <circle cx="64" cy="64" r="58.5" fill="none" stroke="#3b82f6" stroke-width="0.3" opacity="0.2"/>
 
-  <!-- Subtle inner ring accent -->
-  <circle cx="64" cy="64" r="57" fill="none" stroke="#1e40af" stroke-width="0.5" opacity="0.3"/>
+  <!-- Golden ratio face outline - clean proportional wireframe -->
+  <g stroke="#3b82f6" stroke-width="0.6" fill="none" opacity="0.5" filter="url(#soft)">
+    <!-- Face oval outline -->
+    <path d="M 64,16 C 44,16 32,28 30,44 C 28,58 30,70 36,80 C 42,90 52,98 64,100 C 76,98 86,90 92,80 C 98,70 100,58 98,44 C 96,28 84,16 64,16 Z"/>
 
-  <!-- Face mesh wireframe (enhanced detail) -->
-  <g stroke="#3b82f6" stroke-width="0.8" fill="none" opacity="0.75" filter="url(#meshGlow)">
-    <!-- Forehead region -->
-    <polygon points="44,28 54,24 54,38"/>
-    <polygon points="54,24 64,22 54,38"/>
-    <polygon points="64,22 74,24 74,38"/>
-    <polygon points="74,24 84,28 74,38"/>
-    <polygon points="54,38 64,35 74,38"/>
-    <polygon points="44,28 54,38 38,42"/>
-    <polygon points="84,28 74,38 90,42"/>
-    <!-- Eye region - left -->
-    <polygon points="38,42 54,38 46,48"/>
-    <polygon points="54,38 64,35 56,48"/>
-    <polygon points="46,48 56,48 50,44"/>
-    <polygon points="38,42 46,48 36,52"/>
-    <!-- Eye region - right -->
-    <polygon points="90,42 74,38 82,48"/>
-    <polygon points="74,38 64,35 72,48"/>
-    <polygon points="82,48 72,48 78,44"/>
-    <polygon points="90,42 82,48 92,52"/>
-    <!-- Mid-face / nose bridge -->
-    <polygon points="56,48 64,46 72,48"/>
-    <polygon points="36,52 46,48 42,60"/>
-    <polygon points="92,52 82,48 86,60"/>
-    <polygon points="46,48 56,48 48,60"/>
-    <polygon points="82,48 72,48 80,60"/>
-    <polygon points="56,48 64,56 48,60"/>
-    <polygon points="72,48 64,56 80,60"/>
-    <!-- Nose -->
-    <polygon points="48,60 64,56 80,60"/>
-    <polygon points="48,60 56,68 64,64"/>
-    <polygon points="80,60 72,68 64,64"/>
-    <polygon points="56,68 64,64 72,68"/>
-    <!-- Lower face -->
-    <polygon points="42,60 48,60 46,72"/>
-    <polygon points="86,60 80,60 82,72"/>
-    <polygon points="46,72 56,68 52,78"/>
-    <polygon points="82,72 72,68 76,78"/>
-    <polygon points="56,68 72,68 64,76"/>
-    <polygon points="56,68 64,76 52,78"/>
-    <polygon points="72,68 64,76 76,78"/>
+    <!-- Horizontal proportion lines -->
+    <line x1="34" y1="38" x2="94" y2="38" opacity="0.3"/>
+    <line x1="36" y1="50" x2="92" y2="50" opacity="0.3"/>
+    <line x1="38" y1="62" x2="90" y2="62" opacity="0.3"/>
+    <line x1="40" y1="74" x2="88" y2="74" opacity="0.3"/>
+    <line x1="48" y1="86" x2="80" y2="86" opacity="0.3"/>
+
+    <!-- Vertical center line -->
+    <line x1="64" y1="16" x2="64" y2="100" opacity="0.25"/>
+  </g>
+
+  <!-- Triangulated mesh overlay -->
+  <g stroke="#3b82f6" stroke-width="0.65" fill="none" opacity="0.55">
+    <!-- Forehead triangles -->
+    <polygon points="64,20 50,26 58,34"/>
+    <polygon points="64,20 78,26 70,34"/>
+    <polygon points="58,34 64,30 70,34"/>
+    <polygon points="50,26 42,34 58,34"/>
+    <polygon points="78,26 86,34 70,34"/>
+
+    <!-- Brow/temple -->
+    <polygon points="42,34 38,44 50,40"/>
+    <polygon points="86,34 90,44 78,40"/>
+    <polygon points="50,40 58,34 58,42"/>
+    <polygon points="78,40 70,34 70,42"/>
+
+    <!-- Eye region -->
+    <polygon points="38,44 50,40 46,50"/>
+    <polygon points="50,40 58,42 54,50"/>
+    <polygon points="46,50 54,50 50,46"/>
+    <polygon points="90,44 78,40 82,50"/>
+    <polygon points="78,40 70,42 74,50"/>
+    <polygon points="82,50 74,50 78,46"/>
+
+    <!-- Nose bridge -->
+    <polygon points="58,42 64,40 70,42"/>
+    <polygon points="58,42 64,52 54,50"/>
+    <polygon points="70,42 64,52 74,50"/>
+
+    <!-- Nose tip -->
+    <polygon points="64,52 58,58 62,62"/>
+    <polygon points="64,52 70,58 66,62"/>
+    <polygon points="62,62 64,64 66,62"/>
+
+    <!-- Cheek -->
+    <polygon points="38,44 46,50 40,60"/>
+    <polygon points="90,44 82,50 88,60"/>
+    <polygon points="46,50 54,50 50,60"/>
+    <polygon points="82,50 74,50 78,60"/>
+
+    <!-- Mouth -->
+    <polygon points="50,60 58,58 54,68"/>
+    <polygon points="78,60 70,58 74,68"/>
+    <polygon points="58,58 62,62 58,68"/>
+    <polygon points="70,58 66,62 70,68"/>
+    <polygon points="62,62 64,64 64,68"/>
+    <polygon points="66,62 64,64 64,68"/>
+
+    <!-- Jaw -->
+    <polygon points="40,60 50,60 44,72"/>
+    <polygon points="88,60 78,60 84,72"/>
+    <polygon points="44,72 54,68 50,78"/>
+    <polygon points="84,72 74,68 78,78"/>
+
     <!-- Chin -->
-    <polygon points="52,78 64,76 58,86"/>
-    <polygon points="76,78 64,76 70,86"/>
-    <polygon points="58,86 64,76 70,86"/>
-    <polygon points="58,86 64,94 70,86"/>
+    <polygon points="54,68 58,68 56,74"/>
+    <polygon points="74,68 70,68 72,74"/>
+    <polygon points="56,74 64,68 64,80"/>
+    <polygon points="72,74 64,68 64,80"/>
+    <polygon points="50,78 56,74 64,80"/>
+    <polygon points="78,78 72,74 64,80"/>
   </g>
 
-  <!-- Left-side mesh nodes (original, blue) -->
-  <g fill="#60a5fa" opacity="0.8">
-    <circle cx="44" cy="28" r="1.8"/>
-    <circle cx="54" cy="24" r="1.8"/>
-    <circle cx="64" cy="22" r="1.8"/>
-    <circle cx="54" cy="38" r="1.8"/>
-    <circle cx="64" cy="35" r="1.8"/>
-    <circle cx="38" cy="42" r="1.8"/>
-    <circle cx="46" cy="48" r="1.8"/>
-    <circle cx="56" cy="48" r="1.8"/>
-    <circle cx="50" cy="44" r="1.8"/>
-    <circle cx="36" cy="52" r="1.8"/>
-    <circle cx="48" cy="60" r="1.8"/>
-    <circle cx="64" cy="56" r="1.8"/>
-    <circle cx="42" cy="60" r="1.8"/>
-    <circle cx="46" cy="72" r="1.8"/>
-    <circle cx="56" cy="68" r="1.8"/>
-    <circle cx="64" cy="64" r="1.8"/>
-    <circle cx="52" cy="78" r="1.8"/>
-    <circle cx="64" cy="76" r="1.8"/>
-    <circle cx="58" cy="86" r="1.8"/>
-    <circle cx="64" cy="94" r="1.8"/>
+  <!-- Key nodes - left side (blue, original) -->
+  <g fill="#60a5fa" opacity="0.65">
+    <circle cx="50" cy="26" r="1.5"/>
+    <circle cx="42" cy="34" r="1.5"/>
+    <circle cx="50" cy="40" r="1.5"/>
+    <circle cx="46" cy="50" r="1.5"/>
+    <circle cx="58" cy="58" r="1.5"/>
+    <circle cx="54" cy="68" r="1.5"/>
+    <circle cx="50" cy="78" r="1.5"/>
+    <circle cx="64" cy="20" r="1.5"/>
+    <circle cx="64" cy="52" r="1.5"/>
+    <circle cx="64" cy="80" r="1.5"/>
   </g>
 
-  <!-- Right-side static nodes (blue) -->
-  <g fill="#60a5fa" opacity="0.8">
-    <circle cx="74" cy="24" r="1.8"/>
-    <circle cx="74" cy="38" r="1.8"/>
-    <circle cx="64" cy="46" r="1.8"/>
-    <circle cx="72" cy="68" r="1.8"/>
-    <circle cx="70" cy="86" r="1.8"/>
+  <!-- Right side nodes - amber (deformed) with glow -->
+  <g fill="#f59e0b" filter="url(#glow)">
+    <circle cx="80" cy="26" r="1.8"/>
+    <circle cx="90" cy="44" r="1.8"/>
+    <circle cx="82" cy="50" r="1.8"/>
+    <circle cx="70" cy="58" r="1.8"/>
+    <circle cx="74" cy="68" r="1.8"/>
+    <circle cx="78" cy="78" r="1.8"/>
   </g>
 
-  <!-- Deformed nodes on right side (amber, with glow) -->
-  <g filter="url(#amberGlow)">
-    <circle cx="84" cy="28" r="2.2" fill="#f59e0b"/>
-    <circle cx="90" cy="42" r="2.2" fill="#f59e0b"/>
-    <circle cx="82" cy="48" r="2.2" fill="#f59e0b"/>
-    <circle cx="78" cy="44" r="2.0" fill="#f59e0b"/>
-    <circle cx="92" cy="52" r="2.2" fill="#f59e0b"/>
-    <circle cx="80" cy="60" r="2.2" fill="#f59e0b"/>
-    <circle cx="86" cy="60" r="2.0" fill="#f59e0b"/>
-    <circle cx="82" cy="72" r="2.0" fill="#f59e0b"/>
-    <circle cx="76" cy="78" r="2.0" fill="#f59e0b"/>
-    <circle cx="72" cy="48" r="2.0" fill="#f59e0b"/>
+  <!-- Deformation displacement arrows (subtle) -->
+  <g stroke="#f59e0b" stroke-width="1" fill="none" opacity="0.5" stroke-linecap="round">
+    <line x1="66" y1="62" x2="68" y2="59"/>
+    <line x1="70" y1="58" x2="72" y2="55"/>
+    <line x1="64" y1="52" x2="65" y2="49"/>
   </g>
 
-  <!-- Deformation indicator arrows -->
-  <g stroke="#f59e0b" stroke-width="1.2" fill="none" opacity="0.7">
-    <line x1="84" y1="28" x2="87" y2="30"/>
-    <line x1="90" y1="42" x2="93" y2="44"/>
-    <line x1="82" y1="48" x2="85" y2="50"/>
-    <line x1="80" y1="60" x2="83" y2="62"/>
-    <line x1="86" y1="60" x2="89" y2="62"/>
-  </g>
-
-  <!-- Transformation arrow -->
-  <g opacity="0.65">
-    <path d="M 97,55 L 107,55" stroke="#f59e0b" stroke-width="1.8" fill="none"/>
-    <path d="M 105,52 L 108,55 L 105,58" stroke="#f59e0b" stroke-width="1.8" fill="none" stroke-linejoin="round"/>
+  <!-- Glow behind displacement area -->
+  <g fill="#f59e0b" opacity="0.15">
+    <circle cx="69" cy="56" r="8"/>
+    <circle cx="66" cy="60" r="5"/>
   </g>
 </svg>
