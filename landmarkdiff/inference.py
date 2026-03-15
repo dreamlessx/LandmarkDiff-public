@@ -489,26 +489,40 @@ class LandmarkDiffPipeline:
                 num_inference_steps = min(num_inference_steps, 4)
                 guidance_scale = min(guidance_scale, 1.5)
             ip_image = numpy_to_pil(image_512) if self._ip_adapter_loaded else None
-            raw_output = self._generate_controlnet(
-                image_512,
-                landmark_img,
-                prompt,
-                num_inference_steps,
-                guidance_scale,
-                controlnet_conditioning_scale,
-                generator,
-                ip_adapter_image=ip_image,
-            )
+            try:
+                raw_output = self._generate_controlnet(
+                    image_512,
+                    landmark_img,
+                    prompt,
+                    num_inference_steps,
+                    guidance_scale,
+                    controlnet_conditioning_scale,
+                    generator,
+                    ip_adapter_image=ip_image,
+                )
+            except torch.cuda.OutOfMemoryError as exc:
+                torch.cuda.empty_cache()
+                raise RuntimeError(
+                    "GPU out of memory during inference. Try reducing "
+                    "num_inference_steps or switching to mode='tps' for CPU-only."
+                ) from exc
         else:
-            raw_output = self._generate_img2img(
-                tps_warped,
-                mask,
-                prompt,
-                num_inference_steps,
-                guidance_scale,
-                strength,
-                generator,
-            )
+            try:
+                raw_output = self._generate_img2img(
+                    tps_warped,
+                    mask,
+                    prompt,
+                    num_inference_steps,
+                    guidance_scale,
+                    strength,
+                    generator,
+                )
+            except torch.cuda.OutOfMemoryError as exc:
+                torch.cuda.empty_cache()
+                raise RuntimeError(
+                    "GPU out of memory during inference. Try reducing "
+                    "num_inference_steps or switching to mode='tps' for CPU-only."
+                ) from exc
 
         # Step 2: Post-processing for photorealism (neural + classical pipeline)
         identity_check = None
