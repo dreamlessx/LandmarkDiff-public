@@ -30,6 +30,135 @@ from dataclasses import dataclass, field
 import cv2
 import numpy as np
 
+# Per-procedure displacement thresholds (in normalized [0,1] coordinates at 512x512).
+# max_displacement: maximum allowed single-landmark displacement
+# max_asymmetry_ratio: maximum left-right displacement ratio imbalance
+# affected_region: primary anatomical region (from LANDMARK_REGIONS)
+PROCEDURE_THRESHOLDS: dict[str, dict[str, object]] = {
+    "rhinoplasty": {
+        "max_displacement": 0.05,
+        "max_asymmetry_ratio": 0.15,
+        "affected_region": "nose",
+    },
+    "blepharoplasty": {
+        "max_displacement": 0.03,
+        "max_asymmetry_ratio": 0.10,
+        "affected_region": "eye_left",
+    },
+    "rhytidectomy": {
+        "max_displacement": 0.06,
+        "max_asymmetry_ratio": 0.20,
+        "affected_region": "jawline",
+    },
+    "orthognathic": {
+        "max_displacement": 0.08,
+        "max_asymmetry_ratio": 0.20,
+        "affected_region": "lips",
+    },
+    "brow_lift": {
+        "max_displacement": 0.04,
+        "max_asymmetry_ratio": 0.12,
+        "affected_region": "eyebrow_left",
+    },
+    "mentoplasty": {
+        "max_displacement": 0.04,
+        "max_asymmetry_ratio": 0.15,
+        "affected_region": "jawline",
+    },
+}
+
+
+@dataclass
+class DisplacementViolation:
+    """A single landmark displacement violation."""
+
+    landmark_index: int
+    displacement: float
+    threshold: float
+    region: str
+
+
+@dataclass
+class DisplacementValidation:
+    """Result of displacement field validation."""
+
+    valid: bool
+    violations: list[DisplacementViolation]
+    max_displacement: float
+    mean_displacement: float
+    procedure: str
+
+    def summary(self) -> str:
+        status = "VALID" if self.valid else "INVALID"
+        lines = [
+            f"Displacement validation: {status} ({self.procedure})",
+            f"  max: {self.max_displacement:.4f}, mean: {self.mean_displacement:.4f}",
+        ]
+        if self.violations:
+            lines.append(f"  {len(self.violations)} violations:")
+            for v in self.violations[:5]:
+                lines.append(
+                    f"    landmark {v.landmark_index}: {v.displacement:.4f} "
+                    f"> {v.threshold:.4f} ({v.region})"
+                )
+            if len(self.violations) > 5:
+                lines.append(f"    ... and {len(self.violations) - 5} more")
+        return "\n".join(lines)
+
+
+def validate_displacement_field(
+    landmarks_orig: np.ndarray,
+    landmarks_manip: np.ndarray,
+    procedure: str,
+) -> DisplacementValidation:
+    """Validate that landmark displacements fall within procedure-specific bounds.
+
+    Args:
+        landmarks_orig: Original landmarks (N, 2+), normalized [0, 1].
+        landmarks_manip: Manipulated landmarks (N, 2+), normalized [0, 1].
+        procedure: Surgical procedure name.
+
+    Returns:
+        DisplacementValidation with per-landmark violation details.
+    """
+    from landmarkdiff.manipulation import PROCEDURE_LANDMARKS
+
+    n = min(len(landmarks_orig), len(landmarks_manip))
+    orig = landmarks_orig[:n, :2]
+    manip = landmarks_manip[:n, :2]
+    displacements = np.linalg.norm(manip - orig, axis=1)
+
+    thresholds = PROCEDURE_THRESHOLDS.get(procedure)
+    max_thresh = 0.05 if thresholds is None else float(thresholds["max_displacement"])
+
+    # Get procedure landmark indices (expected to move)
+    proc_indices = set(PROCEDURE_LANDMARKS.get(procedure, []))
+
+    # For non-procedure landmarks, use a tighter threshold
+    non_proc_thresh = max_thresh * 0.5
+
+    violations = []
+    for i in range(n):
+        thresh = max_thresh if i in proc_indices else non_proc_thresh
+        if displacements[i] > thresh:
+            region = "procedure" if i in proc_indices else "non-procedure"
+            violations.append(
+                DisplacementViolation(
+                    landmark_index=i,
+                    displacement=float(displacements[i]),
+                    threshold=thresh,
+                    region=region,
+                )
+            )
+
+    return DisplacementValidation(
+        valid=len(violations) == 0,
+        violations=violations,
+        max_displacement=float(displacements.max()),
+        mean_displacement=float(displacements.mean()),
+        procedure=procedure,
+    )
+
 
 @dataclass
 class SafetyResult:
@@ -205,15 +334,29 @@ class SafetyValidator:
         result.details["max_displacement"] = max_disp
         result.details["mean_displacement"] = mean_disp
 
-        # Check maximum displacement
-        if max_disp > self.max_displacement_fraction:
+        # Use procedure-specific threshold when available, fall back to global
+        threshold = self.max_displacement_fraction
+        if procedure and procedure in PROCEDURE_THRESHOLDS:
+            threshold = float(PROCEDURE_THRESHOLDS[procedure]["max_displacement"])
+
+        if max_disp > threshold:
             result.add_failure(
                 "anatomical_magnitude",
                 f"Maximum displacement {max_disp:.4f} exceeds threshold "
-                f"{self.max_displacement_fraction}",
+                f"{threshold} ({procedure or 'global'})",
             )
         else:
             result.add_pass("anatomical_magnitude")
+
+        # Run detailed displacement field validation when procedure is known
+        if procedure:
+            validation = validate_displacement_field(landmarks_orig, landmarks_manip, procedure)
+            result.details["displacement_validation"] = validation.summary()
+            if not validation.valid:
+                result.add_warning(
+                    "displacement_field",
+                    f"{len(validation.violations)} landmarks exceed procedure bounds",
+                )
 
         # Check procedure-specific regions
         if procedure:
