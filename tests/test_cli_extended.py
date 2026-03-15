@@ -14,6 +14,8 @@ from unittest.mock import patch
 
 import pytest
 
+from landmarkdiff import __version__
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
@@ -41,7 +43,7 @@ class TestMainEntryPoint:
             timeout=30,
         )
         assert result.returncode == 0
-        assert "0.2.2" in result.stdout
+        assert __version__ in result.stdout
 
     def test_no_args_prints_help(self):
         """No arguments prints help (no crash)."""
@@ -239,7 +241,7 @@ class TestMainModuleDirectImport:
                 main()
             assert exc.value.code == 0
         out = capsys.readouterr().out
-        assert "0.2.2" in out
+        assert __version__ in out
 
     def test_main_no_args_shows_help(self, capsys):
         """__main__.main with no args shows help without crashing."""
