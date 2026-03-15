@@ -425,7 +425,7 @@ class TestContourData:
         assert NOSE_BOTTOM in ALL_CONTOURS
 
     def test_all_contours_count(self):
-        assert len(ALL_CONTOURS) == 11
+        assert len(ALL_CONTOURS) == 12
 
     @pytest.mark.parametrize("contour", ALL_CONTOURS)
     def test_contour_indices_valid(self, contour):

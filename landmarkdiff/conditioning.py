@@ -105,6 +105,9 @@ NOSE_BRIDGE_UPPER = [8, 9, 168, 6, 8]  # close the glabella/nasion gap
 NOSE_TIP = [94, 2, 326, 327, 294, 278, 279, 275, 274, 460, 456, 363, 370]
 NOSE_BOTTOM = [19, 1, 274, 275, 440, 344, 278, 294, 460, 305, 289, 392]
 
+# Lower jaw fill: connects landmarks 172-177 that JAWLINE_CONTOUR skips
+JAWLINE_LOWER = [172, 173, 174, 175, 176, 177, 152, 400, 378, 379, 365, 397]
+
 OUTER_LIPS = [
     61,
     146,
@@ -162,6 +165,7 @@ _CANNY_DEFAULT_MEDIAN = 128.0  # fallback when no non-zero pixels exist
 
 ALL_CONTOURS = [
     JAWLINE_CONTOUR,
+    JAWLINE_LOWER,
     LEFT_EYE_CONTOUR,
     RIGHT_EYE_CONTOUR,
     LEFT_EYEBROW,

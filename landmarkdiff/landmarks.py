@@ -422,6 +422,10 @@ def render_landmark_image(
         for a, b in [(8, 9), (8, 168), (8, 6), (9, 168)]:
             cv2.line(canvas, tuple(pts[a]), tuple(pts[b]), (192, 192, 192), 1, cv2.LINE_AA)
 
+        # Supplement sparse jawline edges (landmarks 172-177)
+        for a, b in [(172, 173), (173, 174), (174, 175), (175, 176), (176, 177)]:
+            cv2.line(canvas, tuple(pts[a]), tuple(pts[b]), (192, 192, 192), 1, cv2.LINE_AA)
+
     except (ImportError, AttributeError):
         # Fallback: draw colored dots if tessellation not available
         idx_to_color: dict[int, tuple[int, int, int]] = {}
