@@ -61,12 +61,13 @@ class TestPixelCoords:
         coords = face.pixel_coords
         np.testing.assert_array_almost_equal(coords[0], [0.0, 0.0])
 
-    def test_one_maps_to_image_size(self):
+    def test_one_maps_to_max_index(self):
+        """Normalized 1.0 maps to width-1 / height-1 (clamped to valid index)."""
         landmarks = np.ones((478, 3), dtype=np.float32)
         face = FaceLandmarks(landmarks=landmarks, image_width=640, image_height=480, confidence=1.0)
         coords = face.pixel_coords
-        assert abs(coords[0, 0] - 640.0) < 0.01
-        assert abs(coords[0, 1] - 480.0) < 0.01
+        assert abs(coords[0, 0] - 639.0) < 0.01
+        assert abs(coords[0, 1] - 479.0) < 0.01
 
     def test_is_copy_not_view(self):
         face = _make_face()

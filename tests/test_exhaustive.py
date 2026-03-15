@@ -2326,17 +2326,18 @@ class TestEdgeCases:
         assert result.confidence == 0.0
 
     def test_negative_landmarks(self):
-        """Landmarks outside [0,1] should still work (clipping happens in rendering)."""
+        """Negative normalized landmarks should be clamped to 0."""
         landmarks = np.full((478, 3), -0.5, dtype=np.float32)
         face = FaceLandmarks(landmarks=landmarks, image_width=512, image_height=512, confidence=1.0)
         coords = face.pixel_coords
-        assert np.any(coords < 0)
+        assert np.all(coords >= 0)
 
     def test_landmarks_greater_than_one(self):
+        """Landmarks > 1.0 should be clamped to image bounds."""
         landmarks = np.full((478, 3), 1.5, dtype=np.float32)
         face = FaceLandmarks(landmarks=landmarks, image_width=512, image_height=512, confidence=1.0)
         coords = face.pixel_coords
-        assert np.any(coords > 512)
+        assert np.all(coords <= 511)
 
     def test_nan_landmarks(self):
         landmarks = np.full((478, 3), np.nan, dtype=np.float32)
