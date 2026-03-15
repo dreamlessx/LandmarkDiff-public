@@ -184,9 +184,7 @@ def restore_face_gfpgan(
         return image
 
     # GFPGAN requires 3-channel BGR input
-    if image.ndim == 2:
-        image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-    elif image.ndim == 3 and image.shape[2] == 1:
+    if image.ndim == 2 or (image.ndim == 3 and image.shape[2] == 1):
         image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
     try:
@@ -244,9 +242,7 @@ def restore_face_codeformer(
         return image
 
     # CodeFormer requires 3-channel BGR input
-    if image.ndim == 2:
-        image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-    elif image.ndim == 3 and image.shape[2] == 1:
+    if image.ndim == 2 or (image.ndim == 3 and image.shape[2] == 1):
         image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
     try:
