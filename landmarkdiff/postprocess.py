@@ -352,11 +352,23 @@ def enhance_background_realesrgan(
         h, w = image.shape[:2]
         enhanced = cv2.resize(enhanced, (w, h), interpolation=cv2.INTER_LANCZOS4)
 
-        # Only apply enhancement to background (outside mask)
+        # Only apply enhancement to background (outside mask).
+        # Dilate and feather the mask to create a buffer zone at the
+        # hair-skin boundary where Real-ESRGAN introduces halo artifacts.
         mask_f = mask.astype(np.float32)
         if mask_f.max() > 1.0:
             mask_f /= 255.0
-        mask_3ch = np.stack([mask_f] * 3, axis=-1) if mask_f.ndim == 2 else mask_f
+
+        # Dilate mask by ~3% of image size to push enhanced region
+        # away from high-contrast face boundary
+        dilate_px = max(int(min(h, w) * 0.03), 3)
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (dilate_px, dilate_px))
+        mask_2d = mask_f if mask_f.ndim == 2 else mask_f[:, :, 0]
+        dilated = cv2.dilate(mask_2d, kernel)
+
+        # Gaussian feather the dilated edge for a smooth transition
+        feathered = cv2.GaussianBlur(dilated, (dilate_px * 2 + 1, dilate_px * 2 + 1), 0)
+        mask_3ch = np.stack([feathered] * 3, axis=-1)
 
         # Keep face region from original, use enhanced for background
         result = np.clip(
