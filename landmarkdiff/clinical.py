@@ -221,3 +221,195 @@ def adjust_mask_for_keloid(
     # Use blurred version only in keloid regions
     result = modified * (1.0 - keloid_mask) + blurred * keloid_mask
     return np.clip(result, 0.0, 1.0)
+
+
+# Bilateral landmark pairs (left_index, right_index) for asymmetry analysis.
+# Covers jawline, eyes, eyebrows, nose, and lips.
+BILATERAL_PAIRS: list[tuple[int, int]] = [
+    # Jawline
+    (234, 454),
+    (132, 361),
+    (58, 288),
+    (172, 397),
+    (136, 365),
+    (150, 379),
+    (176, 400),
+    (93, 323),
+    (127, 356),
+    (162, 389),
+    (21, 251),
+    (54, 284),
+    (103, 332),
+    (67, 297),
+    (109, 338),
+    # Eyes
+    (33, 263),
+    (133, 362),
+    (160, 385),
+    (159, 386),
+    (158, 387),
+    (157, 388),
+    (161, 384),
+    (246, 466),
+    (173, 398),
+    (145, 374),
+    (153, 380),
+    (154, 381),
+    (155, 390),
+    (144, 373),
+    (163, 382),
+    (7, 249),
+    # Eyebrows
+    (70, 300),
+    (63, 293),
+    (105, 334),
+    (66, 296),
+    (107, 336),
+    (55, 285),
+    (65, 295),
+    (52, 282),
+    (53, 283),
+    (46, 276),
+    # Nose (bilateral parts)
+    (240, 460),
+    (236, 456),
+    (141, 370),
+    (195, 419),
+    (197, 399),
+    # Lips
+    (61, 291),
+    (146, 375),
+    (91, 321),
+    (181, 405),
+    (84, 314),
+    (78, 308),
+    (95, 324),
+    (88, 318),
+    (178, 402),
+]
+
+
+@dataclass
+class AsymmetryResult:
+    """Facial asymmetry analysis result."""
+
+    score: float  # overall asymmetry (0 = perfect symmetry, higher = more asymmetric)
+    region_scores: dict[str, float]  # per-region asymmetry scores
+    pair_deviations: np.ndarray  # per-pair deviation magnitudes
+
+    def summary(self) -> str:
+        lines = [f"Asymmetry score: {self.score:.4f}"]
+        for region, s in sorted(self.region_scores.items()):
+            lines.append(f"  {region}: {s:.4f}")
+        return "\n".join(lines)
+
+
+def quantify_asymmetry(face: FaceLandmarks) -> AsymmetryResult:
+    """Compute facial asymmetry by comparing bilateral landmark positions.
+
+    For each left-right pair, reflects the left landmark across the face
+    midline and measures its distance to the corresponding right landmark.
+    Distances are normalized by inter-ocular distance for scale invariance.
+
+    Args:
+        face: Extracted face landmarks.
+
+    Returns:
+        AsymmetryResult with overall score, per-region scores, and
+        per-pair deviation magnitudes.
+    """
+    coords = face.landmarks[:, :2].copy()
+
+    # Midline x-coordinate: average of nose tip (1) and nasion (168)
+    midline_x = (coords[1, 0] + coords[168, 0]) / 2.0
+
+    # Inter-ocular distance for normalization
+    iod = np.linalg.norm(coords[33] - coords[263])
+    if iod < 1e-6:
+        iod = 1.0
+
+    # Reflect left landmarks across midline and compare to right
+    deviations = np.zeros(len(BILATERAL_PAIRS))
+    for i, (left_idx, right_idx) in enumerate(BILATERAL_PAIRS):
+        left = coords[left_idx].copy()
+        right = coords[right_idx].copy()
+        # Reflect left across midline: mirror x coordinate
+        left[0] = 2.0 * midline_x - left[0]
+        deviations[i] = np.linalg.norm(left - right) / iod
+
+    # Per-region scores using pair index ranges
+    region_ranges = {
+        "jawline": (0, 15),
+        "eyes": (15, 31),
+        "eyebrows": (31, 41),
+        "nose": (41, 46),
+        "lips": (46, 55),
+    }
+    region_scores = {}
+    for region, (start, end) in region_ranges.items():
+        region_devs = deviations[start:end]
+        region_scores[region] = float(np.mean(region_devs)) if len(region_devs) > 0 else 0.0
+
+    return AsymmetryResult(
+        score=float(np.mean(deviations)),
+        region_scores=region_scores,
+        pair_deviations=deviations,
+    )
+
+
+def visualize_asymmetry(
+    image: np.ndarray,
+    face: FaceLandmarks,
+    result: AsymmetryResult,
+    threshold: float = 0.05,
+) -> np.ndarray:
+    """Overlay asymmetry visualization on a face image.
+
+    Draws circles on landmark pairs that exceed the asymmetry threshold,
+    colored by severity (green=mild, yellow=moderate, red=severe).
+
+    Args:
+        image: BGR face image.
+        face: Extracted face landmarks.
+        result: Asymmetry analysis result.
+        threshold: Minimum deviation to highlight.
+
+    Returns:
+        Annotated image copy.
+    """
+    canvas = image.copy()
+    coords = face.pixel_coords
+
+    for i, (left_idx, right_idx) in enumerate(BILATERAL_PAIRS):
+        dev = result.pair_deviations[i]
+        if dev < threshold:
+            continue
+
+        # Color by severity
+        if dev < 0.08:
+            color = (0, 255, 0)  # green - mild
+        elif dev < 0.15:
+            color = (0, 255, 255)  # yellow - moderate
+        else:
+            color = (0, 0, 255)  # red - severe
+
+        radius = max(3, int(dev * 50))
+        for idx in (left_idx, right_idx):
+            pt = (int(coords[idx, 0]), int(coords[idx, 1]))
+            cv2.circle(canvas, pt, radius, color, 2, cv2.LINE_AA)
+
+    # Add score text
+    h = canvas.shape[0]
+    font_scale = max(0.4, h / 512.0 * 0.6)
+    cv2.putText(
+        canvas,
+        f"Asymmetry: {result.score:.3f}",
+        (10, h - 15),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        font_scale,
+        (255, 255, 255),
+        1,
+        cv2.LINE_AA,
+    )
+
+    return canvas
