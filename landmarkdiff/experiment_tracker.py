@@ -32,11 +32,14 @@ Usage::
 from __future__ import annotations
 
 import json
+import logging
 import os
 import socket
 import time
 from datetime import datetime
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 class ExperimentTracker:
@@ -90,7 +93,7 @@ class ExperimentTracker:
         metrics_path = self.dir / str(exp["metrics_file"])
         metrics_path.touch()
 
-        print(f"Experiment started: {exp_id} ({name})")
+        logger.info("Experiment started: %s (%s)", exp_id, name)
         return exp_id
 
     def log_metric(self, exp_id: str, step: int | None = None, **metrics) -> None:
@@ -126,7 +129,7 @@ class ExperimentTracker:
             exp["results"] = results
 
         self._save_index()
-        print(f"Experiment {exp_id} {status}")
+        logger.info("Experiment %s %s", exp_id, status)
 
     def get_metrics(self, exp_id: str) -> list[dict]:
         """Load all logged metrics for an experiment."""
@@ -181,20 +184,33 @@ class ExperimentTracker:
         """Print a summary table of all experiments."""
         experiments = self.list_experiments()
         if not experiments:
-            print("No experiments found.")
+            logger.info("No experiments found.")
             return
 
         # Header
-        print(f"{'ID':<10} {'Name':<20} {'Status':<12} {'FID':>6} {'SSIM':>6} {'LPIPS':>6}")
-        print("-" * 70)
+        logger.info(
+            "%s %s %s %s %s %s",
+            "ID".ljust(10),
+            "Name".ljust(20),
+            "Status".ljust(12),
+            "FID".rjust(6),
+            "SSIM".rjust(6),
+            "LPIPS".rjust(6),
+        )
+        logger.info("-" * 70)
 
         for exp in experiments:
             fid = f"{exp.get('fid', '')}" if "fid" in exp else "--"
             ssim = f"{exp.get('ssim', ''):.4f}" if "ssim" in exp else "--"
             lpips = f"{exp.get('lpips', ''):.4f}" if "lpips" in exp else "--"
-            print(
-                f"{exp['id']:<10} {exp['name']:<20}"
-                f" {exp['status']:<12} {fid:>6} {ssim:>6} {lpips:>6}"
+            logger.info(
+                "%s %s %s %s %s %s",
+                exp["id"].ljust(10),
+                exp["name"].ljust(20),
+                exp["status"].ljust(12),
+                fid.rjust(6),
+                ssim.rjust(6),
+                lpips.rjust(6),
             )
 
     def get_best(self, metric: str = "fid", lower_is_better: bool = True) -> str | None:

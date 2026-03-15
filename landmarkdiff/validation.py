@@ -4,13 +4,14 @@ Periodically generates sample images from the validation set, computes
 metrics (SSIM, LPIPS, NME, identity similarity), and logs results
 to WandB and/or disk.
 
-Designed for use with train_controlnet.py — call at regular intervals
+Designed for use with train_controlnet.py -- call at regular intervals
 during training to monitor quality without disrupting the training loop.
 """
 
 from __future__ import annotations
 
 import json
+import logging
 import time
 from pathlib import Path
 
@@ -19,6 +20,8 @@ import torch
 from PIL import Image
 
 from landmarkdiff.evaluation import compute_lpips, compute_ssim
+
+logger = logging.getLogger(__name__)
 
 
 class ValidationCallback:
@@ -270,14 +273,17 @@ class ValidationCallback:
         proc_summary = " | ".join(
             f"{p}: SSIM={v['ssim_mean']:.3f}" for p, v in sorted(per_procedure.items())
         )
-        print(
-            f"  Validation @ step {global_step}: "
-            f"SSIM={metrics['ssim_mean']:.4f}+/-{metrics['ssim_std']:.4f} "
-            f"LPIPS={metrics['lpips_mean']:.4f}+/-{metrics['lpips_std']:.4f} "
-            f"({metrics['time_seconds']:.1f}s)"
+        logger.info(
+            "  Validation @ step %d: SSIM=%.4f+/-%.4f LPIPS=%.4f+/-%.4f (%.1fs)",
+            global_step,
+            metrics["ssim_mean"],
+            metrics["ssim_std"],
+            metrics["lpips_mean"],
+            metrics["lpips_std"],
+            metrics["time_seconds"],
         )
         if proc_summary:
-            print(f"    Per-procedure: {proc_summary}")
+            logger.info("    Per-procedure: %s", proc_summary)
 
         return metrics
 

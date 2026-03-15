@@ -9,6 +9,7 @@ Augmentations are applied to INPUT only, never to target (ground truth).
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
@@ -25,6 +26,8 @@ from landmarkdiff.manipulation import (
 from landmarkdiff.masking import generate_surgical_mask
 from landmarkdiff.synthetic.augmentation import apply_clinical_augmentation
 from landmarkdiff.synthetic.tps_warp import warp_image_tps
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -152,7 +155,7 @@ def generate_pairs_from_directory(
         if image is None:
             consecutive_failures += 1
             if consecutive_failures > len(image_files):
-                print(f"Warning: {consecutive_failures} consecutive failures, stopping early")
+                logger.warning("%d consecutive failures, stopping early", consecutive_failures)
                 break
             continue
 
@@ -172,7 +175,7 @@ def generate_pairs_from_directory(
             if _quality_cache[cache_key] < min_quality:
                 quality_rejects += 1
                 if quality_rejects % 100 == 0:
-                    print(f"  Quality filter: {quality_rejects} images rejected so far")
+                    logger.info("  Quality filter: %d images rejected so far", quality_rejects)
                 consecutive_failures += 1
                 if consecutive_failures > len(image_files):
                     break
@@ -186,11 +189,11 @@ def generate_pairs_from_directory(
         else:
             consecutive_failures += 1
             if consecutive_failures > len(image_files):
-                print(f"Warning: {consecutive_failures} consecutive failures, stopping early")
+                logger.warning("%d consecutive failures, stopping early", consecutive_failures)
                 break
 
     if quality_rejects > 0:
-        print(f"Quality filter: rejected {quality_rejects} low-quality source images")
+        logger.info("Quality filter: rejected %d low-quality source images", quality_rejects)
 
 
 def save_pair(pair: TrainingPair, output_dir: Path, index: int) -> None:

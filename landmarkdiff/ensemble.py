@@ -21,8 +21,12 @@ Usage:
 
 from __future__ import annotations
 
+import logging
+
 import cv2
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 class EnsembleInference:
@@ -238,7 +242,7 @@ def ensemble_inference(
 
     image = cv2.imread(image_path)
     if image is None:
-        print(f"ERROR: Cannot read image: {image_path}")
+        logger.error("Cannot read image: %s", image_path)
         return
 
     image = cv2.resize(image, (512, 512))
@@ -253,7 +257,7 @@ def ensemble_inference(
     )
     ensemble.load()
 
-    print(f"Generating ensemble ({n_samples} samples, strategy={strategy})...")
+    logger.info("Generating ensemble (%d samples, strategy=%s)...", n_samples, strategy)
     result = ensemble.generate(
         image,
         procedure=procedure,
@@ -269,9 +273,11 @@ def ensemble_inference(
     for i, output in enumerate(result["outputs"]):
         cv2.imwrite(str(out / f"sample_{i:02d}.png"), output)
         score = result["scores"][i]
-        print(
-            f"  Sample {i}: score={score:.4f}"
-            + (" <-- selected" if i == result.get("selected_idx") else "")
+        logger.info(
+            "  Sample %d: score=%.4f%s",
+            i,
+            score,
+            " <-- selected" if i == result.get("selected_idx") else "",
         )
 
     # Comparison grid
@@ -281,11 +287,12 @@ def ensemble_inference(
     grid = np.hstack(panels_small)
     cv2.imwrite(str(out / "comparison_grid.png"), grid)
 
-    print(f"\nEnsemble output saved: {out / 'ensemble_output.png'}")
+    logger.info("Ensemble output saved: %s", out / "ensemble_output.png")
     if result.get("selected_idx", -1) >= 0:
-        print(
-            f"Selected sample: {result['selected_idx']} "
-            f"(score={result['scores'][result['selected_idx']]:.4f})"
+        logger.info(
+            "Selected sample: %d (score=%.4f)",
+            result["selected_idx"],
+            result["scores"][result["selected_idx"]],
         )
 
 
