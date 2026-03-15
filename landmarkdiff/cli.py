@@ -24,9 +24,9 @@ def cmd_infer(args: argparse.Namespace) -> None:
 
     import cv2
 
-    from landmarkdiff.inference import LandmarkDiffPipeline
+    from landmarkdiff.inference import LandmarkDiffPipeline, load_image
 
-    image = cv2.imread(args.image)
+    image = load_image(args.image)
     if image is None:
         logger.error("Cannot read image: %s", args.image)
         sys.exit(1)
@@ -121,12 +121,11 @@ def cmd_config(args: argparse.Namespace) -> None:
 
 def cmd_validate(args: argparse.Namespace) -> None:
     """Run safety validation on an output image."""
-    import cv2
-
+    from landmarkdiff.inference import load_image
     from landmarkdiff.safety import SafetyValidator
 
-    input_img = cv2.imread(args.input)
-    output_img = cv2.imread(args.output_image)
+    input_img = load_image(args.input)
+    output_img = load_image(args.output_image)
 
     if input_img is None or output_img is None:
         logger.error("Cannot read input or output image.")
