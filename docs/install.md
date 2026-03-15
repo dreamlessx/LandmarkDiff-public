@@ -106,28 +106,33 @@ pip install torch torchvision
 
 ## Docker
 
-### Docker Compose (recommended)
-
-```bash
-# Build the image
-docker build -t landmarkdiff .
-
-# Run the Gradio demo
-docker compose up landmarkdiff
-# Open http://localhost:7860
-
-# Run training (requires GPU)
-docker compose --profile training up train
-```
-
 ### CPU-only Docker
 
+For demos that only need TPS (geometric warping) mode:
+
 ```bash
-docker build -f Dockerfile.cpu -t landmarkdiff-cpu .
-docker run -p 7860:7860 landmarkdiff-cpu
+docker build -f Dockerfile.cpu -t landmarkdiff:cpu .
+docker run -p 7860:7860 landmarkdiff:cpu
 ```
 
-The Docker images use CUDA 12.1 + Python 3.11 and include all dependencies. GPU passthrough requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
+### GPU Docker
+
+For ControlNet and diffusion-based inference (requires NVIDIA GPU):
+
+```bash
+docker build -f Dockerfile.gpu -t landmarkdiff:gpu .
+docker run --gpus all -p 7860:7860 landmarkdiff:gpu
+```
+
+GPU passthrough requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html). See [Docker GPU Setup](docker-gpu.md) for detailed prerequisites, VRAM requirements by GPU tier, verification steps, and troubleshooting.
+
+### Docker Compose
+
+```bash
+docker compose up app       # CPU demo on :7860
+docker compose up gpu       # GPU demo on :7861
+docker compose --profile training run train  # training (GPU)
+```
 
 ## Apptainer / Singularity (HPC)
 

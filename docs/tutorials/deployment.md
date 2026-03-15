@@ -41,24 +41,29 @@ The CPU Dockerfile uses `python:3.11-slim`, installs CPU-only PyTorch from `http
 For ControlNet and diffusion-based inference:
 
 ```bash
-# Build
-docker build -t landmarkdiff .
+# Build the GPU image (runtime CUDA, smaller footprint)
+docker build -t landmarkdiff:gpu -f Dockerfile.gpu .
 
 # Run with GPU passthrough
-docker run --gpus all -p 7860:7860 landmarkdiff
+docker run --gpus all -p 7860:7860 landmarkdiff:gpu
 ```
 
-The GPU Dockerfile uses `nvidia/cuda:12.1.1-devel-ubuntu22.04` with Python 3.11. It requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) on the host.
+`Dockerfile.gpu` uses `nvidia/cuda:12.1.1-runtime-ubuntu22.04` with Python 3.11. It requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) on the host.
+
+For detailed GPU prerequisites, VRAM requirements by GPU tier, verification steps, and troubleshooting, see the [Docker GPU Setup](../docker-gpu.md) guide.
 
 ### Docker Compose
 
-The `docker-compose.yml` defines four services:
+The `docker-compose.yml` defines five services:
 
 ```bash
 # CPU demo (default)
 docker compose up app
 
-# GPU demo
+# GPU demo (runtime image, recommended)
+docker compose up gpu
+
+# GPU demo (devel image, for compiling extensions)
 docker compose up app-gpu
 
 # Build Sphinx docs
@@ -73,7 +78,8 @@ docker compose --profile training run train
 | Service | Dockerfile | GPU | Port | Description |
 |---------|-----------|-----|------|-------------|
 | `app` | Dockerfile.cpu | No | 7860 | TPS-mode Gradio demo |
-| `app-gpu` | Dockerfile | Yes (1 GPU) | 7860 | Full ControlNet Gradio demo |
+| `gpu` | Dockerfile.gpu | Yes (1 GPU) | 7861 | GPU inference (runtime image) |
+| `app-gpu` | Dockerfile | Yes (1 GPU) | 7860 | GPU inference (devel image) |
 | `docs` | python:3.11-slim | No | -- | Sphinx documentation builder |
 | `train` | Dockerfile | Yes (1 GPU) | -- | ControlNet training |
 

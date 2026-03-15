@@ -1,0 +1,42 @@
+FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+
+# System dependencies for OpenCV and MediaPipe
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.11 \
+    python3.11-venv \
+    python3-pip \
+    libgl1 \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN ln -sf /usr/bin/python3.11 /usr/bin/python3 && \
+    ln -sf /usr/bin/python3.11 /usr/bin/python
+
+WORKDIR /app
+
+# Copy source code (needed for editable install)
+COPY pyproject.toml .
+COPY landmarkdiff/ landmarkdiff/
+COPY scripts/ scripts/
+COPY configs/ configs/
+
+# Install PyTorch with CUDA 12.1 support, then project dependencies
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir torch torchvision \
+        --index-url https://download.pytorch.org/whl/cu121 && \
+    pip install --no-cache-dir -e ".[app]"
+
+# Pre-download MediaPipe model on build
+RUN python -c "import mediapipe" 2>/dev/null || true
+
+EXPOSE 7860
+
+# Default: launch Gradio demo with GPU-accelerated inference
+CMD ["python", "scripts/app.py", "--server_name", "0.0.0.0"]

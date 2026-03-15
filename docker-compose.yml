@@ -2,15 +2,19 @@
 #
 # Services:
 #   app       - Main LandmarkDiff Gradio demo (CPU-only, lightweight)
-#   app-gpu   - GPU-accelerated variant using nvidia runtime
+#   gpu       - GPU-accelerated demo using runtime CUDA image (recommended)
+#   app-gpu   - GPU-accelerated demo using devel CUDA image
 #   docs      - Sphinx documentation builder
 #   train     - Training service (GPU required, use with: docker compose run train)
 #
 # Usage:
 #   docker compose up app           # CPU demo on :7860
-#   docker compose up app-gpu       # GPU demo on :7860
+#   docker compose up gpu           # GPU demo on :7861
+#   docker compose up app-gpu       # GPU demo on :7860 (devel image)
 #   docker compose run docs         # Build Sphinx docs into docs/_build/
 #   docker compose --profile training run train  # Run training
+#
+# GPU setup: see docs/docker-gpu.md for prerequisites and troubleshooting.
 
 services:
   # ── CPU app (default) ─────────────────────────────────────────
@@ -36,8 +40,36 @@ services:
       retries: 3
       start_period: 30s
 
-  # ── GPU app ───────────────────────────────────────────────────
+  # ── GPU app (runtime image) ───────────────────────────────────
+  # GPU-accelerated demo using the smaller runtime CUDA image.
+  # Requires nvidia-container-toolkit installed on the host.
+  # Access at http://localhost:7861
+  # See docs/docker-gpu.md for setup instructions.
+  gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
+    ports:
+      - "7861:7860"
+    volumes:
+      - ./data:/app/data
+      - ./checkpoints:/app/checkpoints
+      - ./models:/app/models
+      - model-cache:/root/.cache
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+    restart: unless-stopped
+
+  # ── GPU app (devel image) ────────────────────────────────────
   # Full GPU-accelerated demo with ControlNet inference.
+  # Uses the larger devel CUDA image (needed if compiling extensions).
   # Requires nvidia-container-toolkit installed on the host.
   # Access at http://localhost:7860
   app-gpu:

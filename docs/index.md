@@ -737,18 +737,24 @@ Full dependency list in [pyproject.toml](pyproject.toml).
 ## Docker
 
 ```bash
-# Build
-docker build -t landmarkdiff .
+# CPU-only demo (TPS mode, no GPU required)
+docker build -t landmarkdiff:cpu -f Dockerfile.cpu .
+docker run -p 7860:7860 landmarkdiff:cpu
 
-# Run the Gradio demo
-docker compose up landmarkdiff
-# Open http://localhost:7860
-
-# Run training (requires GPU)
-docker compose --profile training up train
+# GPU-accelerated demo (ControlNet inference)
+docker build -t landmarkdiff:gpu -f Dockerfile.gpu .
+docker run --gpus all -p 7860:7860 landmarkdiff:gpu
 ```
 
-The Dockerfile uses CUDA 12.1 + Python 3.11 and installs all dependencies including the Gradio app. GPU passthrough requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
+Or with Docker Compose:
+
+```bash
+docker compose up app       # CPU demo on :7860
+docker compose up gpu       # GPU demo on :7861
+docker compose --profile training run train  # training (GPU)
+```
+
+GPU passthrough requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html). See [Docker GPU Setup](docker-gpu.md) for prerequisites, VRAM requirements by GPU tier, and troubleshooting.
 
 For HPC environments using Apptainer/Singularity, see [containers/](containers/).
 
@@ -910,6 +916,7 @@ tutorials/custom_procedures
 tutorials/training
 tutorials/evaluation
 tutorials/deployment
+docker-gpu
 GPU_TRAINING_GUIDE
 ```
 
