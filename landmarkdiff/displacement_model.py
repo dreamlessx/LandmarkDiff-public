@@ -636,6 +636,19 @@ class DisplacementModel:
         else:
             raise ValueError(f"Unrecognized displacement model format. Keys: {data.files[:10]}")
 
+        # Validate loaded model is not empty
+        if not model.stats:
+            raise ValueError(
+                f"Displacement model at {path} contains no procedure data. "
+                f"File may be corrupted or empty. Keys found: {data.files[:10]}"
+            )
+        for proc, stats in model.stats.items():
+            if not stats:
+                raise ValueError(
+                    f"Displacement model at {path} has no statistics for "
+                    f"procedure '{proc}'. File may be corrupted."
+                )
+
         model._fitted = True
         logger.info(
             "Loaded displacement model from %s (%d procedures, %s samples)",
