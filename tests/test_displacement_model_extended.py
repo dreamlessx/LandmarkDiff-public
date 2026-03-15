@@ -377,12 +377,13 @@ class TestClassifyProcedureExtended:
     def test_above_threshold(self):
         """Displacement above 0.002 threshold should classify correctly."""
         displacements = np.zeros((NUM_LANDMARKS, 2))
-        nose_indices = PROCEDURE_LANDMARKS.get("rhinoplasty", [])
-        for idx in nose_indices:
+        # Use blepharoplasty (no overlap with other procedure landmark sets)
+        eye_indices = PROCEDURE_LANDMARKS.get("blepharoplasty", [])
+        for idx in eye_indices:
             if idx < NUM_LANDMARKS:
                 displacements[idx] = [0.01, 0.01]
         result = classify_procedure(displacements)
-        assert result == "rhinoplasty"
+        assert result == "blepharoplasty"
 
     def test_competing_regions(self):
         """When multiple regions have displacement, highest mean wins."""
