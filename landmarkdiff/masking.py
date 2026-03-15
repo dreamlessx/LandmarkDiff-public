@@ -7,7 +7,7 @@ Supports clinical edge cases (vitiligo preservation, keloid softening).
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict
 
 import cv2
 import numpy as np
@@ -23,8 +23,17 @@ _BOUNDARY_NOISE_MAX = 4  # max random noise offset in pixels
 _BOUNDARY_NOISE_SCALE = 64  # intensity multiplier for noise mask
 _GAUSSIAN_KERNEL_FACTOR = 6  # sigma multiplier for Gaussian kernel size
 
+
+class MaskParams(TypedDict):
+    """Typed schema for per-procedure mask configuration."""
+
+    landmark_indices: list[int]
+    dilation_px: int
+    feather_sigma: float
+
+
 # Procedure-specific mask parameters
-MASK_CONFIG: dict[str, dict] = {
+MASK_CONFIG: dict[str, MaskParams] = {
     "rhinoplasty": {
         "landmark_indices": [
             1,
