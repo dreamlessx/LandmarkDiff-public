@@ -7,6 +7,7 @@ mm inputs only in v3+ with FLAME calibrated metric space.
 from __future__ import annotations
 
 import logging
+import math
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -296,8 +297,11 @@ def apply_procedure_preset(
     if clinical_flags and clinical_flags.ehlers_danlos:
         radius *= 1.5
 
-    # Procedure-specific displacement vectors (normalized to image_size)
-    pixel_scale = image_size / 512.0
+    # Scale radius based on geometric mean of actual image dimensions.
+    # Radii are calibrated for 512x512; using geometric mean handles
+    # non-square inputs without asymmetric deformation.
+    geo_mean = math.sqrt(face.image_width * face.image_height)
+    pixel_scale = geo_mean / 512.0
     handles = _get_procedure_handles(procedure, indices, scale, radius * pixel_scale)
 
     # Bell's palsy: remove handles on the affected (paralyzed) side
