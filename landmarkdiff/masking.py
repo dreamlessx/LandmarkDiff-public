@@ -294,9 +294,10 @@ def generate_surgical_mask(
     if top_y > 0:
         fade_height = max(int(sigma * 2), 10)
         fade_start = max(0, top_y - fade_height)
-        for row in range(fade_start, top_y):
-            t = (row - fade_start) / max(fade_height, 1)
-            mask[row, :] *= t
+        if top_y > fade_start:
+            rows = np.arange(fade_start, top_y)
+            t = (rows - fade_start).astype(np.float32) / max(fade_height, 1)
+            mask[fade_start:top_y, :] *= t[:, np.newaxis]
 
     # Clinical edge case adjustments
     if clinical_flags is not None:
@@ -324,10 +325,9 @@ def generate_surgical_mask(
 
 def _find_mask_top_edge(mask: np.ndarray, threshold: float = 0.05) -> int:
     """Find the topmost row where the mask exceeds threshold."""
-    for row in range(mask.shape[0]):
-        if np.any(mask[row] > threshold):
-            return row
-    return 0
+    row_max = np.max(mask, axis=1)
+    above = np.where(row_max > threshold)[0]
+    return int(above[0]) if len(above) > 0 else 0
 
 
 def mask_to_3channel(mask: np.ndarray) -> np.ndarray:
