@@ -6,11 +6,13 @@ and generate_conditioning integration. All tests run without GPU or model loadin
 
 from __future__ import annotations
 
+import importlib
 import sys
 from pathlib import Path
 
 import cv2
 import numpy as np
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -352,3 +354,52 @@ class TestContourData:
     def test_total_contour_count(self):
         """Should have exactly 12 contour groups (includes nose bridge upper and jawline lower)."""
         assert len(ALL_CONTOURS) == 12
+
+
+# ---------------------------------------------------------------------------
+# Input quality checks
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.skipif(
+    not importlib.util.find_spec("torch"),
+    reason="torch not installed",
+)
+class TestCheckImageQuality:
+    """Tests for check_image_quality input validation."""
+
+    def test_good_image_no_warnings(self):
+        """A sharp, well-lit, high-res image should produce no warnings."""
+        from landmarkdiff.inference import check_image_quality
+
+        # Sharp textured image at decent resolution
+        img = np.zeros((512, 512, 3), dtype=np.uint8)
+        cv2.rectangle(img, (50, 50), (200, 200), (200, 200, 200), 2)
+        cv2.rectangle(img, (250, 250), (400, 400), (150, 150, 150), 2)
+        img[:] = img + 80  # raise brightness
+        warnings = check_image_quality(img)
+        assert isinstance(warnings, list)
+
+    def test_low_resolution_warning(self):
+        """Tiny image should trigger low resolution warning."""
+        from landmarkdiff.inference import check_image_quality
+
+        img = np.full((64, 64, 3), 128, dtype=np.uint8)
+        warnings = check_image_quality(img)
+        assert any("Low resolution" in w for w in warnings)
+
+    def test_dark_image_warning(self):
+        """Nearly black image should trigger dark warning."""
+        from landmarkdiff.inference import check_image_quality
+
+        img = np.full((256, 256, 3), 10, dtype=np.uint8)
+        warnings = check_image_quality(img)
+        assert any("Dark input" in w for w in warnings)
+
+    def test_blurry_image_warning(self):
+        """Flat constant image should trigger blur warning."""
+        from landmarkdiff.inference import check_image_quality
+
+        img = np.full((256, 256, 3), 128, dtype=np.uint8)
+        warnings = check_image_quality(img)
+        assert any("Blurry" in w for w in warnings)

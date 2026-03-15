@@ -109,6 +109,41 @@ _YAW_THREE_QUARTER_MAX = 45
 _YAW_WARNING_THRESHOLD = 30
 # Max pitch scale factor (maps pitch ratio to degrees)
 _PITCH_SCALE = 45
+# Input quality thresholds
+_MIN_RESOLUTION = 128  # minimum dimension in pixels
+_BLUR_LAPLACIAN_THRESHOLD = 50.0  # below this variance, image is likely blurry
+_DARK_MEAN_THRESHOLD = 40  # mean brightness below this is poorly lit
+
+
+def check_image_quality(image: np.ndarray) -> list[str]:
+    """Check input image quality and return a list of warning strings.
+
+    Detects low resolution, blur (via Laplacian variance), and poor
+    lighting. Returns an empty list if quality is acceptable.
+    """
+    warnings = []
+    h, w = image.shape[:2]
+
+    if min(h, w) < _MIN_RESOLUTION:
+        warnings.append(
+            f"Low resolution ({w}x{h}): minimum {_MIN_RESOLUTION}px "
+            "recommended for reliable landmark detection"
+        )
+
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if image.ndim == 3 else image
+    lap_var = cv2.Laplacian(gray, cv2.CV_64F).var()
+    if lap_var < _BLUR_LAPLACIAN_THRESHOLD:
+        warnings.append(
+            f"Blurry input (Laplacian variance={lap_var:.1f}): sharp images produce better results"
+        )
+
+    mean_brightness = float(gray.mean())
+    if mean_brightness < _DARK_MEAN_THRESHOLD:
+        warnings.append(
+            f"Dark input (mean brightness={mean_brightness:.0f}/255): well-lit images recommended"
+        )
+
+    return warnings
 
 
 def mask_composite(
@@ -415,6 +450,11 @@ class LandmarkDiffPipeline:
             torch.backends.cudnn.benchmark = False
             torch.use_deterministic_algorithms(True, warn_only=True)
 
+        # Check input quality and warn (non-blocking)
+        quality_warnings = check_image_quality(image)
+        for warning in quality_warnings:
+            logger.warning("Input quality: %s", warning)
+
         flags = clinical_flags or self.clinical_flags
         res = _SD15_RESOLUTION
         image_512 = cv2.resize(image, (res, res))
@@ -578,6 +618,7 @@ class LandmarkDiffPipeline:
             "identity_check": identity_check,
             "restore_used": restore_used,
             "manipulation_mode": manipulation_mode,
+            "quality_warnings": quality_warnings,
         }
 
     def _generate_controlnet(
