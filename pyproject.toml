@@ -229,6 +229,7 @@ module = [
     "landmarkdiff.metrics_agg",
     "landmarkdiff.metrics_viz",
     "landmarkdiff.model_registry",
+    "landmarkdiff.morphometry",
     "landmarkdiff.postprocess",
     "landmarkdiff.safety",
     "landmarkdiff.synthetic.*",
