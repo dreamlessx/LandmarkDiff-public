@@ -332,9 +332,14 @@ def train(
 
     # DDP initialization
     if _DDP_ENABLED:
+        import datetime
+
         import torch.distributed as dist
 
-        dist.init_process_group(backend="nccl")
+        dist.init_process_group(
+            backend="nccl",
+            timeout=datetime.timedelta(seconds=1800),
+        )
         device = torch.device(f"cuda:{_LOCAL_RANK}")
         torch.cuda.set_device(device)
     else:
@@ -412,7 +417,9 @@ def train(
     unet.enable_gradient_checkpointing()
 
     # Move to device
-    vae.to(device, dtype=weight_dtype)
+    # VAE stays in FP32 for decode quality and to avoid dtype mismatch
+    # when computing Phase B image-level losses (identity, perceptual)
+    vae.to(device, dtype=torch.float32)
     unet.to(device, dtype=weight_dtype)
     text_encoder.to(device, dtype=weight_dtype)
     controlnet.to(device, dtype=weight_dtype)
@@ -778,7 +785,15 @@ def train(
 
         loss_unscaled = loss.item()
         loss = loss / gradient_accumulation_steps
-        loss.backward()
+
+        # Skip gradient all-reduce on non-final accumulation steps (DDP perf)
+        _is_accum_step = (global_step + 1) % gradient_accumulation_steps != 0
+        if _DDP_ENABLED and _is_accum_step:
+            with controlnet.no_sync():
+                loss.backward()
+        else:
+            loss.backward()
+
         accumulation_loss += loss_unscaled
 
         # Gradient watchdog: check for NaN/Inf before stepping
@@ -797,6 +812,14 @@ def train(
                 )
                 _signal_handler.save_fn()
 
+        # Broadcast skip decision so all ranks agree (prevents param divergence)
+        if _DDP_ENABLED:
+            import torch.distributed as dist
+
+            _skip_t = torch.tensor([1 if _skip_step else 0], device=device)
+            dist.broadcast(_skip_t, src=0)
+            _skip_step = _skip_t.item() == 1
+
         # Step optimizer
         if not _skip_step and (global_step + 1) % gradient_accumulation_steps == 0:
             _last_grad_norm = torch.nn.utils.clip_grad_norm_(controlnet_module.parameters(), 1.0)
@@ -810,14 +833,19 @@ def train(
         global_step += 1
         _global_step_ref[0] = global_step
 
-        # Check for SLURM signal (graceful exit)
+        # Check for SLURM signal (graceful exit) -- broadcast to all ranks
+        _should_exit = False
         if _signal_handler is not None and _signal_handler.should_exit:
+            _should_exit = True
+        if _DDP_ENABLED:
+            import torch.distributed as dist
+
+            _exit_t = torch.tensor([1 if _should_exit else 0], device=device)
+            dist.broadcast(_exit_t, src=0)
+            _should_exit = _exit_t.item() == 1
+        if _should_exit:
             if _IS_MAIN:
-                logger.info(
-                    "Graceful exit at step %d after %s",
-                    global_step,
-                    _signal_handler.signal_received,
-                )
+                logger.info("Graceful exit at step %d after SLURM signal", global_step)
             break
 
         # ─── Logging (main process only) ───
@@ -894,98 +922,107 @@ def train(
         if global_step % log_every == 0:
             accumulation_loss = 0.0
 
-        # ─── Sample generation + validation (main process only) ───
-        if global_step % sample_every == 0 and global_step > 0 and _IS_MAIN:
-            _generate_samples(
-                ema_controlnet,
-                vae,
-                unet,
-                text_embeddings,
-                noise_scheduler,
-                dataset,
-                device,
-                weight_dtype,
-                out,
-                global_step,
-            )
-            # Run validation callback (computes SSIM/LPIPS on generated samples)
-            if val_callback is not None:
-                try:
-                    val_metrics = val_callback.run(
-                        ema_controlnet,
-                        vae,
-                        unet,
-                        text_embeddings,
-                        noise_scheduler,
-                        device,
-                        weight_dtype,
-                        global_step,
-                    )
-                    if HAS_WANDB:
-                        wandb.log(
-                            {
-                                "val/ssim": val_metrics["ssim_mean"],
-                                "val/lpips": val_metrics["lpips_mean"],
-                            },
-                            step=global_step,
+        # ─── Sample generation + validation ───
+        # All ranks check condition so they all reach the barrier.
+        # Only rank 0 does the actual work; other ranks wait at barrier.
+        if global_step % sample_every == 0 and global_step > 0:
+            if _IS_MAIN:
+                _generate_samples(
+                    ema_controlnet,
+                    vae,
+                    unet,
+                    text_embeddings,
+                    noise_scheduler,
+                    dataset,
+                    device,
+                    weight_dtype,
+                    out,
+                    global_step,
+                )
+                # Run validation callback (computes SSIM/LPIPS on generated samples)
+                if val_callback is not None:
+                    try:
+                        val_metrics = val_callback.run(
+                            ema_controlnet,
+                            vae,
+                            unet,
+                            text_embeddings,
+                            noise_scheduler,
+                            device,
+                            weight_dtype,
+                            global_step,
                         )
-                except Exception as val_err:
-                    logger.warning("Validation failed at step %d: %s", global_step, val_err)
-                    logger.warning("Continuing training...")
+                        if HAS_WANDB:
+                            wandb.log(
+                                {
+                                    "val/ssim": val_metrics["ssim_mean"],
+                                    "val/lpips": val_metrics["lpips_mean"],
+                                },
+                                step=global_step,
+                            )
+                    except Exception as val_err:
+                        logger.warning("Validation failed at step %d: %s", global_step, val_err)
+                        logger.warning("Continuing training...")
 
-        # ─── Checkpoint (main process only) ───
-        if global_step % checkpoint_every == 0 and _IS_MAIN:
-            # Collect metrics for checkpoint metadata
-            _ckpt_metrics = {"loss": accumulation_loss / max(log_every, 1)}
-            if val_callback and val_callback.history:
-                _last_val = val_callback.history[-1]
-                _ckpt_metrics["val_ssim"] = _last_val.get("ssim_mean", 0)
-                _ckpt_metrics["val_lpips"] = _last_val.get("lpips_mean", 0)
+            if _DDP_ENABLED:
+                import torch.distributed as dist
 
-            # Use CheckpointManager if available, otherwise fallback
-            try:
-                from landmarkdiff.checkpoint_manager import CheckpointManager
+                dist.barrier()
 
-                if not hasattr(train, "_ckpt_manager"):
-                    train._ckpt_manager = CheckpointManager(
-                        output_dir=out,
-                        keep_best=3,
-                        keep_latest=5,
-                        metric="loss",
-                        lower_is_better=True,
+        # ─── Checkpoint (save before validation to protect progress) ───
+        # All ranks check condition; only rank 0 saves; barrier syncs.
+        if global_step % checkpoint_every == 0 and global_step > 0:
+            if _IS_MAIN:
+                # Collect metrics for checkpoint metadata
+                _ckpt_metrics = {"loss": accumulation_loss / max(log_every, 1)}
+                if val_callback and val_callback.history:
+                    _last_val = val_callback.history[-1]
+                    _ckpt_metrics["val_ssim"] = _last_val.get("ssim_mean", 0)
+                    _ckpt_metrics["val_lpips"] = _last_val.get("lpips_mean", 0)
+
+                # Use CheckpointManager if available, otherwise fallback
+                try:
+                    from landmarkdiff.checkpoint_manager import CheckpointManager
+
+                    if not hasattr(train, "_ckpt_manager"):
+                        train._ckpt_manager = CheckpointManager(
+                            output_dir=out,
+                            keep_best=3,
+                            keep_latest=5,
+                            metric="loss",
+                            lower_is_better=True,
+                        )
+                    ckpt_dir = train._ckpt_manager.save(
+                        step=global_step,
+                        controlnet=controlnet_module,
+                        ema_controlnet=ema_controlnet,
+                        optimizer=optimizer,
+                        scheduler=scheduler,
+                        metrics=_ckpt_metrics,
+                        phase=phase,
                     )
-                ckpt_dir = train._ckpt_manager.save(
-                    step=global_step,
-                    controlnet=controlnet_module,
-                    ema_controlnet=ema_controlnet,
-                    optimizer=optimizer,
-                    scheduler=scheduler,
-                    metrics=_ckpt_metrics,
-                    phase=phase,
-                )
-                logger.info("Checkpoint saved: %s | %s", ckpt_dir, train._ckpt_manager.summary())
-            except ImportError:
-                # Fallback: save without manager
-                ckpt_dir = out / f"checkpoint-{global_step}"
-                ckpt_dir.mkdir(exist_ok=True)
-                ema_controlnet.save_pretrained(ckpt_dir / "controlnet_ema")
-                torch.save(
-                    {
-                        "controlnet": controlnet_module.state_dict(),
-                        "ema_controlnet": ema_controlnet.state_dict(),
-                        "optimizer": optimizer.state_dict(),
-                        "scheduler": scheduler.state_dict(),
-                        "global_step": global_step,
-                    },
-                    ckpt_dir / "training_state.pt",
-                )
-                logger.info("Checkpoint saved: %s", ckpt_dir)
+                    logger.info("Checkpoint saved: %s | %s", ckpt_dir, train._ckpt_manager.summary())
+                except ImportError:
+                    # Fallback: save without manager
+                    ckpt_dir = out / f"checkpoint-{global_step}"
+                    ckpt_dir.mkdir(exist_ok=True)
+                    ema_controlnet.save_pretrained(ckpt_dir / "controlnet_ema")
+                    torch.save(
+                        {
+                            "controlnet": controlnet_module.state_dict(),
+                            "ema_controlnet": ema_controlnet.state_dict(),
+                            "optimizer": optimizer.state_dict(),
+                            "scheduler": scheduler.state_dict(),
+                            "global_step": global_step,
+                        },
+                        ckpt_dir / "training_state.pt",
+                    )
+                    logger.info("Checkpoint saved: %s", ckpt_dir)
 
-        # DDP barrier to sync processes after checkpoint
-        if _DDP_ENABLED and global_step % checkpoint_every == 0:
-            import torch.distributed as dist
+            if _DDP_ENABLED:
+                import torch.distributed as dist
 
-            dist.barrier()
+                dist.barrier()
 
     # ─── Cleanup resilience handlers ───
     if _signal_handler is not None:
