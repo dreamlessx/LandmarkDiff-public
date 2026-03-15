@@ -149,7 +149,8 @@ def frequency_aware_sharpen(
     Returns:
         Sharpened BGR image.
     """
-    lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB).astype(np.float32)
+    image_u8 = np.clip(image, 0, 255).astype(np.uint8)
+    lab = cv2.cvtColor(image_u8, cv2.COLOR_BGR2LAB).astype(np.float32)
     l_channel = lab[:, :, 0]
 
     # Unsharp mask on luminance only
@@ -471,8 +472,12 @@ def histogram_match_skin(
     if not np.any(mask_bool):
         return source
 
-    src_lab = cv2.cvtColor(source, cv2.COLOR_BGR2LAB).astype(np.float32)
-    ref_lab = cv2.cvtColor(reference, cv2.COLOR_BGR2LAB).astype(np.float32)
+    # Clip to valid uint8 range before LAB conversion to prevent overflow
+    # on images with saturated or out-of-range pixel values
+    src_u8 = np.clip(source, 0, 255).astype(np.uint8)
+    ref_u8 = np.clip(reference, 0, 255).astype(np.uint8)
+    src_lab = cv2.cvtColor(src_u8, cv2.COLOR_BGR2LAB).astype(np.float32)
+    ref_lab = cv2.cvtColor(ref_u8, cv2.COLOR_BGR2LAB).astype(np.float32)
 
     for ch in range(3):
         src_vals = src_lab[:, :, ch][mask_bool]
