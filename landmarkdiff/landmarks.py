@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -11,6 +12,9 @@ import mediapipe as mp
 import numpy as np
 
 logger = logging.getLogger(__name__)
+
+# Lock for thread-safe model download in _extract_tasks_api
+_model_download_lock = threading.Lock()
 
 # Region color map for visualization (BGR)
 REGION_COLORS: dict[str, tuple[int, int, int]] = {
@@ -320,11 +324,15 @@ def _extract_tasks_api(
     import tempfile
     import urllib.request
 
-    # Download model if not cached
+    # Download model if not cached (thread-safe with double-check locking)
     model_path = Path(tempfile.gettempdir()) / "face_landmarker_v2_with_blendshapes.task"
     if not model_path.exists():
-        url = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
-        urllib.request.urlretrieve(url, str(model_path))
+        with _model_download_lock:
+            if not model_path.exists():
+                url = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
+                tmp_path = model_path.with_suffix(".tmp")
+                urllib.request.urlretrieve(url, str(tmp_path))
+                tmp_path.rename(model_path)
 
     options = FaceLandmarkerOptions(
         base_options=BaseOptions(model_asset_path=str(model_path)),
