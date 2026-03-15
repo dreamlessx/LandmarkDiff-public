@@ -413,3 +413,188 @@ def visualize_asymmetry(
     )
 
     return canvas
+
+
+# ---------------------------------------------------------------------------
+# Golden ratio and neoclassical facial proportions
+# ---------------------------------------------------------------------------
+
+PHI = 1.618033988749895  # golden ratio
+
+
+@dataclass
+class FacialProportions:
+    """Neoclassical facial proportion analysis."""
+
+    # Facial thirds (ideal: each ~1/3)
+    upper_third: float  # hairline to brow
+    middle_third: float  # brow to nose base
+    lower_third: float  # nose base to chin
+
+    # Lower face subdivisions (ideal: upper lip 1/3, lower 2/3)
+    upper_lip_ratio: float
+    lower_lip_ratio: float
+
+    # Width ratios
+    nose_to_face_width: float  # ideal ~0.25 (nose = 1/4 face width)
+    eye_spacing_ratio: float  # intercanthal / biocular, ideal ~0.3
+
+    # Golden ratio comparisons
+    face_height_to_width: float  # ideal ~PHI
+    nose_to_chin_over_lips_to_chin: float  # ideal ~PHI
+
+    def summary(self) -> str:
+        lines = [
+            "Facial Proportions (neoclassical ideals):",
+            f"  Thirds: upper={self.upper_third:.2f} mid={self.middle_third:.2f} "
+            f"lower={self.lower_third:.2f} (ideal: 0.33 each)",
+            f"  Lower face: upper_lip={self.upper_lip_ratio:.2f} "
+            f"lower_lip={self.lower_lip_ratio:.2f} (ideal: 0.33/0.67)",
+            f"  Nose/face width: {self.nose_to_face_width:.3f} (ideal: 0.25)",
+            f"  Eye spacing: {self.eye_spacing_ratio:.3f} (ideal: 0.30)",
+            f"  Height/width: {self.face_height_to_width:.3f} (ideal: {PHI:.3f})",
+        ]
+        return "\n".join(lines)
+
+
+def analyze_proportions(face: FaceLandmarks) -> FacialProportions:
+    """Compute neoclassical facial proportions from landmarks.
+
+    Uses MediaPipe landmarks to approximate classical measurement points:
+    - Trichion (hairline): top of face (landmark 10)
+    - Glabella (brow bridge): landmark 9
+    - Subnasale (nose base): landmark 94
+    - Menton (chin bottom): landmark 152
+    - Stomion (lip junction): landmark 14
+
+    Args:
+        face: Extracted face landmarks.
+
+    Returns:
+        FacialProportions with ratio measurements.
+    """
+    coords = face.pixel_coords
+
+    # Vertical reference points
+    trichion_y = coords[10, 1]  # forehead/hairline
+    glabella_y = coords[9, 1]  # brow bridge
+    subnasale_y = coords[94, 1]  # nose base
+    menton_y = coords[152, 1]  # chin bottom
+    stomion_y = coords[14, 1]  # lip junction
+
+    face_height = max(menton_y - trichion_y, 1.0)
+
+    # Facial thirds
+    upper = (glabella_y - trichion_y) / face_height
+    middle = (subnasale_y - glabella_y) / face_height
+    lower = (menton_y - subnasale_y) / face_height
+
+    # Lower face: lip proportions
+    lower_face_h = max(menton_y - subnasale_y, 1.0)
+    upper_lip_r = (stomion_y - subnasale_y) / lower_face_h
+    lower_lip_r = (menton_y - stomion_y) / lower_face_h
+
+    # Width measurements
+    face_left_x = coords[234, 0]  # left jaw
+    face_right_x = coords[454, 0]  # right jaw
+    face_width = max(face_right_x - face_left_x, 1.0)
+
+    nose_left_x = coords[240, 0]  # left alar
+    nose_right_x = coords[460, 0]  # right alar
+    nose_width = nose_right_x - nose_left_x
+
+    # Eye spacing
+    left_inner = coords[133, 0]  # left medial canthus
+    right_inner = coords[362, 0]  # right medial canthus
+    left_outer = coords[33, 0]  # left lateral canthus
+    right_outer = coords[263, 0]  # right lateral canthus
+    intercanthal = right_inner - left_inner
+    biocular = right_outer - left_outer
+    eye_spacing = intercanthal / max(biocular, 1.0)
+
+    return FacialProportions(
+        upper_third=float(upper),
+        middle_third=float(middle),
+        lower_third=float(lower),
+        upper_lip_ratio=float(upper_lip_r),
+        lower_lip_ratio=float(lower_lip_r),
+        nose_to_face_width=float(nose_width / face_width),
+        eye_spacing_ratio=float(eye_spacing),
+        face_height_to_width=float(face_height / face_width),
+        nose_to_chin_over_lips_to_chin=float(
+            (menton_y - subnasale_y) / max(menton_y - stomion_y, 1.0)
+        ),
+    )
+
+
+def visualize_proportions(
+    image: np.ndarray,
+    face: FaceLandmarks,
+    proportions: FacialProportions,
+) -> np.ndarray:
+    """Overlay facial proportion guidelines on an image.
+
+    Draws horizontal lines for facial thirds and vertical lines for
+    facial fifths, with deviation scores from ideal proportions.
+
+    Args:
+        image: BGR face image.
+        face: Extracted face landmarks.
+        proportions: Computed facial proportions.
+
+    Returns:
+        Annotated image copy.
+    """
+    canvas = image.copy()
+    h, w = canvas.shape[:2]
+    coords = face.pixel_coords
+
+    # Reference points
+    trichion_y = int(coords[10, 1])
+    glabella_y = int(coords[9, 1])
+    subnasale_y = int(coords[94, 1])
+    menton_y = int(coords[152, 1])
+
+    # Draw facial thirds lines
+    thirds_color = (0, 200, 200)  # yellow-ish
+    for y, label in [
+        (trichion_y, "Trichion"),
+        (glabella_y, "Glabella"),
+        (subnasale_y, "Subnasale"),
+        (menton_y, "Menton"),
+    ]:
+        cv2.line(canvas, (0, y), (w, y), thirds_color, 1, cv2.LINE_AA)
+        cv2.putText(
+            canvas,
+            label,
+            (w - 90, y - 5),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.35,
+            thirds_color,
+            1,
+            cv2.LINE_AA,
+        )
+
+    # Draw facial fifths (vertical lines at eye corners + nose)
+    fifths_color = (200, 200, 0)  # cyan-ish
+    x_points = [
+        int(coords[234, 0]),  # left jaw
+        int(coords[33, 0]),  # left outer eye
+        int(coords[133, 0]),  # left inner eye
+        int(coords[362, 0]),  # right inner eye
+        int(coords[263, 0]),  # right outer eye
+        int(coords[454, 0]),  # right jaw
+    ]
+    for x in x_points:
+        cv2.line(canvas, (x, 0), (x, h), fifths_color, 1, cv2.LINE_AA)
+
+    # Add proportion text at bottom
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    scale = max(0.3, h / 512.0 * 0.4)
+    text = (
+        f"Thirds: {proportions.upper_third:.2f}/{proportions.middle_third:.2f}/"
+        f"{proportions.lower_third:.2f}  H/W: {proportions.face_height_to_width:.2f}"
+    )
+    cv2.putText(canvas, text, (5, h - 5), font, scale, (255, 255, 255), 1, cv2.LINE_AA)
+
+    return canvas
