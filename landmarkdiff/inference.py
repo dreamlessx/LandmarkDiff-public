@@ -383,8 +383,11 @@ class LandmarkDiffPipeline:
                 self._pipe.enable_model_cpu_offload()
             except Exception:
                 self._pipe = self._pipe.to(self.device)
+            # Attention slicing trades compute for VRAM on low-memory GPUs
+            self._pipe.enable_attention_slicing()
         else:
             self._pipe.enable_sequential_cpu_offload()
+            self._pipe.enable_attention_slicing()
         logger.info("Pipeline loaded on %s (%s)", self.device, self.dtype)
 
     @property
