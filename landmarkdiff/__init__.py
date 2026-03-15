@@ -31,6 +31,7 @@ __all__ = [
     "masking",
     "metrics_agg",
     "metrics_viz",
+    "morphometry",
     "model_registry",
     "postprocess",
     "safety",

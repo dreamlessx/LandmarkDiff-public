@@ -146,11 +146,21 @@ But here's the catch: the tools that produce good visualizations are expensive, 
 
 ### Existing Tools and Their Limitations
 
-**Commercial 3D imaging systems:**
+**Tier 1: Clinical 3D Simulation**
 
-- **Canfield Vectra 3D** (~$50--80K per unit) -- The industry standard. Uses structured-light 3D capture to produce accurate surface meshes, and their Sculptor software can simulate tissue movement. But the hardware cost puts it out of reach for most practices globally, it requires trained operators, and the simulation software is proprietary with no published validation studies on prediction accuracy.
-- **Crisalix** -- Cloud-based 3D simulation from 2D photos. More accessible than Vectra, but subscription-based, proprietary, and uses classical 3D morphing rather than learned generative models. The visual quality depends heavily on the input photo, and there's no open evaluation of its fidelity.
-- **FaceTouchUp / NewLook** -- Basic 2D morphing tools that let surgeons manually push pixels around. Fast and cheap, but the results look like warped photographs because that's exactly what they are -- geometric transforms with no understanding of how skin, light, or tissue actually behave.
+- **Canfield Scientific VECTRA** (~$30-100K) -- Dedicated structured-light 3D scanner paired with Mirror simulation software. The gold standard in top-tier practices. Produces accurate surface meshes with Face Sculptor for tissue movement simulation. Requires trained operators, expensive hardware, and in-office capture. Proprietary with no published validation studies on prediction accuracy. [Website](https://www.canfieldsci.com/imaging-systems/vectra-xt-3d-imaging-system/)
+- **Crisalix** (~$200-500/mo) -- Cloud-based 3D simulation from 2D photos. 17 years in market, PE-backed (BID Equity). Supports breast and face procedures. Uses geometric morphing, not AI or diffusion. More accessible than VECTRA, but subscription-based, proprietary, and there's no open evaluation of its fidelity. [Website](https://www.crisalix.com)
+- **AEDIT** ($60/mo consumer) -- Phone-based 3D scanning using 100+ photos via TrueDepth camera. Patented morphing with "100,000 facial recognition points." Covers rhinoplasty, lip filler, brow lift, and Botox simulation. Multiple patents on 3D reconstruction from phone input. Consumer-first approach, iOS only. [Website](https://aedit.com/aeditor-app)
+
+**Tier 2: Practice Management + Lite Simulation**
+
+- **FaceTouchUp** (~$50-100/mo) -- 2D morphing tool with AR overlay. Affordable and quick for consultations, but results look like warped photographs because that's exactly what they are -- geometric transforms with no understanding of how skin, light, or tissue actually behave. [Website](https://www.facetouchup.com)
+- **TouchMD / Symplast / Consentz** -- EMR and practice management platforms with basic photo ghosting or overlay features, not true surgical simulation.
+
+**Tier 3: Consumer Beauty Tech**
+
+- **Perfect Corp** -- AI-powered face reshape for beauty and med spa applications. Focused on fillers and Botox visualization, not structural surgical prediction. [Website](https://www.perfectcorp.com)
+- **GlamAR** -- Virtual try-on API for beauty brands. Cosmetics overlay layer, not surgical simulation. [Website](https://www.glamar.io)
 
 **Academic approaches:**
 
@@ -160,11 +170,25 @@ Most recent academic work on face manipulation focuses on generic editing (make 
 - **FaceShifter** (Li et al., 2019) -- High-fidelity face swapping with occlusion awareness. Impressive identity transfer, but the goal is swapping one person's face onto another, not simulating what a surgical procedure would do to the same person.
 - **DiffFace** (Kim et al., 2022) -- Diffusion-based face swapping with facial guidance. Shows the potential of diffusion models for face manipulation, but targets identity transfer, not surgical outcome prediction.
 
-The common thread: almost none of this work uses real surgical data to drive deformations, none evaluates fairness across skin tones, and none handles clinical edge cases like Bell's palsy or keloid-prone skin.
+The common thread: none of the commercial tools use diffusion models (all rely on geometric warping or morphing), almost none of the academic work uses real surgical data to drive deformations, none evaluates fairness across skin tones, and none handles clinical edge cases like Bell's palsy or keloid-prone skin.
+
+| Feature | Canfield VECTRA | Crisalix | AEDIT | FaceTouchUp | **LandmarkDiff** |
+|---------|-----------------|----------|-------|-------------|-------------------|
+| Input | $50K+ scanner | Photos | Phone (iOS) | Photos | **Any phone** |
+| Method | Geometric warp | Geometric morph | Patented morph | 2D pixel push | **ControlNet diffusion** |
+| Output quality | High (3D mesh) | Medium (3D morph) | Medium (morph) | Low (pixel warp) | **High (photorealistic)** |
+| Procedures | Many | Breast + face | Face + injectables | Manual any | **6 facial** |
+| Price | $30-100K | ~$200-500/mo | Free/$60/mo | $50-100/mo | **Free (MIT)** |
+| Open source | No | No | No | No | **Yes** |
+| Published research | No | No | No | No | **Yes (arXiv)** |
+| Diffusion-based | No | No | No | No | **Yes** |
+| Fairness eval | No | No | No | No | **Fitzpatrick I-VI** |
 
 ### What Makes LandmarkDiff Different
 
-LandmarkDiff is not trying to compete with Vectra on 3D accuracy -- we're solving a different problem. We want to make surgery visualization accessible to any surgeon with a phone and any patient who walks into a consultation, while being honest about what the tool can and can't do.
+LandmarkDiff is not trying to compete with VECTRA on 3D accuracy -- we're solving a different problem. We want to make surgery visualization accessible to any surgeon with a phone and any patient who walks into a consultation, while being honest about what the tool can and can't do.
+
+**No existing tool uses diffusion models.** Every competitor in the comparison table above relies on geometric warping or morphing. LandmarkDiff is the first published system to apply ControlNet-conditioned latent diffusion to surgical outcome prediction, producing photorealistic texture synthesis rather than geometric pixel manipulation. Combined with open-source access, published research, and Fitzpatrick-stratified fairness evaluation, this positions LandmarkDiff as both the most technically advanced and most transparent surgical visualization system available.
 
 Concretely:
 
@@ -176,21 +200,7 @@ Concretely:
 - **Fitzpatrick-stratified fairness evaluation.** All metrics are broken down by Fitzpatrick skin type (I--VI) to catch and prevent performance disparities across skin tones.
 - **Roadmap toward 3D.** We're working on phone-video-to-3D reconstruction to eventually provide accessible 3D visualization without Vectra-class hardware.
 
-**Honest limitations:** We don't have prospective clinical validation yet (that's planned). Our deformation model is calibrated from a limited dataset. We currently produce 2D output, not 3D. And diffusion models can hallucinate details, so outputs should always be reviewed by a clinician before showing to patients. This is a research tool, not a medical device.
-
-### Comparison Table
-
-| Feature | Vectra 3D | Crisalix | FaceTouchUp | **LandmarkDiff** |
-|---|---|---|---|---|
-| Input | Structured light | 2D photo | 2D photo | 2D photo / video |
-| Output | 3D mesh | 3D-ish sim | 2D morph | Photorealistic 2D (3D planned) |
-| Hardware required | ~$50--80K | Phone | Phone | Phone (CPU mode available) |
-| Open source | No | No | No | **Yes (MIT)** |
-| Surgery-specific | Yes | Yes | No | Yes |
-| Real surgical data | Unknown | Unknown | No | Yes |
-| Clinical edge-case flags | No | No | No | Yes |
-| Fairness evaluation | No | No | No | Yes (Fitzpatrick I--VI) |
-| Cost | $50--80K+ | Subscription | One-time | **Free** |
+**Honest limitations:** We don't have prospective clinical validation yet (that's planned). Our deformation model is calibrated from a limited dataset. We currently produce 2D output, not 3D. And diffusion models can hallucinate details, so outputs should always be reviewed by a clinician before showing to patients. This is a research tool, not a medical device. The comparison above reflects publicly available information as of March 2026. Commercial tools may have undisclosed technical capabilities.
 
 ### References
 
