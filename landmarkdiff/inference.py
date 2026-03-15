@@ -54,6 +54,36 @@ def pil_to_numpy(img: Image.Image) -> np.ndarray:
     return arr
 
 
+# Extensions that cv2.imread handles natively
+_CV2_NATIVE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif"}
+# Extensions that need Pillow fallback (HEIC, WebP, AVIF)
+_PILLOW_EXTS = {".heic", ".heif", ".webp", ".avif"}
+
+
+def load_image(path: str) -> np.ndarray | None:
+    """Load an image from disk, supporting HEIC, WebP, and AVIF via Pillow.
+
+    Falls back to Pillow for formats that OpenCV cannot read natively.
+    Returns BGR numpy array or None if the file cannot be loaded.
+    """
+    from pathlib import Path
+
+    ext = Path(path).suffix.lower()
+
+    if ext in _CV2_NATIVE_EXTS or ext not in _PILLOW_EXTS:
+        img = cv2.imread(path)
+        if img is not None:
+            return img
+
+    # Pillow fallback for HEIC/WebP/AVIF
+    try:
+        pil_img = Image.open(path).convert("RGB")
+        return np.array(pil_img)[:, :, ::-1].copy()  # RGB -> BGR
+    except Exception:
+        logger.warning("Could not load image: %s", path)
+        return None
+
+
 PROCEDURE_PROMPTS: dict[str, str] = {
     "rhinoplasty": (
         "clinical photograph, patient face, natural refined nose, smooth nasal bridge, "
@@ -745,7 +775,7 @@ def run_inference(
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
 
-    image = cv2.imread(image_path)
+    image = load_image(image_path)
     if image is None:
         logger.error("Could not load %s", image_path)
         sys.exit(1)
