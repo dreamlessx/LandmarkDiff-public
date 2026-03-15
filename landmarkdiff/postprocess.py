@@ -479,6 +479,9 @@ def histogram_match_skin(
     src_lab = cv2.cvtColor(src_u8, cv2.COLOR_BGR2LAB).astype(np.float32)
     ref_lab = cv2.cvtColor(ref_u8, cv2.COLOR_BGR2LAB).astype(np.float32)
 
+    # Full CDF matching on L (luminance) channel only.
+    # For a/b (chrominance) channels, use gentle mean-shift with damping
+    # to avoid color shifts on dark skin tones (Fitzpatrick V-VI).
     for ch in range(3):
         src_vals = src_lab[:, :, ch][mask_bool]
         ref_vals = ref_lab[:, :, ch][mask_bool]
@@ -486,24 +489,24 @@ def histogram_match_skin(
         if len(src_vals) == 0 or len(ref_vals) == 0:
             continue
 
-        # CDF matching
-        src_sorted = np.sort(src_vals)
-        ref_sorted = np.sort(ref_vals)
-
-        # Interpolate reference CDF to match source length
-        src_cdf = np.linspace(0, 1, len(src_sorted))
-        ref_cdf = np.linspace(0, 1, len(ref_sorted))
-
-        # Map source values through reference distribution
-        mapping = np.interp(src_cdf, ref_cdf, ref_sorted)
-
-        # Create lookup from source intensity to matched intensity
-        src_flat = src_lab[:, :, ch].ravel()
-        matched = np.interp(src_flat, src_sorted, mapping)
-        matched_2d = matched.reshape(src_lab.shape[:2])
-
-        # Apply only in mask region
-        src_lab[:, :, ch] = np.where(mask_bool, matched_2d, src_lab[:, :, ch])
+        if ch == 0:
+            # L channel: full CDF matching for brightness
+            src_sorted = np.sort(src_vals)
+            ref_sorted = np.sort(ref_vals)
+            src_cdf = np.linspace(0, 1, len(src_sorted))
+            ref_cdf = np.linspace(0, 1, len(ref_sorted))
+            mapping = np.interp(src_cdf, ref_cdf, ref_sorted)
+            src_flat = src_lab[:, :, ch].ravel()
+            matched = np.interp(src_flat, src_sorted, mapping)
+            matched_2d = matched.reshape(src_lab.shape[:2])
+            src_lab[:, :, ch] = np.where(mask_bool, matched_2d, src_lab[:, :, ch])
+        else:
+            # a/b channels: gentle mean-shift (30% blend) to preserve skin color
+            src_mean = np.mean(src_vals)
+            ref_mean = np.mean(ref_vals)
+            shift = (ref_mean - src_mean) * 0.3
+            shifted = src_lab[:, :, ch] + shift * mask_bool.astype(np.float32)
+            src_lab[:, :, ch] = shifted
 
     result_lab = np.clip(src_lab, 0, 255).astype(np.uint8)
     return cv2.cvtColor(result_lab, cv2.COLOR_LAB2BGR)
