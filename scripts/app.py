@@ -691,7 +691,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="LandmarkDiff Interactive UI")
     parser.add_argument("--port", type=int, default=7860)
     parser.add_argument("--share", action="store_true", help="Create public Gradio link")
-    parser.add_argument("--server-name", default="0.0.0.0")
+    parser.add_argument("--server-name", default="127.0.0.1")
     args = parser.parse_args()
 
     app = build_app()

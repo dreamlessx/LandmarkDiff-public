@@ -377,7 +377,7 @@ def main():
     )
     parser.add_argument("--port", type=int, default=7860, help="Server port")
     parser.add_argument("--share", action="store_true", help="Create a public Gradio share link")
-    parser.add_argument("--server-name", default="0.0.0.0", help="Server host address")
+    parser.add_argument("--server-name", default="127.0.0.1", help="Server host address")
     args = parser.parse_args()
 
     print("=" * 60)
