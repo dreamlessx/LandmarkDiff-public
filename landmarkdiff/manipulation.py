@@ -239,6 +239,55 @@ def gaussian_rbf_deform(
     return result
 
 
+def gaussian_rbf_deform_batch(
+    landmarks: np.ndarray,
+    handles: list[DeformationHandle],
+) -> np.ndarray:
+    """Batch RBF deformation: apply all handles in one vectorized pass.
+
+    Computes all N handle weights simultaneously via (N, 478) matrix ops
+    instead of looping. Assumes handles are independent (additive
+    displacements from original positions).
+    """
+    if not handles:
+        return landmarks.copy()
+
+    # Build (N, 2) arrays of centers, displacements, and radii
+    centers = np.array(
+        [landmarks[h.landmark_index, :2] for h in handles], dtype=np.float32
+    )  # (N, 2)
+    displacements = np.array([h.displacement[:2] for h in handles], dtype=np.float32)  # (N, 2)
+    radii_sq = np.array([2.0 * h.influence_radius**2 for h in handles], dtype=np.float32)  # (N,)
+
+    # Compute pairwise squared distances: (N, 478)
+    # landmarks[:, :2] is (478, 2), centers is (N, 2)
+    diff = landmarks[np.newaxis, :, :2] - centers[:, np.newaxis, :]  # (N, 478, 2)
+    dist_sq = np.sum(diff**2, axis=2)  # (N, 478)
+
+    # RBF weights: (N, 478)
+    weights = np.exp(-dist_sq / radii_sq[:, np.newaxis])
+
+    # Weighted displacements summed across all handles: (478, 2)
+    total_dx = np.sum(displacements[:, 0:1] * weights, axis=0)  # (478,)
+    total_dy = np.sum(displacements[:, 1:2] * weights, axis=0)  # (478,)
+
+    result = landmarks.copy()
+    result[:, 0] += total_dx
+    result[:, 1] += total_dy
+
+    # Handle Z displacement if present
+    has_z = landmarks.shape[1] > 2 and any(len(h.displacement) > 2 for h in handles)
+    if has_z:
+        dz = np.array(
+            [h.displacement[2] if len(h.displacement) > 2 else 0.0 for h in handles],
+            dtype=np.float32,
+        )
+        total_dz = np.sum(dz[:, np.newaxis] * weights, axis=0)
+        result[:, 2] += total_dz
+
+    return result
+
+
 def apply_procedure_preset(
     face: FaceLandmarks,
     procedure: str,
@@ -319,8 +368,7 @@ def apply_procedure_preset(
     pixel_landmarks[:, 0] *= face.image_width
     pixel_landmarks[:, 1] *= face.image_height
 
-    for handle in handles:
-        pixel_landmarks = gaussian_rbf_deform(pixel_landmarks, handle)
+    pixel_landmarks = gaussian_rbf_deform_batch(pixel_landmarks, handles)
 
     # Convert back to normalized
     result = pixel_landmarks.copy()
