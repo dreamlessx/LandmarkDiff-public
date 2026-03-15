@@ -18,7 +18,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 from pathlib import Path
+
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+logger = logging.getLogger(__name__)
 
 
 def _bold_best(values: list[float], higher_is_better: bool = True) -> list[str]:
@@ -433,38 +437,38 @@ if __name__ == "__main__":
     # Table 1: Main results
     if Path(args.results).exists():
         t1 = generate_table1_main(args.results, args.baselines, str(out / "table1_main.tex"))
-        print("Table 1 (Main results):")
-        print(t1)
-        print()
+        logger.info("Table 1 (Main results):")
+        logger.info(t1)
+        logger.info("")
 
     # Table 2: Ablation
     if Path(args.ablation).exists():
         t2 = generate_table2_ablation(args.ablation, str(out / "table2_ablation.tex"))
-        print("Table 2 (Ablation):")
-        print(t2)
-        print()
+        logger.info("Table 2 (Ablation):")
+        logger.info(t2)
+        logger.info("")
 
     # Table 3: Fairness
     if Path(args.results).exists():
         t3 = generate_table3_fairness(args.results, str(out / "table3_fairness.tex"))
-        print("Table 3 (Fairness):")
-        print(t3)
-        print()
+        logger.info("Table 3 (Fairness):")
+        logger.info(t3)
+        logger.info("")
 
     # Table 4: Per-procedure
     if Path(args.results).exists():
         t4 = generate_table4_procedures(args.results, str(out / "table4_procedures.tex"))
-        print("Table 4 (Per-procedure):")
-        print(t4)
-        print()
+        logger.info("Table 4 (Per-procedure):")
+        logger.info(t4)
+        logger.info("")
 
     # Displacement data table
     if Path(args.displacement_report).exists():
         t5 = generate_displacement_table(
             args.displacement_report, str(out / "table5_displacement.tex")
         )
-        print("Table 5 (Displacement data):")
-        print(t5)
-        print()
+        logger.info("Table 5 (Displacement data):")
+        logger.info(t5)
+        logger.info("")
 
-    print(f"All tables saved to {out}/")
+    logger.info("All tables saved to %s/", out)

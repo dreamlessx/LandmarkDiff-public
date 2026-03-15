@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import shutil
 import sys
 import tempfile
@@ -38,6 +39,13 @@ import numpy as np
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%H:%M:%S",
+)
+logger = logging.getLogger(__name__)
+
 PROCEDURES = [
     "rhinoplasty",
     "blepharoplasty",
@@ -47,10 +55,11 @@ PROCEDURES = [
     "mentoplasty",
 ]
 
+IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
+
 
 def collect_target_images(data_dir: Path) -> list[Path]:
     """Collect target images (output of pipeline)."""
-    extensions = {".jpg", ".jpeg", ".png"}
     # Try *_target.png pattern first (training pairs)
     targets = sorted(data_dir.glob("*_target.png"))
     if targets:
@@ -60,7 +69,7 @@ def collect_target_images(data_dir: Path) -> list[Path]:
     if outputs:
         return outputs
     # Fall back to all images
-    return sorted(f for f in data_dir.rglob("*") if f.suffix.lower() in extensions and f.is_file())
+    return sorted(f for f in data_dir.rglob("*") if f.suffix.lower() in IMAGE_EXTS and f.is_file())
 
 
 def prepare_fid_dir(images: list[Path], tmp_dir: Path, size: int = 299) -> Path:
@@ -78,37 +87,73 @@ def prepare_fid_dir(images: list[Path], tmp_dir: Path, size: int = 299) -> Path:
     return tmp_dir
 
 
+def _try_clean_fid(real_dir: str, gen_dir: str) -> float | None:
+    """Attempt FID computation via the clean-fid library (unbiased estimator).
+
+    Returns the FID score on success, or None if clean-fid is not installed.
+    """
+    try:
+        from cleanfid import fid as cfid  # type: ignore[import-untyped]
+    except ImportError:
+        return None
+
+    score = cfid.compute_fid(real_dir, gen_dir, mode="clean")
+    return float(score)
+
+
 def compute_fid_score(real_dir: str, gen_dir: str) -> dict:
     """Compute FID and optionally IS between two image directories.
+
+    Tries clean-fid first (unbiased estimator), then torch-fidelity,
+    then falls back to manual InceptionV3 computation.
 
     Returns dict with fid, inception_score_mean, inception_score_std,
     real_count, gen_count.
     """
-    try:
-        from torch_fidelity import calculate_metrics
-    except ImportError:
-        # Fallback: manual FID computation
-        return _compute_fid_manual(real_dir, gen_dir)
-
-    metrics = calculate_metrics(
-        input1=gen_dir,
-        input2=real_dir,
-        fid=True,
-        isc=True,
-        kid=False,
-        verbose=False,
-    )
-
     real_count = len(list(Path(real_dir).glob("*.png")))
     gen_count = len(list(Path(gen_dir).glob("*.png")))
 
-    return {
-        "fid": round(metrics.get("frechet_inception_distance", -1), 4),
-        "inception_score_mean": round(metrics.get("inception_score_mean", -1), 4),
-        "inception_score_std": round(metrics.get("inception_score_std", -1), 4),
-        "real_count": real_count,
-        "gen_count": gen_count,
-    }
+    # Try clean-fid first (unbiased estimator)
+    score = _try_clean_fid(real_dir, gen_dir)
+    if score is not None:
+        logger.info("FID (clean-fid): %.4f  [real=%d, gen=%d]", score, real_count, gen_count)
+        return {
+            "fid": round(score, 4),
+            "inception_score_mean": -1,
+            "inception_score_std": -1,
+            "real_count": real_count,
+            "gen_count": gen_count,
+            "method": "clean-fid",
+        }
+
+    # Try torch-fidelity
+    try:
+        from torch_fidelity import calculate_metrics
+
+        metrics = calculate_metrics(
+            input1=gen_dir,
+            input2=real_dir,
+            fid=True,
+            isc=True,
+            kid=False,
+            verbose=False,
+        )
+        fid_val = round(metrics.get("frechet_inception_distance", -1), 4)
+        logger.info("FID (torch-fidelity): %.4f  [real=%d, gen=%d]", fid_val, real_count, gen_count)
+        return {
+            "fid": fid_val,
+            "inception_score_mean": round(metrics.get("inception_score_mean", -1), 4),
+            "inception_score_std": round(metrics.get("inception_score_std", -1), 4),
+            "real_count": real_count,
+            "gen_count": gen_count,
+            "method": "torch-fidelity",
+        }
+    except ImportError:
+        pass
+
+    # Fallback: manual FID computation
+    logger.info("clean-fid and torch-fidelity not installed; using manual InceptionV3 FID.")
+    return _compute_fid_manual(real_dir, gen_dir)
 
 
 def _compute_fid_manual(real_dir: str, gen_dir: str) -> dict:
@@ -122,7 +167,9 @@ def _compute_fid_manual(real_dir: str, gen_dir: str) -> dict:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Load InceptionV3 (remove final classification layer)
-    inception = models.inception_v3(pretrained=True, transform_input=False)
+    inception = models.inception_v3(
+        weights=models.Inception_V3_Weights.IMAGENET1K_V1, transform_input=False
+    )
     inception.fc = torch.nn.Identity()
     inception.eval().to(device)
 
@@ -167,12 +214,25 @@ def _compute_fid_manual(real_dir: str, gen_dir: str) -> dict:
 
     diff = mu_r - mu_g
     covmean = sqrtm(sigma_r @ sigma_g)
+
+    # Numerical fix: sqrtm can produce complex output due to
+    # floating-point rounding on near-singular matrices.
     if np.iscomplexobj(covmean):
-        covmean = covmean.real
-    fid = diff @ diff + np.trace(sigma_r + sigma_g - 2 * covmean)
+        if np.allclose(covmean.imag, 0, atol=1e-3):
+            covmean = covmean.real
+        else:
+            logger.warning(
+                "sqrtm produced non-negligible imaginary component "
+                "(max imag=%.4e); clipping to real.",
+                np.max(np.abs(covmean.imag)),
+            )
+            covmean = covmean.real
+
+    fid = float(diff @ diff + np.trace(sigma_r + sigma_g - 2 * covmean))
+    fid = max(fid, 0.0)  # FID is non-negative by definition
 
     return {
-        "fid": round(float(fid), 4),
+        "fid": round(fid, 4),
         "inception_score_mean": -1,
         "inception_score_std": -1,
         "real_count": len(real_feats),
@@ -278,18 +338,18 @@ def main():
 
     real_dir = Path(args.real)
     if not real_dir.exists():
-        print(f"ERROR: Real image directory not found: {real_dir}")
+        logger.error("Real image directory not found: %s", real_dir)
         sys.exit(1)
 
     report = {"real_dir": str(real_dir)}
 
     if args.compare and len(args.generated) > 1:
         # Compare multiple checkpoints
-        print(f"Comparing {len(args.generated)} checkpoints against {real_dir}")
+        logger.info("Comparing %d checkpoints against %s", len(args.generated), real_dir)
         comparisons = {}
 
         real_imgs = collect_target_images(real_dir)
-        print(f"Real images: {len(real_imgs)}")
+        logger.info("Real images: %d", len(real_imgs))
 
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
@@ -298,16 +358,18 @@ def main():
             for gen_path_str in args.generated:
                 gen_path = Path(gen_path_str)
                 if not gen_path.exists():
-                    print(f"  SKIP: {gen_path} not found")
+                    logger.warning("SKIP: %s not found", gen_path)
                     continue
 
                 gen_imgs = collect_target_images(gen_path)
                 gen_tmp = prepare_fid_dir(gen_imgs, tmp_path / "gen")
                 result = compute_fid_score(str(real_tmp), str(gen_tmp))
                 comparisons[str(gen_path)] = result
-                print(
-                    f"  {gen_path.name}: FID={result['fid']:.2f}, "
-                    f"IS={result.get('inception_score_mean', -1):.2f}"
+                logger.info(
+                    "  %s: FID=%.2f, IS=%.2f",
+                    gen_path.name,
+                    result["fid"],
+                    result.get("inception_score_mean", -1),
                 )
 
                 # Clean gen tmp for next iteration
@@ -317,21 +379,21 @@ def main():
 
         # Rank by FID
         ranked = sorted(comparisons.items(), key=lambda x: x[1]["fid"])
-        print("\nRanking (by FID, lower is better):")
+        logger.info("\nRanking (by FID, lower is better):")
         for i, (name, metrics) in enumerate(ranked):
-            print(f"  {i + 1}. {Path(name).name}: FID={metrics['fid']:.2f}")
+            logger.info("  %d. %s: FID=%.2f", i + 1, Path(name).name, metrics["fid"])
 
     else:
         gen_dir = Path(args.generated[0])
         if not gen_dir.exists():
-            print(f"ERROR: Generated image directory not found: {gen_dir}")
+            logger.error("Generated image directory not found: %s", gen_dir)
             sys.exit(1)
 
         # Global FID
-        print(f"Computing FID: {gen_dir} vs {real_dir}")
+        logger.info("Computing FID: %s vs %s", gen_dir, real_dir)
         real_imgs = collect_target_images(real_dir)
         gen_imgs = collect_target_images(gen_dir)
-        print(f"Real: {len(real_imgs)} images, Generated: {len(gen_imgs)} images")
+        logger.info("Real: %d images, Generated: %d images", len(real_imgs), len(gen_imgs))
 
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
@@ -340,39 +402,40 @@ def main():
             global_result = compute_fid_score(str(real_tmp), str(gen_tmp))
 
         report["global"] = global_result
-        print(f"\nGlobal FID: {global_result['fid']:.2f}")
+        logger.info("\nGlobal FID: %.2f", global_result["fid"])
         if global_result.get("inception_score_mean", -1) > 0:
-            print(
-                f"Inception Score: {global_result['inception_score_mean']:.2f} "
-                f"+/- {global_result['inception_score_std']:.2f}"
+            logger.info(
+                "Inception Score: %.2f +/- %.2f",
+                global_result["inception_score_mean"],
+                global_result["inception_score_std"],
             )
 
         # Per-procedure FID
         if args.per_procedure:
-            print("\nPer-procedure FID:")
+            logger.info("\nPer-procedure FID:")
             proc_results = compute_per_procedure_fid(real_dir, gen_dir)
             report["per_procedure"] = proc_results
             for proc, metrics in proc_results.items():
                 fid = metrics["fid"]
                 n = metrics.get("gen_count", 0)
-                print(f"  {proc}: FID={fid:.2f} (n={n})")
+                logger.info("  %s: FID=%.2f (n=%d)", proc, fid, n)
 
         # Per-Fitzpatrick FID
         if args.per_fitzpatrick:
-            print("\nPer-Fitzpatrick FID:")
+            logger.info("\nPer-Fitzpatrick FID:")
             fitz_results = compute_fitzpatrick_fid(real_dir, gen_dir)
             report["per_fitzpatrick"] = fitz_results
             for ftype, metrics in sorted(fitz_results.items()):
                 fid = metrics["fid"]
                 n_real = metrics.get("real_count", 0)
                 n_gen = metrics.get("gen_count", 0)
-                print(f"  Type {ftype}: FID={fid:.2f} (real={n_real}, gen={n_gen})")
+                logger.info("  Type %s: FID=%.2f (real=%d, gen=%d)", ftype, fid, n_real, n_gen)
 
     # Save report
     output_path = args.output or str(Path(args.generated[0]) / "fid_report.json")
     with open(output_path, "w") as f:
         json.dump(report, f, indent=2)
-    print(f"\nReport saved: {output_path}")
+    logger.info("\nReport saved: %s", output_path)
 
 
 if __name__ == "__main__":

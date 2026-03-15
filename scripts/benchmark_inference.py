@@ -25,6 +25,7 @@ from __future__ import annotations
 import argparse
 import gc
 import json
+import logging
 import resource
 import sys
 import time
@@ -34,6 +35,9 @@ import cv2
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -122,16 +126,16 @@ def profile_stages(image: np.ndarray, repeats: int = 10) -> dict:
     results = {}
 
     # 1. Landmark extraction
-    print("  Profiling landmark extraction...")
+    logger.info("  Profiling landmark extraction...")
     results["landmark_extraction"] = _warmup_and_time(lambda: extract_landmarks(image), repeats)
 
     face = extract_landmarks(image)
     if face is None:
-        print("  No face detected, cannot profile remaining stages")
+        logger.warning("  No face detected, cannot profile remaining stages")
         return results
 
     # 2. Manipulation (per procedure)
-    print("  Profiling manipulation...")
+    logger.info("  Profiling manipulation...")
     procedures = [
         "rhinoplasty",
         "blepharoplasty",
@@ -149,13 +153,13 @@ def profile_stages(image: np.ndarray, repeats: int = 10) -> dict:
     results["manipulation"] = manip_results
 
     # 3. Conditioning
-    print("  Profiling conditioning...")
+    logger.info("  Profiling conditioning...")
     results["conditioning"] = _warmup_and_time(
         lambda: generate_conditioning(face, 512, 512), repeats
     )
 
     # 4. Masking
-    print("  Profiling masking...")
+    logger.info("  Profiling masking...")
     mask_results = {}
     for proc in procedures:
         mask_results[proc] = _warmup_and_time(
@@ -164,7 +168,7 @@ def profile_stages(image: np.ndarray, repeats: int = 10) -> dict:
     results["masking"] = mask_results
 
     # 5. TPS warp
-    print("  Profiling TPS warp...")
+    logger.info("  Profiling TPS warp...")
     manip = apply_procedure_preset(face, "rhinoplasty", 50.0, image_size=512)
     results["tps_warp"] = _warmup_and_time(
         lambda: warp_image_tps(image, face.pixel_coords, manip.pixel_coords),
@@ -172,7 +176,7 @@ def profile_stages(image: np.ndarray, repeats: int = 10) -> dict:
     )
 
     # 6. Mask composite
-    print("  Profiling mask composite...")
+    logger.info("  Profiling mask composite...")
     from landmarkdiff.inference import mask_composite
 
     mask = generate_surgical_mask(face, "rhinoplasty", 512, 512)
@@ -192,7 +196,7 @@ def profile_mode(
     """Profile end-to-end inference for a given mode."""
     from landmarkdiff.inference import LandmarkDiffPipeline
 
-    print(f"  Loading pipeline (mode={mode})...")
+    logger.info("  Loading pipeline (mode=%s)...", mode)
     reset_gpu_stats()
 
     try:
@@ -204,14 +208,14 @@ def profile_mode(
     _, load_peak = gpu_mem_mb()
 
     # Warmup
-    print(f"  Warmup ({mode})...")
+    logger.info("  Warmup (%s)...", mode)
     try:
         pipe.generate(image, procedure="rhinoplasty", intensity=50.0, seed=42)
     except Exception as e:
         return {"mode": mode, "error": f"warmup failed: {e}"}
 
     # Timed runs
-    print(f"  Benchmarking ({mode}, {repeats} runs)...")
+    logger.info("  Benchmarking (%s, %d runs)...", mode, repeats)
     times = []
     for i in range(repeats):
         reset_gpu_stats()
@@ -224,7 +228,7 @@ def profile_mode(
                 postprocess=(mode != "tps"),
             )
         times.append(t.elapsed * 1000)
-        print(f"    [{i + 1}/{repeats}] {times[-1]:.0f} ms")
+        logger.info("    [%d/%d] %.0f ms", i + 1, repeats, times[-1])
 
     _, inference_peak = gpu_mem_mb()
     arr = np.array(times)
@@ -357,29 +361,29 @@ def main():
     if args.input:
         image = cv2.imread(args.input)
         if image is None:
-            print(f"ERROR: Cannot read {args.input}")
+            logger.error("Cannot read %s", args.input)
             sys.exit(1)
         image = cv2.resize(image, (512, 512))
-        print(f"Using image: {args.input}")
+        logger.info("Using image: %s", args.input)
     else:
         image = create_synthetic_face()
-        print("Using synthetic test image")
+        logger.info("Using synthetic test image")
 
     all_results: dict = {"timestamp": time.strftime("%Y-%m-%d %H:%M:%S")}
 
     # Per-stage profiling
     if not args.skip_stages:
-        print("\n=== Per-Stage Profiling ===")
+        logger.info("\n=== Per-Stage Profiling ===")
         stage_results = profile_stages(image, repeats=args.repeats)
         all_results["stages"] = stage_results
         stage_md = format_stage_table(stage_results)
-        print()
-        print(stage_md)
+        logger.info("")
+        logger.info(stage_md)
     else:
         stage_md = ""
 
     # End-to-end mode comparison
-    print("\n=== End-to-End Mode Comparison ===")
+    logger.info("\n=== End-to-End Mode Comparison ===")
     mode_results = []
     for mode in args.modes:
         r = profile_mode(image, mode, repeats=args.repeats)
@@ -387,8 +391,8 @@ def main():
 
     all_results["modes"] = mode_results
     mode_md = format_mode_table(mode_results)
-    print()
-    print(mode_md)
+    logger.info("")
+    logger.info(mode_md)
 
     # Memory summary
     mem_summary = {
@@ -402,7 +406,7 @@ def main():
     json_path = output_dir / "benchmark_inference.json"
     with open(json_path, "w") as f:
         json.dump(all_results, f, indent=2)
-    print(f"\nJSON results: {json_path}")
+    logger.info("\nJSON results: %s", json_path)
 
     # Save markdown
     md_path = output_dir / "benchmark_inference.md"
@@ -420,9 +424,9 @@ def main():
         )
     )
     md_path.write_text(md_content)
-    print(f"Markdown report: {md_path}")
+    logger.info("Markdown report: %s", md_path)
 
-    print("\nDone.")
+    logger.info("\nDone.")
 
 
 if __name__ == "__main__":
