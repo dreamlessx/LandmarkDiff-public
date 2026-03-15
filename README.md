@@ -1,35 +1,45 @@
 <p align="center">
-  <img src="assets/logo.png" alt="LandmarkDiff" width="128" height="128">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo.png">
+    <source media="(prefers-color-scheme: light)" srcset="assets/logo.png">
+    <img src="assets/logo.png" alt="LandmarkDiff" width="140" height="140">
+  </picture>
+</p>
+<h1 align="center">LandmarkDiff</h1>
+<p align="center">
+  <em>Photorealistic facial surgery outcome prediction from a single photo</em>
 </p>
 
-# LandmarkDiff
-
-[![CI](https://github.com/dreamlessx/LandmarkDiff-public/actions/workflows/ci.yml/badge.svg)](https://github.com/dreamlessx/LandmarkDiff-public/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/dreamlessx/LandmarkDiff-public/graph/badge.svg)](https://codecov.io/gh/dreamlessx/LandmarkDiff-public)
-[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://dreamlessx.github.io/LandmarkDiff-public/)
-[![PyPI version](https://img.shields.io/pypi/v/landmarkdiff.svg)](https://pypi.org/project/landmarkdiff/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.10 | 3.11 | 3.12](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12-blue.svg)](https://www.python.org/downloads/)
-[![PyTorch 2.1+](https://img.shields.io/badge/pytorch-2.1+-ee4c2c.svg)](https://pytorch.org/)
-[![Hugging Face Space](https://img.shields.io/badge/%F0%9F%A4%97-Live%20Demo-yellow)](https://huggingface.co/spaces/dreamlessx/LandmarkDiff)
-[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+<p align="center">
+  <a href="https://github.com/dreamlessx/LandmarkDiff-public/actions/workflows/ci.yml"><img src="https://github.com/dreamlessx/LandmarkDiff-public/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://codecov.io/gh/dreamlessx/LandmarkDiff-public"><img src="https://codecov.io/gh/dreamlessx/LandmarkDiff-public/graph/badge.svg" alt="codecov"></a>
+  <a href="https://dreamlessx.github.io/LandmarkDiff-public/"><img src="https://img.shields.io/badge/docs-GitHub%20Pages-blue" alt="Docs"></a>
+  <a href="https://pypi.org/project/landmarkdiff/"><img src="https://img.shields.io/pypi/v/landmarkdiff.svg" alt="PyPI version"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12-blue.svg" alt="Python 3.10 | 3.11 | 3.12"></a>
+  <a href="https://pytorch.org/"><img src="https://img.shields.io/badge/pytorch-2.1+-ee4c2c.svg" alt="PyTorch 2.1+"></a>
+  <a href="https://huggingface.co/spaces/dreamlessx/LandmarkDiff"><img src="https://img.shields.io/badge/%F0%9F%A4%97-Live%20Demo-yellow" alt="Hugging Face Space"></a>
+  <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/badge/code%20style-ruff-000000.svg" alt="Code style: ruff"></a>
+</p>
 
 Photorealistic facial surgery outcome prediction from a single photo, powered by anatomically-conditioned latent diffusion.
 
-<table>
+<table align="center">
 <tr>
-<td width="50%">
+<td width="50%" valign="top">
 
-**Input:** Single 2D photo -- any clinical photo or phone selfie
-**Output:** Photorealistic post-op prediction
-**Just a phone** -- no depth sensors, no clinical equipment
+**Input & Output**
+- Single 2D photo -- any clinical photo or phone selfie
+- Photorealistic post-op prediction
+- Just a phone -- no depth sensors, no clinical equipment
 
 </td>
-<td width="50%">
+<td width="50%" valign="top">
 
-**6 procedures** -- rhinoplasty, blepharoplasty, rhytidectomy, orthognathic, brow lift, mentoplasty
-**4 inference modes** -- TPS (CPU), img2img, ControlNet, ControlNet+IP
-**5 clinical flags** -- vitiligo, Bell's palsy, keloid, Ehlers-Danlos, Fitzpatrick-stratified eval
+**Capabilities**
+- **6 procedures** -- rhinoplasty, blepharoplasty, rhytidectomy, orthognathic, brow lift, mentoplasty
+- **4 inference modes** -- TPS (CPU), img2img, ControlNet, ControlNet+IP
+- **5 clinical flags** -- vitiligo, Bell's palsy, keloid, Ehlers-Danlos, Fitzpatrick-stratified eval
 
 </td>
 </tr>
@@ -43,11 +53,21 @@ LandmarkDiff extracts MediaPipe's 478-point face mesh from the input photo, appl
 
 > **Paper:** "LandmarkDiff: Anatomically-Conditioned Latent Diffusion for Photorealistic Facial Surgery Outcome Prediction," targeting MICCAI 2026.
 
-![LandmarkDiff pipeline](demos/demo_pipeline_0.png)
+<p align="center">
+  <img src="demos/demo_pipeline_0.png" alt="LandmarkDiff pipeline" width="90%">
+  <br>
+  <em>Full pipeline: input photo -- landmark extraction -- mesh deformation -- ControlNet synthesis -- compositing</em>
+</p>
 
 ### Try the Live Demo
 
-**[huggingface.co/spaces/dreamlessx/LandmarkDiff](https://huggingface.co/spaces/dreamlessx/LandmarkDiff)** -- runs entirely on CPU, no GPU or local install needed. Upload a photo, pick a procedure, adjust intensity, and see the predicted result with symmetry analysis in seconds.
+<p align="center">
+  <a href="https://huggingface.co/spaces/dreamlessx/LandmarkDiff">
+    <img src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Live%20Demo-yellow?style=for-the-badge" alt="Try the Live Demo">
+  </a>
+</p>
+
+Runs entirely on CPU, no GPU or local install needed. Upload a photo, pick a procedure, adjust intensity, and see the predicted result with symmetry analysis in seconds.
 
 ```bash
 # Quick install
@@ -56,6 +76,8 @@ pip install -e ".[train,eval,app,dev]"
 # Run a prediction
 python scripts/run_inference.py photo.jpg --procedure rhinoplasty --intensity 60 --mode controlnet
 ```
+
+<br>
 
 ---
 
@@ -87,6 +109,8 @@ python scripts/run_inference.py photo.jpg --procedure rhinoplasty --intensity 60
 - [Contributing](#contributing)
 - [License](#license)
 - [Acknowledgments](#acknowledgments)
+
+<br>
 
 ---
 
@@ -331,11 +355,17 @@ Six-step refinement:
 
 ### Pipeline Visualization
 
-![Pipeline demo -- rhinoplasty on diverse faces](demos/demo_pipeline_0.png)
+<p align="center">
+  <img src="demos/demo_pipeline_0.png" alt="Pipeline demo -- rhinoplasty on diverse faces" width="90%">
+</p>
 
-![Pipeline demo -- rhinoplasty result](demos/demo_pipeline_1.png)
+<p align="center">
+  <img src="demos/demo_pipeline_1.png" alt="Pipeline demo -- rhinoplasty result" width="90%">
+</p>
 
 Each image shows five pipeline stages: **Input | Original Mesh | Manipulated Mesh | Surgical Mask | TPS-warped Result**. These are geometric-only (TPS mode, CPU) outputs; ControlNet photorealistic results will be added after training completes.
+
+<br>
 
 ---
 
@@ -938,6 +968,8 @@ make paper           # build MICCAI paper PDF
 make clean           # remove build artifacts
 ```
 
+<br>
+
 ---
 
 ## Roadmap
@@ -987,6 +1019,8 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for the detailed roadmap with full milest
 - MICCAI 2026 workshop paper (July 2026 submission)
 - RSNA 2026 abstract (May 2026)
 - Full conference paper (CVPR/NeurIPS 2027)
+
+<br>
 
 ---
 
