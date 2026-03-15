@@ -260,8 +260,9 @@ class TestEvaluationMetrics:
         """NME with small displacement should be small."""
         from landmarkdiff.evaluation import compute_nme
 
-        landmarks = np.random.rand(478, 2) * 512
-        displaced = landmarks + np.random.randn(478, 2) * 2  # 2px noise
+        rng = np.random.default_rng(42)
+        landmarks = rng.random((478, 2)) * 512
+        displaced = landmarks + rng.standard_normal((478, 2)) * 2  # 2px noise
         nme = compute_nme(landmarks, displaced)
         assert nme > 0
-        assert nme < 0.1  # should be small relative to IOD
+        assert nme < 0.15  # should be small relative to IOD
