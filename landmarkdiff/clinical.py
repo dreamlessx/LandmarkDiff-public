@@ -223,6 +223,87 @@ def adjust_mask_for_keloid(
     return np.clip(result, 0.0, 1.0)
 
 
+# ---------------------------------------------------------------------------
+# Frankfort horizontal plane
+# ---------------------------------------------------------------------------
+
+# MediaPipe proxies for Frankfort plane landmarks:
+# Porion (ear canal top): tragus area, use landmark 234 (left) / 454 (right)
+# Infraorbital point: lower orbital rim, use landmark 145 (left) / 374 (right)
+_PORION_LEFT = 234
+_PORION_RIGHT = 454
+_INFRAORBITAL_LEFT = 145
+_INFRAORBITAL_RIGHT = 374
+
+
+def compute_frankfort_angle(face: FaceLandmarks) -> float:
+    """Compute the Frankfort horizontal plane angle in degrees.
+
+    The Frankfort plane runs from the porion (top of ear canal) to the
+    infraorbital point (bottom of eye orbit). In an ideally aligned face,
+    this plane is horizontal (0 degrees).
+
+    Uses MediaPipe landmark proxies:
+    - Porion: tragus region (landmarks 234/454)
+    - Infraorbital: lower orbital rim (landmarks 145/374)
+
+    Returns:
+        Angle in degrees (positive = tilted left-high, negative = right-high).
+        0.0 means perfectly horizontal.
+    """
+    coords = face.landmarks[:, :2].copy()
+    coords[:, 0] *= face.image_width
+    coords[:, 1] *= face.image_height
+
+    # Average left and right sides for robustness
+    porion = (coords[_PORION_LEFT] + coords[_PORION_RIGHT]) / 2.0
+    infraorbital = (coords[_INFRAORBITAL_LEFT] + coords[_INFRAORBITAL_RIGHT]) / 2.0
+
+    dx = infraorbital[0] - porion[0]
+    dy = infraorbital[1] - porion[1]
+    return float(np.degrees(np.arctan2(dy, dx)))
+
+
+def align_to_frankfort(face: FaceLandmarks) -> FaceLandmarks:
+    """Rotate landmarks so the Frankfort horizontal plane is level.
+
+    Computes the Frankfort angle and applies a counter-rotation around
+    the face center to align the plane horizontally. Landmarks remain
+    in normalized [0, 1] space.
+
+    Args:
+        face: Input face landmarks.
+
+    Returns:
+        New FaceLandmarks with rotated landmarks.
+    """
+    angle_deg = compute_frankfort_angle(face)
+    angle_rad = -np.radians(angle_deg)  # negate to counter-rotate
+
+    coords = face.landmarks.copy()
+    # Compute rotation center (face centroid in normalized space)
+    cx = np.mean(coords[:, 0])
+    cy = np.mean(coords[:, 1])
+
+    cos_a = np.cos(angle_rad)
+    sin_a = np.sin(angle_rad)
+
+    dx = coords[:, 0] - cx
+    dy = coords[:, 1] - cy
+    coords[:, 0] = cx + dx * cos_a - dy * sin_a
+    coords[:, 1] = cy + dx * sin_a + dy * cos_a
+
+    # Clamp to [0, 1]
+    coords[:, :2] = np.clip(coords[:, :2], 0.0, 1.0)
+
+    return FaceLandmarks(
+        landmarks=coords,
+        image_width=face.image_width,
+        image_height=face.image_height,
+        confidence=face.confidence,
+    )
+
+
 # Bilateral landmark pairs (left_index, right_index) for asymmetry analysis.
 # Covers jawline, eyes, eyebrows, nose, and lips.
 BILATERAL_PAIRS: list[tuple[int, int]] = [
