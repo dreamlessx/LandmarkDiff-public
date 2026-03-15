@@ -120,6 +120,96 @@ class TestFaceLandmarksImmutability:
 
 
 # ---------------------------------------------------------------------------
+# FaceLandmarks — face_rotation
+# ---------------------------------------------------------------------------
+
+
+class TestFaceRotation:
+    def test_upright_face_near_zero(self):
+        """Horizontally aligned eyes should give ~0 degrees rotation."""
+        landmarks = np.zeros((478, 3), dtype=np.float32)
+        # Left eye outer corner (33) and right eye outer corner (263) at same y
+        landmarks[33] = [0.3, 0.4, 0.0]
+        landmarks[263] = [0.7, 0.4, 0.0]
+        face = FaceLandmarks(landmarks=landmarks, image_width=512, image_height=512, confidence=1.0)
+        assert abs(face.face_rotation) < 1.0
+
+    def test_tilted_face_positive(self):
+        """Right eye lower than left eye gives positive rotation."""
+        landmarks = np.zeros((478, 3), dtype=np.float32)
+        landmarks[33] = [0.3, 0.4, 0.0]
+        landmarks[263] = [0.7, 0.5, 0.0]  # right eye lower
+        face = FaceLandmarks(landmarks=landmarks, image_width=512, image_height=512, confidence=1.0)
+        assert face.face_rotation > 5.0
+
+    def test_tilted_face_negative(self):
+        """Right eye higher than left eye gives negative rotation."""
+        landmarks = np.zeros((478, 3), dtype=np.float32)
+        landmarks[33] = [0.3, 0.5, 0.0]  # left eye lower
+        landmarks[263] = [0.7, 0.4, 0.0]
+        face = FaceLandmarks(landmarks=landmarks, image_width=512, image_height=512, confidence=1.0)
+        assert face.face_rotation < -5.0
+
+    def test_returns_float(self):
+        face = _make_face()
+        assert isinstance(face.face_rotation, float)
+
+
+# ---------------------------------------------------------------------------
+# FaceLandmarks — face_bbox
+# ---------------------------------------------------------------------------
+
+
+class TestFaceBbox:
+    def test_returns_four_ints(self):
+        face = _make_face()
+        bbox = face.face_bbox
+        assert len(bbox) == 4
+        for val in bbox:
+            assert isinstance(val, int)
+
+    def test_bbox_within_image_bounds(self):
+        face = _make_face()
+        x_min, y_min, x_max, y_max = face.face_bbox
+        assert x_min >= 0
+        assert y_min >= 0
+        assert x_max < face.image_width
+        assert y_max < face.image_height
+
+    def test_bbox_contains_all_landmarks(self):
+        face = _make_face()
+        coords = face.pixel_coords
+        x_min, y_min, x_max, y_max = face.face_bbox
+        assert np.all(coords[:, 0] >= x_min)
+        assert np.all(coords[:, 1] >= y_min)
+        assert np.all(coords[:, 0] <= x_max)
+        assert np.all(coords[:, 1] <= y_max)
+
+    def test_rotated_face_gets_more_padding(self):
+        """Rotated faces should get wider bounding boxes."""
+        # Upright face
+        lm_up = np.full((478, 3), 0.5, dtype=np.float32)
+        lm_up[:, 0] = np.linspace(0.3, 0.7, 478)
+        lm_up[:, 1] = np.linspace(0.2, 0.8, 478)
+        lm_up[33] = [0.3, 0.4, 0.0]
+        lm_up[263] = [0.7, 0.4, 0.0]  # eyes level
+        face_up = FaceLandmarks(landmarks=lm_up, image_width=512, image_height=512, confidence=1.0)
+
+        # Rotated face (same landmarks, eyes tilted 30+ degrees)
+        lm_rot = lm_up.copy()
+        lm_rot[33] = [0.3, 0.3, 0.0]
+        lm_rot[263] = [0.7, 0.6, 0.0]  # strong tilt
+        face_rot = FaceLandmarks(landmarks=lm_rot, image_width=512, image_height=512, confidence=1.0)
+
+        bbox_up = face_up.face_bbox
+        bbox_rot = face_rot.face_bbox
+        area_up = (bbox_up[2] - bbox_up[0]) * (bbox_up[3] - bbox_up[1])
+        area_rot = (bbox_rot[2] - bbox_rot[0]) * (bbox_rot[3] - bbox_rot[1])
+        # Rotated face bbox should be larger due to extra padding
+        assert area_rot > area_up
+
+
+# ---------------------------------------------------------------------------
 # Region data validation
 # ---------------------------------------------------------------------------
 
