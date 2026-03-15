@@ -2144,6 +2144,7 @@ class TestProceduresList:
             "lip_augmentation",
             "forehead_reduction",
             "submental_liposuction",
+            "otoplasty",
         }
         assert set(PROCEDURES) == expected
 
