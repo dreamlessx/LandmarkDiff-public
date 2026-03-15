@@ -679,3 +679,162 @@ def visualize_proportions(
     cv2.putText(canvas, text, (5, h - 5), font, scale, (255, 255, 255), 1, cv2.LINE_AA)
 
     return canvas
+
+
+# ---------------------------------------------------------------------------
+# Deviated septum detection
+# ---------------------------------------------------------------------------
+
+# Nasal midline landmarks (dorsum, tip, columella base)
+_NASAL_MIDLINE = [6, 197, 195, 5, 4, 1, 2, 94, 19]
+# Alar (nostril) landmarks for bilateral comparison
+_LEFT_ALAR = [240, 236, 141, 363, 370]
+_RIGHT_ALAR = [460, 456, 274, 275, 278]
+
+
+@dataclass
+class SeptumAnalysis:
+    """Results of deviated septum analysis."""
+
+    deviation_angle: float  # degrees from vertical midline
+    deviation_direction: str  # "left", "right", or "centered"
+    midline_rmse: float  # RMS deviation of nasal midline from face midline (px)
+    alar_asymmetry: float  # absolute difference in left vs right nostril width (px)
+    severity: str  # "none", "mild", "moderate", "severe"
+
+    def summary(self) -> str:
+        lines = [
+            f"Septum deviation: {self.deviation_angle:.1f} deg {self.deviation_direction}",
+            f"  Midline RMSE: {self.midline_rmse:.2f} px",
+            f"  Alar asymmetry: {self.alar_asymmetry:.2f} px",
+            f"  Severity: {self.severity}",
+        ]
+        return "\n".join(lines)
+
+
+def detect_deviated_septum(
+    face: FaceLandmarks,
+    mild_threshold: float = 2.0,
+    moderate_threshold: float = 5.0,
+    severe_threshold: float = 8.0,
+) -> SeptumAnalysis:
+    """Detect nasal septum deviation from facial landmarks.
+
+    Measures deviation of the nasal midline from the facial vertical
+    midline. Compares left and right alar (nostril) widths to assess
+    bilateral asymmetry.
+
+    Args:
+        face: Extracted face landmarks.
+        mild_threshold: Deviation angle (degrees) for mild classification.
+        moderate_threshold: Deviation angle for moderate classification.
+        severe_threshold: Deviation angle for severe classification.
+
+    Returns:
+        SeptumAnalysis with deviation measurements.
+    """
+    coords = face.pixel_coords
+
+    # Facial midline: average x of left and right jaw reference points
+    face_mid_x = (coords[234, 0] + coords[454, 0]) / 2.0
+
+    # Nasal midline points
+    nasal_pts = coords[_NASAL_MIDLINE]
+    nasal_x = nasal_pts[:, 0]
+    nasal_y = nasal_pts[:, 1]
+
+    # Fit line to nasal midline: x = a*y + b
+    # Use least squares to find the angle of deviation
+    y_centered = nasal_y - nasal_y.mean()
+    x_centered = nasal_x - nasal_x.mean()
+
+    denom = float(np.sum(y_centered**2))
+    slope = float(np.sum(x_centered * y_centered)) / denom if denom > 0 else 0.0
+
+    # Angle from vertical (positive = deviated right)
+    deviation_angle = float(np.degrees(np.arctan(slope)))
+
+    # RMS deviation of nasal midline from face midline
+    midline_rmse = float(np.sqrt(np.mean((nasal_x - face_mid_x) ** 2)))
+
+    # Alar asymmetry: compare left and right nostril spread
+    left_alar_x = coords[_LEFT_ALAR, 0]
+    right_alar_x = coords[_RIGHT_ALAR, 0]
+    left_width = float(face_mid_x - left_alar_x.mean())
+    right_width = float(right_alar_x.mean() - face_mid_x)
+    alar_asymmetry = abs(left_width - right_width)
+
+    # Direction
+    if abs(deviation_angle) < mild_threshold:
+        direction = "centered"
+    elif deviation_angle > 0:
+        direction = "right"
+    else:
+        direction = "left"
+
+    # Severity classification
+    abs_angle = abs(deviation_angle)
+    if abs_angle < mild_threshold:
+        severity = "none"
+    elif abs_angle < moderate_threshold:
+        severity = "mild"
+    elif abs_angle < severe_threshold:
+        severity = "moderate"
+    else:
+        severity = "severe"
+
+    return SeptumAnalysis(
+        deviation_angle=deviation_angle,
+        deviation_direction=direction,
+        midline_rmse=midline_rmse,
+        alar_asymmetry=alar_asymmetry,
+        severity=severity,
+    )
+
+
+def visualize_septum_deviation(
+    image: np.ndarray,
+    face: FaceLandmarks,
+    analysis: SeptumAnalysis,
+) -> np.ndarray:
+    """Overlay nasal midline and deviation indicator on an image.
+
+    Args:
+        image: BGR face image.
+        face: Extracted face landmarks.
+        analysis: Septum analysis results.
+
+    Returns:
+        Annotated image copy.
+    """
+    canvas = image.copy()
+    h, w = canvas.shape[:2]
+    coords = face.pixel_coords
+
+    # Draw facial midline (green dashed approximation)
+    face_mid_x = int((coords[234, 0] + coords[454, 0]) / 2.0)
+    for y in range(0, h, 8):
+        cv2.line(canvas, (face_mid_x, y), (face_mid_x, min(y + 4, h)), (0, 180, 0), 1)
+
+    # Draw nasal midline (red)
+    nasal_pts = coords[_NASAL_MIDLINE]
+    for i in range(len(nasal_pts) - 1):
+        pt1 = (int(nasal_pts[i, 0]), int(nasal_pts[i, 1]))
+        pt2 = (int(nasal_pts[i + 1, 0]), int(nasal_pts[i + 1, 1]))
+        cv2.line(canvas, pt1, pt2, (0, 0, 255), 2, cv2.LINE_AA)
+
+    # Draw alar points
+    for idx in _LEFT_ALAR:
+        pt = (int(coords[idx, 0]), int(coords[idx, 1]))
+        cv2.circle(canvas, pt, 3, (255, 200, 0), -1)
+    for idx in _RIGHT_ALAR:
+        pt = (int(coords[idx, 0]), int(coords[idx, 1]))
+        cv2.circle(canvas, pt, 3, (0, 200, 255), -1)
+
+    # Text annotation
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    scale = max(0.3, h / 512.0 * 0.4)
+    text = f"Deviation: {analysis.deviation_angle:.1f} deg ({analysis.severity})"
+    cv2.putText(canvas, text, (5, h - 5), font, scale, (255, 255, 255), 1, cv2.LINE_AA)
+
+    return canvas
