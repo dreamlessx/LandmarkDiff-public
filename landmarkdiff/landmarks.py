@@ -403,6 +403,79 @@ def _extract_solutions_api(
     return landmarks, 1.0
 
 
+def extract_all_landmarks(
+    image: np.ndarray,
+    max_faces: int = 10,
+    min_detection_confidence: float = 0.5,
+    min_tracking_confidence: float = 0.5,
+) -> list[FaceLandmarks]:
+    """Extract landmarks for all faces in an image.
+
+    Args:
+        image: BGR image as numpy array.
+        max_faces: Maximum number of faces to detect.
+        min_detection_confidence: Minimum face detection confidence.
+        min_tracking_confidence: Minimum landmark tracking confidence.
+
+    Returns:
+        List of FaceLandmarks, one per detected face. Empty if no faces found.
+    """
+    h, w = image.shape[:2]
+    rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    faces = []
+
+    # Use Solutions API which supports max_num_faces > 1
+    try:
+        with mp.solutions.face_mesh.FaceMesh(
+            static_image_mode=True,
+            max_num_faces=max_faces,
+            refine_landmarks=True,
+            min_detection_confidence=min_detection_confidence,
+            min_tracking_confidence=min_tracking_confidence,
+        ) as face_mesh:
+            results = face_mesh.process(rgb)
+
+        if results.multi_face_landmarks:
+            for face_lm in results.multi_face_landmarks:
+                landmarks = np.array(
+                    [(lm.x, lm.y, lm.z) for lm in face_lm.landmark],
+                    dtype=np.float32,
+                )
+                faces.append(
+                    FaceLandmarks(
+                        landmarks=landmarks,
+                        image_width=w,
+                        image_height=h,
+                        confidence=1.0,
+                    )
+                )
+    except Exception:
+        logger.debug("Multi-face extraction failed", exc_info=True)
+
+    return faces
+
+
+def select_largest_face(faces: list[FaceLandmarks]) -> FaceLandmarks | None:
+    """Select the face with the largest bounding box from a list.
+
+    Args:
+        faces: List of detected faces.
+
+    Returns:
+        The face with the largest area, or None if the list is empty.
+    """
+    if not faces:
+        return None
+
+    def _face_area(face: FaceLandmarks) -> float:
+        coords = face.pixel_coords
+        x_range = coords[:, 0].max() - coords[:, 0].min()
+        y_range = coords[:, 1].max() - coords[:, 1].min()
+        return float(x_range * y_range)
+
+    return max(faces, key=_face_area)
+
+
 def visualize_landmarks(
     image: np.ndarray,
     face: FaceLandmarks,
