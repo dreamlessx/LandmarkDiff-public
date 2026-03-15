@@ -368,7 +368,25 @@ def apply_procedure_preset(
     pixel_landmarks[:, 0] *= face.image_width
     pixel_landmarks[:, 1] *= face.image_height
 
-    pixel_landmarks = gaussian_rbf_deform_batch(pixel_landmarks, handles)
+    # Scale each handle's displacement by the confidence of its anchor
+    # landmark. Low-confidence landmarks (e.g., near face boundary on
+    # profile views) are deformed less aggressively.
+    conf = face.landmark_confidence
+    scaled_handles = []
+    for handle in handles:
+        c = float(conf[handle.landmark_index])
+        if c < 1.0:
+            scaled_handles.append(
+                DeformationHandle(
+                    landmark_index=handle.landmark_index,
+                    displacement=handle.displacement * c,
+                    influence_radius=handle.influence_radius,
+                )
+            )
+        else:
+            scaled_handles.append(handle)
+
+    pixel_landmarks = gaussian_rbf_deform_batch(pixel_landmarks, scaled_handles)
 
     # Convert back to normalized
     result = pixel_landmarks.copy()
