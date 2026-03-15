@@ -1,0 +1,15 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 73%
+        threshold: 2%
+    patch:
+      default:
+        target: 80%
+
+ignore:
+  - "scripts/**"
+  - "examples/**"
+  - "docs/**"
+  - "tests/**"

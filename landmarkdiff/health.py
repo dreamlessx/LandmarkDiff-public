@@ -231,7 +231,7 @@ def check_gpu() -> CheckResult:
         available = torch.cuda.is_available()
         if available:
             name = torch.cuda.get_device_name(0)
-            vram_gb = torch.cuda.get_device_properties(0).total_mem / 1e9
+            vram_gb = torch.cuda.get_device_properties(0).total_memory / 1e9
             return CheckResult(
                 name="gpu",
                 healthy=True,
