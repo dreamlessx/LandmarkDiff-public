@@ -144,9 +144,9 @@ class NasalMorphometry:
         nose_length = np.linalg.norm(glabella - nose_tip)
 
         # Guard against zero division
-        intercanthal = max(intercanthal, 1e-6)
-        face_width = max(face_width, 1e-6)
-        face_height = max(face_height, 1e-6)
+        intercanthal = float(max(intercanthal, 1e-6))
+        face_width = float(max(face_width, 1e-6))
+        face_height = float(max(face_height, 1e-6))
 
         # Facial midline (between outer eye corners)
         midline_x = (pts[LEFT_OUTER_EYE][0] + pts[RIGHT_OUTER_EYE][0]) / 2
