@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.svg" alt="LandmarkDiff" width="128" height="128">
+</p>
+
 # LandmarkDiff
 
 [![CI](https://github.com/dreamlessx/LandmarkDiff-public/actions/workflows/ci.yml/badge.svg)](https://github.com/dreamlessx/LandmarkDiff-public/actions/workflows/ci.yml)
