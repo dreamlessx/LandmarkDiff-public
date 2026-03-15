@@ -12,7 +12,10 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import logging
 import sys
+
+logger = logging.getLogger(__name__)
 
 
 def cmd_infer(args: argparse.Namespace) -> None:
@@ -25,7 +28,7 @@ def cmd_infer(args: argparse.Namespace) -> None:
 
     image = cv2.imread(args.image)
     if image is None:
-        print(f"ERROR: Cannot read image: {args.image}")
+        logger.error("Cannot read image: %s", args.image)
         sys.exit(1)
 
     image = cv2.resize(image, (512, 512))
@@ -125,7 +128,7 @@ def cmd_validate(args: argparse.Namespace) -> None:
     output_img = cv2.imread(args.output_image)
 
     if input_img is None or output_img is None:
-        print("ERROR: Cannot read input or output image.")
+        logger.error("Cannot read input or output image.")
         sys.exit(1)
 
     validator = SafetyValidator(

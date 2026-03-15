@@ -15,12 +15,15 @@ Designed for:
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 import cv2
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Data structures
@@ -882,7 +885,7 @@ def verify_batch(
 
     for i, img_file in enumerate(image_files):
         if (i + 1) % 50 == 0 or i == 0:
-            print(f"Processing {i + 1}/{len(image_files)}: {img_file.name}")
+            logger.info("Processing %d/%d: %s", i + 1, len(image_files), img_file.name)
 
         image = cv2.imread(str(img_file))
         if image is None:
@@ -934,7 +937,7 @@ def verify_batch(
     # Save report
     report_text = report.summary()
     (out_path / "report.txt").write_text(report_text)
-    print(f"\n{report_text}")
-    print(f"\nResults saved to {out_path}/")
+    logger.info("\n%s", report_text)
+    logger.info("Results saved to %s/", out_path)
 
     return report
