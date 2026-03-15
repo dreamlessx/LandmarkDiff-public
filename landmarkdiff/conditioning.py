@@ -154,6 +154,11 @@ INNER_LIPS = [
     78,
 ]
 
+# Auto-Canny threshold scaling factors (median-based)
+_CANNY_LOW_FACTOR = 0.66
+_CANNY_HIGH_FACTOR = 1.33
+_CANNY_DEFAULT_MEDIAN = 128.0
+
 ALL_CONTOURS = [
     JAWLINE_CONTOUR,
     LEFT_EYE_CONTOUR,
@@ -216,9 +221,9 @@ def auto_canny(image: np.ndarray) -> np.ndarray:
     Returns:
         Binary edge map (uint8, 0 or 255).
     """
-    median = np.median(image[image > 0]) if np.any(image > 0) else 128.0
-    low = int(max(0, 0.66 * median))
-    high = int(min(255, 1.33 * median))
+    median = np.median(image[image > 0]) if np.any(image > 0) else _CANNY_DEFAULT_MEDIAN
+    low = int(max(0, _CANNY_LOW_FACTOR * median))
+    high = int(min(255, _CANNY_HIGH_FACTOR * median))
 
     edges = cv2.Canny(image, low, high)
 

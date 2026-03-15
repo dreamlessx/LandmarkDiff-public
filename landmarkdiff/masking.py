@@ -17,6 +17,12 @@ from landmarkdiff.landmarks import FaceLandmarks
 if TYPE_CHECKING:
     from landmarkdiff.clinical import ClinicalFlags
 
+# Boundary noise parameters for seam prevention
+_BOUNDARY_KERNEL_SIZE = 5
+_BOUNDARY_NOISE_MAX = 4
+_BOUNDARY_NOISE_SCALE = 64
+_GAUSSIAN_KERNEL_FACTOR = 6
+
 # Procedure-specific mask parameters
 MASK_CONFIG: dict[str, dict] = {
     "rhinoplasty": {
@@ -224,9 +230,11 @@ def generate_surgical_mask(
 
     Args:
         face: Extracted facial landmarks.
-        procedure: Procedure name.
-        width: Mask width.
-        height: Mask height.
+        procedure: Procedure name (e.g. "rhinoplasty", "blepharoplasty").
+        width: Mask width (defaults to face.image_width).
+        height: Mask height (defaults to face.image_height).
+        clinical_flags: Optional clinical adjustments (vitiligo, keloid).
+        image: Original image, required when clinical_flags.vitiligo is set.
 
     Returns:
         Float32 mask array [0.0-1.0] with feathered boundaries.
@@ -259,18 +267,19 @@ def generate_surgical_mask(
 
     # Add slight boundary noise to prevent clean-edge seams
     # (Spec: Perlin noise 2-4px on boundary before feathering)
+    _bk = (_BOUNDARY_KERNEL_SIZE, _BOUNDARY_KERNEL_SIZE)
     boundary = cv2.subtract(
-        cv2.dilate(dilated, np.ones((5, 5), np.uint8)),
-        cv2.erode(dilated, np.ones((5, 5), np.uint8)),
+        cv2.dilate(dilated, np.ones(_bk, np.uint8)),
+        cv2.erode(dilated, np.ones(_bk, np.uint8)),
     )
-    noise = np.random.default_rng().integers(0, 4, size=(h, w), dtype=np.uint8)
-    noise_boundary = cv2.bitwise_and(boundary, noise.astype(np.uint8) * 64)
+    noise = np.random.default_rng().integers(0, _BOUNDARY_NOISE_MAX, size=(h, w), dtype=np.uint8)
+    noise_boundary = cv2.bitwise_and(boundary, noise.astype(np.uint8) * _BOUNDARY_NOISE_SCALE)
     dilated = cv2.add(dilated, noise_boundary)
     dilated = np.clip(dilated, 0, 255).astype(np.uint8)
 
     # Gaussian feathering
     sigma = config["feather_sigma"]
-    ksize = int(6 * sigma) | 1  # ensure odd
+    ksize = int(_GAUSSIAN_KERNEL_FACTOR * sigma) | 1  # ensure odd
     feathered = cv2.GaussianBlur(
         dilated.astype(np.float32) / 255.0,
         (ksize, ksize),
