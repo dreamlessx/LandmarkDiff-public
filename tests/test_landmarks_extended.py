@@ -194,7 +194,10 @@ class TestFaceBbox:
         lm_up[33] = [0.3, 0.4, 0.0]
         lm_up[263] = [0.7, 0.4, 0.0]  # eyes level
         face_up = FaceLandmarks(
-            landmarks=lm_up, image_width=512, image_height=512, confidence=1.0,
+            landmarks=lm_up,
+            image_width=512,
+            image_height=512,
+            confidence=1.0,
         )
 
         # Rotated face (same landmarks, eyes tilted 30+ degrees)
@@ -202,7 +205,10 @@ class TestFaceBbox:
         lm_rot[33] = [0.3, 0.3, 0.0]
         lm_rot[263] = [0.7, 0.6, 0.0]  # strong tilt
         face_rot = FaceLandmarks(
-            landmarks=lm_rot, image_width=512, image_height=512, confidence=1.0,
+            landmarks=lm_rot,
+            image_width=512,
+            image_height=512,
+            confidence=1.0,
         )
 
         bbox_up = face_up.face_bbox

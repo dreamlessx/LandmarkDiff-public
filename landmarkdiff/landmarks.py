@@ -222,7 +222,7 @@ class FaceLandmarks:
         right eye outer corner (landmark 263) to estimate roll angle.
         Returns degrees counter-clockwise; 0 means upright.
         """
-        left_eye = self.landmarks[33, :2]   # left eye outer corner
+        left_eye = self.landmarks[33, :2]  # left eye outer corner
         right_eye = self.landmarks[263, :2]  # right eye outer corner
         dx = (right_eye[0] - left_eye[0]) * self.image_width
         dy = (right_eye[1] - left_eye[1]) * self.image_height
