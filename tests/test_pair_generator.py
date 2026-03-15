@@ -72,7 +72,7 @@ class TestTrainingPair:
 
 class TestProcedures:
     def test_all_procedures_defined(self):
-        assert len(PROCEDURES) == 16
+        assert len(PROCEDURES) == 17
         expected = {
             "rhinoplasty",
             "blepharoplasty",
@@ -90,6 +90,7 @@ class TestProcedures:
             "lip_augmentation",
             "forehead_reduction",
             "submental_liposuction",
+            "otoplasty",
         }
         assert set(PROCEDURES) == expected
 

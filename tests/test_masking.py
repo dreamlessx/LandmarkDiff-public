@@ -61,6 +61,7 @@ class TestMaskConfig:
             "lip_augmentation",
             "forehead_reduction",
             "submental_liposuction",
+            "otoplasty",
         ]
         assert set(expected) == set(MASK_CONFIG.keys())
         for proc in expected:

@@ -192,6 +192,7 @@ def main(argv: list[str] | None = None) -> None:
             "lip_augmentation",
             "forehead_reduction",
             "submental_liposuction",
+            "otoplasty",
         ],
     )
     p_infer.add_argument("--intensity", type=float, default=65.0)

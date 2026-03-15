@@ -428,6 +428,22 @@ PROCEDURE_LANDMARKS: dict[str, list[int]] = {
         396,
         400,
     ],
+    "otoplasty": [
+        # Left ear-adjacent: preauricular, temple, upper jaw
+        234,
+        127,
+        93,
+        132,
+        162,
+        21,
+        # Right ear-adjacent
+        454,
+        356,
+        323,
+        361,
+        389,
+        251,
+    ],
 }
 # Default influence radii per procedure (in pixels at 512x512)
 PROCEDURE_RADIUS: dict[str, float] = {
@@ -447,6 +463,7 @@ PROCEDURE_RADIUS: dict[str, float] = {
     "lip_augmentation": 15.0,
     "forehead_reduction": 30.0,
     "submental_liposuction": 30.0,
+    "otoplasty": 35.0,
 }
 
 
@@ -1390,6 +1407,34 @@ def _get_procedure_handles(
                         landmark_index=idx,
                         displacement=np.array([-1.0 * scale, -2.0 * scale]),
                         influence_radius=radius * 0.8,
+                    )
+                )
+
+    elif procedure == "otoplasty":
+        # Ear pinning: move ear-adjacent landmarks medially (toward face center).
+        # Left ear region -> move right (toward midline)
+        left_ear = [234, 127, 93, 132, 162, 21]
+        # Graduated displacement: preauricular strongest, temple/jaw softer
+        left_weights = [1.0, 0.8, 0.6, 0.5, 0.7, 0.4]
+        for idx, w in zip(left_ear, left_weights):
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([3.0 * scale * w, 0.0]),
+                        influence_radius=radius,
+                    )
+                )
+        # Right ear region -> move left (toward midline)
+        right_ear = [454, 356, 323, 361, 389, 251]
+        right_weights = [1.0, 0.8, 0.6, 0.5, 0.7, 0.4]
+        for idx, w in zip(right_ear, right_weights):
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([-3.0 * scale * w, 0.0]),
+                        influence_radius=radius,
                     )
                 )
 
