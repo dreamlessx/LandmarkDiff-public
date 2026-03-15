@@ -1,0 +1,238 @@
+openapi: 3.0.3
+info:
+  title: LandmarkDiff API
+  description: Surgical outcome prediction using landmark-conditioned diffusion
+  version: 0.2.0
+  contact:
+    name: LandmarkDiff Team
+  license:
+    name: Apache 2.0
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: getHealth
+      responses:
+        200:
+          description: Service status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: ok
+                version: 0.2.0
+                neural: false
+
+  /procedures:
+    get:
+      summary: List available procedures
+      operationId: getProcedures
+      responses:
+        200:
+          description: List of procedures
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProceduresResponse'
+
+  /predict:
+    post:
+      summary: Run full prediction pipeline
+      operationId: predict
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PredictRequest'
+      responses:
+        200:
+          description: Prediction result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PredictResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        422:
+          $ref: '#/components/responses/NoFaceDetected'
+
+  /analyze:
+    post:
+      summary: Analyze face image
+      operationId: analyzeFace
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AnalyzeRequest'
+      responses:
+        200:
+          description: Analysis result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyzeResponse'
+
+  /batch:
+    post:
+      summary: Batch process multiple images
+      operationId: batchPredict
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BatchRequest'
+      responses:
+        200:
+          description: Batch results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchResponse'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status: { type: string, example: ok }
+        version: { type: string, example: 0.2.0 }
+        neural: { type: boolean, example: false }
+
+    ProceduresResponse:
+      type: object
+      properties:
+        procedures:
+          type: array
+          items: { type: string }
+          example: [rhinoplasty, blepharoplasty, rhytidectomy, orthognathic, brow_lift, mentoplasty]
+        default_intensity: { type: number, example: 65.0 }
+        intensity_range:
+          type: array
+          items: { type: number }
+          example: [0, 100]
+
+    PredictRequest:
+      type: object
+      required: [image]
+      properties:
+        image:
+          type: string
+          format: binary
+          description: Input face image (JPEG/PNG)
+        procedure:
+          type: string
+          default: rhinoplasty
+          enum: [rhinoplasty, blepharoplasty, rhytidectomy, orthognathic, brow_lift, mentoplasty]
+        intensity:
+          type: number
+          default: 65.0
+          minimum: 0
+          maximum: 100
+        return_intermediates:
+          type: boolean
+          default: false
+        return_format:
+          type: string
+          default: base64
+          enum: [base64, binary]
+
+    PredictResponse:
+      type: object
+      properties:
+        procedure: { type: string }
+        intensity: { type: number }
+        ssim: { type: number }
+        fitzpatrick: { type: string }
+        identity_check: { type: object }
+        elapsed_seconds: { type: number }
+        neural_postprocess: { type: boolean }
+        output: { type: string, description: base64 encoded image }
+
+    AnalyzeRequest:
+      type: object
+      required: [image]
+      properties:
+        image:
+          type: string
+          format: binary
+
+    AnalyzeResponse:
+      type: object
+      properties:
+        detected: { type: boolean }
+        num_landmarks: { type: integer }
+        image_size:
+          type: array
+          items: { type: integer }
+        confidence: { type: number }
+        fitzpatrick: { type: string }
+        view: { type: object }
+        landmarks_preview: { type: string }
+
+    BatchRequest:
+      type: object
+      required: [images]
+      properties:
+        images:
+          type: array
+          items:
+            type: string
+            format: binary
+        procedure:
+          type: string
+          default: rhinoplasty
+        intensity:
+          type: number
+          default: 65.0
+
+    BatchResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              filename: { type: string }
+              success: { type: boolean }
+              output: { type: string }
+              ssim: { type: number }
+              error: { type: string }
+        total: { type: integer }
+
+  responses:
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail: { type: string }
+    NoFaceDetected:
+      description: No face detected in image
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail: { type: string }
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
