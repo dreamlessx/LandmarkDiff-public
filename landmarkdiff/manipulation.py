@@ -520,6 +520,99 @@ def gaussian_rbf_deform_batch(
     return result
 
 
+def apply_combined_procedures(
+    face: FaceLandmarks,
+    procedures: dict[str, float],
+    image_size: int = 512,
+    blend_mode: str = "additive",
+    clinical_flags: ClinicalFlags | None = None,
+    displacement_model_path: str | None = None,
+    noise_scale: float = 0.0,
+) -> FaceLandmarks:
+    """Apply multiple procedures with independent intensities in a single pass.
+
+    Combines deformation fields from multiple procedures. Overlapping
+    regions are handled according to the blend_mode:
+    - "additive": sum displacements (default, most natural for non-overlapping)
+    - "average": average displacements in overlapping regions
+    - "max": take the largest displacement at each landmark
+
+    Args:
+        face: Input face landmarks.
+        procedures: Mapping of procedure name to intensity (0-100).
+        image_size: Reference image size for displacement scaling.
+        blend_mode: How to blend overlapping deformation fields.
+        clinical_flags: Optional clinical condition flags.
+        displacement_model_path: Path to a fitted DisplacementModel (.npz).
+        noise_scale: Variation noise scale for data-driven mode.
+
+    Returns:
+        New FaceLandmarks with all procedures applied.
+
+    Raises:
+        ValueError: If no procedures given or blend_mode is unknown.
+    """
+    if not procedures:
+        raise ValueError("At least one procedure must be specified")
+    if blend_mode not in ("additive", "average", "max"):
+        raise ValueError(f"Unknown blend_mode: {blend_mode}. Use 'additive', 'average', or 'max'")
+
+    original_px = face.pixel_coords[:, :2]
+    n_landmarks = face.landmarks.shape[0]
+
+    # Collect displacement fields from each procedure
+    displacement_fields: list[np.ndarray] = []
+    for proc, intensity in procedures.items():
+        if intensity <= 0:
+            continue
+        modified = apply_procedure_preset(
+            face,
+            proc,
+            intensity,
+            image_size=image_size,
+            clinical_flags=clinical_flags,
+            displacement_model_path=displacement_model_path,
+            noise_scale=noise_scale,
+        )
+        modified_px = modified.pixel_coords[:, :2]
+        displacement_fields.append(modified_px - original_px)
+
+    if not displacement_fields:
+        return face
+
+    # Stack into (N_procs, 478, 2)
+    stacked = np.stack(displacement_fields, axis=0)
+
+    if blend_mode == "additive":
+        combined = np.sum(stacked, axis=0)
+    elif blend_mode == "average":
+        # Average only where displacement is non-zero
+        nonzero_mask = np.any(np.abs(stacked) > 1e-6, axis=2)  # (N_procs, 478)
+        count = np.maximum(nonzero_mask.sum(axis=0), 1)  # (478,)
+        combined = np.sum(stacked, axis=0) / count[:, np.newaxis]
+    else:  # max
+        magnitudes = np.sqrt(np.sum(stacked**2, axis=2))  # (N_procs, 478)
+        max_idx = np.argmax(magnitudes, axis=0)  # (478,)
+        combined = stacked[max_idx, np.arange(n_landmarks)]
+
+    # Apply combined displacement
+    result_px = original_px + combined
+    result_px[:, 0] = np.clip(result_px[:, 0], 0, face.image_width - 1)
+    result_px[:, 1] = np.clip(result_px[:, 1], 0, face.image_height - 1)
+
+    # Convert back to normalized coordinates
+    result_norm = face.landmarks.copy()
+    result_norm[:, 0] = result_px[:, 0] / face.image_width
+    result_norm[:, 1] = result_px[:, 1] / face.image_height
+
+    return FaceLandmarks(
+        landmarks=result_norm,
+        image_width=face.image_width,
+        image_height=face.image_height,
+        confidence=face.confidence,
+    )
+
+
 def apply_procedure_preset(
     face: FaceLandmarks,
     procedure: str,
