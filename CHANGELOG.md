@@ -29,18 +29,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 26 new utility scripts synced from upstream (evaluation, visualization, paper figure generation)
 - GitHub wiki expanded to 15 pages (procedure guides, training walkthrough, evaluation reference)
 - Real demo faces in HF Space replacing placeholder images
-- `build_qualitative_grid.py` -- multi-procedure qualitative comparison grid
-- `generate_comparison_figure.py` -- side-by-side method comparison figure
-- `landmark_accuracy_heatmap.py` -- per-landmark error heatmap for paper
-- `visualize_attention.py` -- ControlNet cross-attention map visualization
-- `visualize_latent_space.py` -- UMAP/PCA projection of latent codes by procedure
-- `progressive_denoising.py` -- denoising trajectory strip for supplementary
-- `intensity_sweep.py` -- full intensity sweep grid (0-100%) for all procedures
+- `build_qualitative_grid.py`: multi-procedure qualitative comparison grid
+- `generate_comparison_figure.py`: side-by-side method comparison figure
+- `landmark_accuracy_heatmap.py`: per-landmark error heatmap for paper
+- `visualize_attention.py`: ControlNet cross-attention map visualization
+- `visualize_latent_space.py`: UMAP/PCA projection of latent codes by procedure
+- `progressive_denoising.py`: denoising trajectory strip for supplementary
+- `intensity_sweep.py`: full intensity sweep grid (0-100%) for all procedures
 
 ### Changed
 - bf16 is now the default training precision (was fp32)
 - Loss weight tuning: landmark weight 0.1, identity weight 0.05, perceptual weight 0.1 (defaults locked)
-- HF Space UI simplified -- single-panel layout, procedure selector cleaned up
+- HF Space UI simplified: single-panel layout, procedure selector cleaned up
 - CI workflow updated: pinned action versions, pip caching, per-job concurrency control
 
 ### Fixed

@@ -80,13 +80,13 @@ When a `DisplacementModel` (fitted from real before/after surgery pairs) is avai
 ## Stage 3: Generation
 
 ### TPS Mode (CPU)
-Pure geometric thin-plate spline warp. Maps original landmark positions to deformed positions and interpolates the full image. No diffusion model needed -- results are instant but lack the photorealistic texture synthesis of diffusion modes.
+Pure geometric thin-plate spline warp. Maps original landmark positions to deformed positions and interpolates the full image. No diffusion model needed; results are instant but lack the photorealistic texture synthesis of diffusion modes.
 
 ### img2img Mode
 Feeds the TPS-warped image into SD1.5 img2img pipeline with a procedure-specific prompt. A surgical mask (convex hull of procedure landmarks, dilated + feathered) controls the compositing region.
 
 ### ControlNet Mode
-Renders the deformed face mesh as a wireframe (2556-edge tessellation matching what CrucibleAI's ControlNet was trained on) and uses it as conditioning. The full MediaPipe tessellation and contour edges are drawn -- thin gray lines for tessellation, brighter white for contours. Uses DPM++ 2M Karras scheduler for photorealistic output.
+Renders the deformed face mesh as a wireframe (2556-edge tessellation matching what CrucibleAI's ControlNet was trained on) and uses it as conditioning. The full MediaPipe tessellation and contour edges are drawn (thin gray lines for tessellation, brighter white for contours). Uses DPM++ 2M Karras scheduler for photorealistic output.
 
 ### ControlNet + IP-Adapter Mode
 Extends ControlNet mode with h94/IP-Adapter-FaceID to condition generation on the input face embedding. This provides stronger identity preservation. The IP-Adapter scale defaults to 0.6.

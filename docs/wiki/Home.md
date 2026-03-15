@@ -23,7 +23,7 @@ LandmarkDiff predicts post-surgical facial appearance by combining MediaPipe 478
 
 | Page | Description |
 |------|-------------|
-| [Architecture](Architecture) | Full pipeline diagram -- from face mesh extraction to post-processing |
+| [Architecture](Architecture) | Full pipeline diagram, from face mesh extraction to post-processing |
 | [Procedures](Procedures) | All 6 supported surgical procedures with landmark indices and displacement patterns |
 | [API Reference](API-Reference) | Key classes: `LandmarkDiffPipeline`, `FaceLandmarks`, `DeformationHandle`, etc. |
 | [Configuration](Configuration) | YAML experiment config schema, CLI flags, environment variables |

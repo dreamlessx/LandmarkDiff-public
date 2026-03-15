@@ -14,7 +14,9 @@ Thanks to everyone who has contributed to LandmarkDiff.
 | [P-r-e-m-i-u-m](https://github.com/P-r-e-m-i-u-m) | Mentoplasty procedure preset ([#36](https://github.com/dreamlessx/LandmarkDiff-public/pull/36)) |
 | [lshariprasad](https://github.com/lshariprasad) | histogram_match_skin tests ([#263](https://github.com/dreamlessx/LandmarkDiff-public/pull/263)) |
 | [dagangtj](https://github.com/dagangtj) | SafetyResult dataclass improvements ([#235](https://github.com/dreamlessx/LandmarkDiff-public/pull/235)), file logging handler ([#236](https://github.com/dreamlessx/LandmarkDiff-public/pull/236)), api_client error messages ([#237](https://github.com/dreamlessx/LandmarkDiff-public/pull/237)) |
+| [PredictiveManish](https://github.com/PredictiveManish) | OpenAPI specification ([#340](https://github.com/dreamlessx/LandmarkDiff-public/pull/340)), batch processing notebook ([#334](https://github.com/dreamlessx/LandmarkDiff-public/pull/334)) |
 | [passionworkeer](https://github.com/passionworkeer) | Docker architecture feedback ([#5](https://github.com/dreamlessx/LandmarkDiff-public/issues/5)) |
+| [srikar117](https://github.com/srikar117) | Dark mode for Gradio interface ([#204](https://github.com/dreamlessx/LandmarkDiff-public/issues/204), in progress) |
 
 ## Data Contributors
 

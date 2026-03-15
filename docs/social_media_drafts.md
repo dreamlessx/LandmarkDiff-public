@@ -1,4 +1,4 @@
-# Social Media Drafts -- LandmarkDiff
+# Social Media Drafts: LandmarkDiff
 
 All drafts are written from the perspective of `dreamlessx`.
 Links:
@@ -10,7 +10,7 @@ Links:
 
 ---
 
-## 1. r/MachineLearning -- [Project] Post
+## 1. r/MachineLearning: [Project] Post
 
 **Flair**: [Project]
 

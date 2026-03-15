@@ -21,7 +21,7 @@ All tables and figures in this document can be reproduced using the scripts list
 | Denoising trajectory | `scripts/progressive_denoising.py` | Denoising strip for any procedure |
 | Landmark heatmap | `scripts/landmark_accuracy_heatmap.py` | Per-landmark NME heatmap |
 
-Quick example -- reproduce S1 for rhinoplasty at all intensities:
+Quick example: reproduce S1 for rhinoplasty at all intensities:
 
 ```bash
 python scripts/intensity_sweep.py \

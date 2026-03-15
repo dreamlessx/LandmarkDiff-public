@@ -59,7 +59,7 @@ python scripts/train_controlnet.py --data_dir data/synthetic_pairs/ --output_dir
 
 ## Planned Models
 
-The following models are on the roadmap as LandmarkDiff moves toward a 3D-native pipeline (phone video scan to interactive 3D surgical preview). None of these are available yet -- this section previews what is coming.
+The following models are on the roadmap as LandmarkDiff moves toward a 3D-native pipeline (phone video scan to interactive 3D surgical preview). None of these are available yet; this section previews what is coming.
 
 | Model | Approach | Purpose | Status |
 |-------|----------|---------|--------|
