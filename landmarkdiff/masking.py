@@ -287,6 +287,17 @@ def generate_surgical_mask(
 
     mask = np.clip(feathered, 0.0, 1.0)
 
+    # Extra forehead fade: soften the top boundary to prevent visible
+    # seams at the hairline (especially on receding hairlines).
+    # Find the top edge of the mask and apply a gradual vertical fade.
+    top_y = _find_mask_top_edge(mask)
+    if top_y > 0:
+        fade_height = max(int(sigma * 2), 10)
+        fade_start = max(0, top_y - fade_height)
+        for row in range(fade_start, top_y):
+            t = (row - fade_start) / max(fade_height, 1)
+            mask[row, :] *= t
+
     # Clinical edge case adjustments
     if clinical_flags is not None:
         # Vitiligo: reduce mask over depigmented patches to preserve them
@@ -309,6 +320,14 @@ def generate_surgical_mask(
             mask = adjust_mask_for_keloid(mask, keloid_mask)
 
     return mask
+
+
+def _find_mask_top_edge(mask: np.ndarray, threshold: float = 0.05) -> int:
+    """Find the topmost row where the mask exceeds threshold."""
+    for row in range(mask.shape[0]):
+        if np.any(mask[row] > threshold):
+            return row
+    return 0
 
 
 def mask_to_3channel(mask: np.ndarray) -> np.ndarray:
