@@ -6,17 +6,17 @@ means the identity loss term contributes zero gradients during Phase B training.
 This module provides a fully differentiable path so that gradients flow back
 through the predicted image into the ControlNet.
 
-Architecture: IResNet-50 (the standard ArcFace backbone from InsightFace).
-  conv1(3->64, 3x3) -> BN -> PReLU ->
-  4 IResNet blocks [3, 4, 14, 3] with channels [64, 128, 256, 512] ->
-  BN -> Dropout -> Flatten -> FC(512*7*7 -> 512) -> BN (no bias)
-  -> L2-normalize
+Architecture: IResNet-50 matching the InsightFace w600k_r50 ONNX model.
+  conv1(3->64, 3x3, bias) -> PReLU ->
+  4 IResNet stages [3, 4, 14, 3] with channels [64, 128, 256, 512] ->
+  BN2d -> Flatten -> FC(512*7*7 -> 512) -> BN1d -> L2-normalize
 
-Each IBasicBlock: conv3x3-BN-PReLU-conv3x3-BN + SE attention + residual.
+Each IBasicBlock: BN -> conv3x3(bias) -> PReLU -> conv3x3(bias) + residual.
+No SE module. Convolutions use bias=True.
 
-Pretrained weights: InsightFace distributes IResNet-50 as a PyTorch .pth
-(backbone.pth inside the buffalo_l model pack). This module can load those
-weights directly, or fall back to random initialization with a warning.
+Pretrained weights: converted from the InsightFace buffalo_l w600k_r50.onnx
+model to a PyTorch state dict (backbone.pth). The conversion extracts weights
+from the ONNX graph and maps them to matching PyTorch module keys.
 
 Usage in losses.py:
     from landmarkdiff.arcface_torch import ArcFaceLoss
@@ -42,34 +42,12 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-class SEModule(nn.Module):
-    """Squeeze-and-Excitation channel attention (Hu et al., 2018).
-
-    Reduces channels by ``reduction``, applies ReLU, expands back, and uses
-    sigmoid gating on the original feature map.
-    """
-
-    def __init__(self, channels: int, reduction: int = 4):
-        super().__init__()
-        mid = channels // reduction
-        self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.fc1 = nn.Conv2d(channels, mid, kernel_size=1, bias=True)
-        self.relu = nn.ReLU(inplace=True)
-        self.fc2 = nn.Conv2d(mid, channels, kernel_size=1, bias=True)
-        self.sigmoid = nn.Sigmoid()
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        w = self.avg_pool(x)
-        w = self.relu(self.fc1(w))
-        w = self.sigmoid(self.fc2(w))
-        return x * w
-
-
 class IBasicBlock(nn.Module):
     """Improved basic residual block for IResNet.
 
-    Structure: BN -> conv3x3 -> BN -> PReLU -> conv3x3 -> BN -> SE -> + residual
-    Uses pre-activation style BatchNorm and includes SE attention.
+    Structure: BN -> conv3x3(bias) -> PReLU -> conv3x3(bias) -> + residual
+    Uses pre-activation style BatchNorm. Convolutions have bias=True to match
+    the InsightFace w600k_r50 ONNX weights.
     """
 
     expansion: int = 1
@@ -80,19 +58,17 @@ class IBasicBlock(nn.Module):
         planes: int,
         stride: int = 1,
         downsample: nn.Module | None = None,
-        use_se: bool = True,
     ):
         super().__init__()
-        self.bn1 = nn.BatchNorm2d(inplanes, eps=1e-5)
+        self.bn1 = nn.BatchNorm2d(inplanes, eps=2e-5, momentum=0.1)
         self.conv1 = nn.Conv2d(
             inplanes,
             planes,
             kernel_size=3,
             stride=1,
             padding=1,
-            bias=False,
+            bias=True,
         )
-        self.bn2 = nn.BatchNorm2d(planes, eps=1e-5)
         self.prelu = nn.PReLU(planes)
         self.conv2 = nn.Conv2d(
             planes,
@@ -100,30 +76,19 @@ class IBasicBlock(nn.Module):
             kernel_size=3,
             stride=stride,
             padding=1,
-            bias=False,
+            bias=True,
         )
-        self.bn3 = nn.BatchNorm2d(planes, eps=1e-5)
-
-        self.se_module = SEModule(planes) if use_se else nn.Identity()
         self.downsample = downsample
-        self.stride = stride
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         identity = x
-
         out = self.bn1(x)
         out = self.conv1(out)
-        out = self.bn2(out)
         out = self.prelu(out)
         out = self.conv2(out)
-        out = self.bn3(out)
-        out = self.se_module(out)
-
         if self.downsample is not None:
             identity = self.downsample(x)
-
-        out = out + identity
-        return out
+        return out + identity
 
 
 # ---------------------------------------------------------------------------
@@ -137,72 +102,56 @@ class ArcFaceBackbone(nn.Module):
     Input:  (B, 3, 112, 112) face crops normalized to [-1, 1].
     Output: (B, 512) L2-normalized embeddings.
 
-    Architecture follows the InsightFace IResNet-50 exactly so that
-    pretrained weights can be loaded without key remapping.
+    Architecture matches the InsightFace w600k_r50 ONNX model exactly:
+    Conv(bias) -> PReLU -> 4 stages -> BN2d -> Flatten -> FC -> BN1d -> L2norm.
     """
 
     def __init__(
         self,
         layers: tuple[int, ...] = (3, 4, 14, 3),
-        dropout_rate: float = 0.0,
         embedding_dim: int = 512,
-        use_se: bool = True,
     ):
         super().__init__()
         self.inplanes = 64
-        self.use_se = use_se
 
-        # Stem: conv1 -> BN -> PReLU
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(64, eps=1e-5)
+        # Stem: conv1(bias) -> PReLU (no BN in stem)
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=True)
         self.prelu = nn.PReLU(64)
 
         # 4 residual stages
-        self.layer1 = self._make_layer(IBasicBlock, 64, layers[0], stride=2)
-        self.layer2 = self._make_layer(IBasicBlock, 128, layers[1], stride=2)
-        self.layer3 = self._make_layer(IBasicBlock, 256, layers[2], stride=2)
-        self.layer4 = self._make_layer(IBasicBlock, 512, layers[3], stride=2)
+        self.layer1 = self._make_layer(64, layers[0], stride=2)
+        self.layer2 = self._make_layer(128, layers[1], stride=2)
+        self.layer3 = self._make_layer(256, layers[2], stride=2)
+        self.layer4 = self._make_layer(512, layers[3], stride=2)
 
-        # Head: BN -> Dropout -> Flatten -> FC -> BN
-        self.bn2 = nn.BatchNorm2d(512 * IBasicBlock.expansion, eps=1e-5)
-        self.dropout = nn.Dropout(p=dropout_rate, inplace=True)
-        self.fc = nn.Linear(512 * IBasicBlock.expansion * 7 * 7, embedding_dim)
-        self.features = nn.BatchNorm1d(embedding_dim, eps=1e-5)
-        # InsightFace convention: final BN has no bias
-        nn.init.constant_(self.features.weight, 1.0)
-        self.features.bias.requires_grad_(False)
+        # Head: BN2d -> Flatten -> FC -> BN1d
+        self.bn2 = nn.BatchNorm2d(512, eps=2e-5, momentum=0.1)
+        self.fc = nn.Linear(512 * 7 * 7, embedding_dim)
+        self.features = nn.BatchNorm1d(embedding_dim, eps=2e-5, momentum=0.1)
 
         # Weight initialization
         self._initialize_weights()
 
     def _make_layer(
         self,
-        block: type[IBasicBlock],
         planes: int,
         num_blocks: int,
         stride: int = 1,
     ) -> nn.Sequential:
         downsample = None
-        if stride != 1 or self.inplanes != planes * block.expansion:
-            downsample = nn.Sequential(
-                nn.Conv2d(
-                    self.inplanes,
-                    planes * block.expansion,
-                    kernel_size=1,
-                    stride=stride,
-                    bias=False,
-                ),
-                nn.BatchNorm2d(planes * block.expansion, eps=1e-5),
+        if stride != 1 or self.inplanes != planes:
+            downsample = nn.Conv2d(
+                self.inplanes,
+                planes,
+                kernel_size=1,
+                stride=stride,
+                bias=True,
             )
 
-        layers = [
-            block(self.inplanes, planes, stride, downsample, use_se=self.use_se),
-        ]
-        self.inplanes = planes * block.expansion
+        layers = [IBasicBlock(self.inplanes, planes, stride, downsample)]
+        self.inplanes = planes
         for _ in range(1, num_blocks):
-            layers.append(
-                block(self.inplanes, planes, stride=1, use_se=self.use_se),
-            )
+            layers.append(IBasicBlock(self.inplanes, planes))
 
         return nn.Sequential(*layers)
 
@@ -230,7 +179,6 @@ class ArcFaceBackbone(nn.Module):
             (B, 512) L2-normalized embeddings.
         """
         x = self.conv1(x)
-        x = self.bn1(x)
         x = self.prelu(x)
 
         x = self.layer1(x)
@@ -239,7 +187,6 @@ class ArcFaceBackbone(nn.Module):
         x = self.layer4(x)
 
         x = self.bn2(x)
-        x = self.dropout(x)
         x = torch.flatten(x, 1)
         x = self.fc(x)
         x = self.features(x)
@@ -253,60 +200,34 @@ class ArcFaceBackbone(nn.Module):
 # Pretrained weight loading
 # ---------------------------------------------------------------------------
 
-# Known locations where InsightFace buffalo_l backbone.pth may live
+# Known locations where converted backbone.pth may live
 _KNOWN_WEIGHT_PATHS = [
-    Path.home() / ".insightface" / "models" / "buffalo_l" / "w600k_r50.onnx",
-    Path.home() / ".insightface" / "models" / "buffalo_l" / "backbone.pth",
-    # Common manual download location
     Path.home() / ".cache" / "arcface" / "backbone.pth",
+    Path.home() / ".insightface" / "models" / "buffalo_l" / "backbone.pth",
 ]
-
-# Glint360K R50 weights URL (InsightFace official release)
-_WEIGHT_URL = (
-    "https://github.com/deepinsight/insightface/releases/download/"
-    "v0.7/glint360k_cosface_r50_fp16_0.1-backbone.pth"
-)
 
 
 def _find_pretrained_weights() -> Path | None:
     """Search known locations for pretrained IResNet-50 weights."""
     for p in _KNOWN_WEIGHT_PATHS:
-        if p.exists() and p.suffix == ".pth":
+        if p.exists() and p.suffix == ".pth" and p.stat().st_size > 0:
             return p
     return None
-
-
-def _try_download_weights(dest: Path) -> bool:
-    """Attempt to download pretrained weights from the InsightFace release."""
-    try:
-        import urllib.request
-
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        logger.info("Downloading ArcFace IResNet-50 weights from %s ...", _WEIGHT_URL)
-        urllib.request.urlretrieve(_WEIGHT_URL, str(dest))
-        logger.info("Downloaded to %s", dest)
-        return True
-    except Exception as e:
-        logger.warning("Failed to download ArcFace weights: %s", e)
-        return False
 
 
 def load_pretrained_weights(
     model: ArcFaceBackbone,
     weights_path: str | None = None,
-    download: bool = True,
 ) -> bool:
     """Load pretrained InsightFace IResNet-50 weights into the model.
 
-    InsightFace distributes backbone weights as PyTorch state dicts. The key
-    names match our module structure exactly (both follow the IResNet
-    convention), so no key remapping is needed in most cases.
+    Weights are a PyTorch state dict converted from the InsightFace
+    w600k_r50.onnx model. Key names match our module structure exactly.
 
     Args:
         model: An ``ArcFaceBackbone`` instance.
         weights_path: Explicit path to a ``.pth`` file.  If ``None``, searches
-            known locations and optionally downloads.
-        download: Whether to attempt downloading if no local weights found.
+            known locations.
 
     Returns:
         ``True`` if weights were loaded successfully, ``False`` otherwise
@@ -322,11 +243,6 @@ def load_pretrained_weights(
 
     if path is None:
         path = _find_pretrained_weights()
-
-    if path is None and download:
-        dest = Path.home() / ".cache" / "arcface" / "backbone.pth"
-        if _try_download_weights(dest):
-            path = dest
 
     if path is None:
         warnings.warn(
@@ -346,7 +262,7 @@ def load_pretrained_weights(
     if "state_dict" in state_dict:
         state_dict = state_dict["state_dict"]
 
-    # Try direct load first (InsightFace uses the same key names)
+    # Try direct load first
     try:
         model.load_state_dict(state_dict, strict=True)
         logger.info("Loaded ArcFace weights (strict match)")
@@ -354,15 +270,12 @@ def load_pretrained_weights(
     except RuntimeError:
         pass
 
-    # Try non-strict load (some checkpoints have extra keys like the
-    # classification head 'fc_angular.*' or use 'output_layer' instead
-    # of 'features' for the final BN)
+    # Try non-strict load (some checkpoints may have extra keys)
     try:
         # Remap common differences
         remapped = {}
         for k, v in state_dict.items():
             new_k = k
-            # Some checkpoints use 'output_layer' for the final BatchNorm1d
             if k.startswith("output_layer."):
                 new_k = k.replace("output_layer.", "features.")
             remapped[new_k] = v
@@ -370,8 +283,7 @@ def load_pretrained_weights(
         missing, unexpected = model.load_state_dict(remapped, strict=False)
         if missing:
             logger.warning(
-                "Missing keys when loading ArcFace weights (may be OK if only "
-                "classification head keys): %s",
+                "Missing keys when loading ArcFace weights: %s",
                 missing[:10],
             )
         if unexpected:
@@ -414,21 +326,17 @@ def align_face(
     """
     B, C, H, W = images.shape
 
-    if size == H and size == W:
+    if H == size and W == size:
         return images
 
     # Crop fraction: keep central 80% to remove background padding
     crop_frac = 0.8
 
     # Build a normalized grid [-1, 1] covering the center crop region
-    # The grid maps output pixels to input pixel locations
     half_crop = crop_frac / 2.0
-    # grid_sample expects coordinates in [-1, 1] where -1 is top-left, +1 is bottom-right
-    # Center crop: map [-1, 1] output range to [-crop_frac, +crop_frac] input range
     theta = torch.zeros(B, 2, 3, device=images.device, dtype=images.dtype)
     theta[:, 0, 0] = half_crop  # x scale
     theta[:, 1, 1] = half_crop  # y scale
-    # translation stays 0 (centered)
 
     grid = F.affine_grid(theta, [B, C, size, size], align_corners=False)
     aligned = F.grid_sample(
@@ -447,7 +355,7 @@ def align_face_no_crop(
 ) -> torch.Tensor:
     """Resize face images to (size x size) without cropping, differentiably.
 
-    Simple bilinear resize using ``F.grid_sample`` for gradient flow. Use
+    Simple bilinear resize using ``F.interpolate`` for gradient flow. Use
     this when images are already tightly cropped faces.
 
     Args:
@@ -503,7 +411,7 @@ class ArcFaceLoss(nn.Module):
             device: Device to place the backbone on. If ``None``, determined
                 from the first forward call.
             weights_path: Path to pretrained backbone.pth. If ``None``,
-                searches known locations and attempts download.
+                searches known locations.
             crop_face: Whether to center-crop images before embedding.
                 Set ``False`` if images are already 112x112 face crops.
         """
@@ -532,7 +440,6 @@ class ArcFaceLoss(nn.Module):
         # Move to device and freeze
         self.backbone = self.backbone.to(device)
         self.backbone.eval()
-        # Freeze all parameters -- we do NOT want to train ArcFace
         for param in self.backbone.parameters():
             param.requires_grad_(False)
 
@@ -560,10 +467,6 @@ class ArcFaceLoss(nn.Module):
     ) -> torch.Tensor:
         """Extract ArcFace embeddings.
 
-        The backbone is in eval mode with frozen parameters, but when
-        ``enable_grad=True`` we allow gradient computation through the
-        forward pass (important for the predicted images).
-
         Args:
             images: (B, 3, 112, 112) in [-1, 1].
             enable_grad: If ``True``, gradients flow through the backbone's
@@ -573,12 +476,6 @@ class ArcFaceLoss(nn.Module):
             (B, 512) L2-normalized embeddings.
         """
         if enable_grad:
-            # Gradients flow through the backbone forward pass so that
-            # the generator receives gradient signal from the identity loss.
-            # NOTE: backbone parameters are frozen (requires_grad=False), so
-            # only the input tensor carries gradients, which is exactly what
-            # we want -- gradients w.r.t. the predicted image, not w.r.t.
-            # ArcFace weights.
             return self.backbone(images)
         else:
             with torch.no_grad():
@@ -619,16 +516,13 @@ class ArcFaceLoss(nn.Module):
         target_prepared = self._prepare_images(target_crop)
 
         # Extract embeddings
-        # pred: WITH gradient flow (so generator gets identity signal)
         pred_emb = self._extract_embedding(pred_prepared, enable_grad=True)
-        # target: WITHOUT gradient flow (no need to backprop through target)
         target_emb = self._extract_embedding(target_prepared, enable_grad=False)
 
         # Detach target to be absolutely sure no gradients leak
         target_emb = target_emb.detach()
 
         # Cosine similarity loss: 1 - cos_sim
-        # Both embeddings are already L2-normalized by the backbone
         cosine_sim = (pred_emb * target_emb).sum(dim=1)  # (B,)
 
         # Clamp to valid range (numerical safety for BF16)
@@ -642,21 +536,14 @@ class ArcFaceLoss(nn.Module):
         image: torch.Tensor,
         procedure: str,
     ) -> torch.Tensor:
-        """Crop image based on surgical procedure for identity comparison.
-
-        Matches the cropping logic from the original ``IdentityLoss`` in
-        ``losses.py`` for consistency.
-        """
+        """Crop image based on surgical procedure for identity comparison."""
         _, _, h, w = image.shape
 
         if procedure == "rhinoplasty":
-            # Upper face crop (forehead to nose tip) -- exclude surgical region
             return image[:, :, : h * 2 // 3, :]
         elif procedure == "blepharoplasty":
-            # Full face
             return image
         elif procedure == "rhytidectomy":
-            # Upper face (above jawline)
             return image[:, :, : h * 3 // 4, :]
         else:
             return image

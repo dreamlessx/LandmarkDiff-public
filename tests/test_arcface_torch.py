@@ -14,29 +14,9 @@ from landmarkdiff.arcface_torch import (
     ArcFaceBackbone,
     ArcFaceLoss,
     IBasicBlock,
-    SEModule,
     align_face,
     align_face_no_crop,
 )
-
-
-class TestSEModule:
-    """Tests for Squeeze-and-Excitation module."""
-
-    def test_output_shape(self):
-        se = SEModule(64, reduction=4)
-        x = torch.randn(2, 64, 14, 14)
-        out = se(x)
-        assert out.shape == (2, 64, 14, 14)
-
-    def test_channel_attention(self):
-        se = SEModule(32)
-        x = torch.randn(1, 32, 7, 7)
-        out = se(x)
-        # Output should be same shape, gated version of input
-        assert out.shape == x.shape
-        # Not identical to input (attention changes values)
-        assert not torch.allclose(out, x)
 
 
 class TestIBasicBlock:
@@ -49,17 +29,14 @@ class TestIBasicBlock:
         assert out.shape == (2, 64, 14, 14)
 
     def test_output_shape_with_downsample(self):
-        downsample = torch.nn.Sequential(
-            torch.nn.Conv2d(64, 128, 1, stride=2, bias=False),
-            torch.nn.BatchNorm2d(128),
-        )
+        downsample = torch.nn.Conv2d(64, 128, 1, stride=2, bias=True)
         block = IBasicBlock(64, 128, stride=2, downsample=downsample)
         x = torch.randn(2, 64, 14, 14)
         out = block(x)
         assert out.shape == (2, 128, 7, 7)
 
     def test_residual_connection(self):
-        block = IBasicBlock(64, 64, stride=1, use_se=False)
+        block = IBasicBlock(64, 64, stride=1)
         x = torch.randn(1, 64, 7, 7)
         out = block(x)
         # Output should differ from input due to learned transform
