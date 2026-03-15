@@ -4,9 +4,13 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import cv2
 import numpy as np
+
+if TYPE_CHECKING:
+    from landmarkdiff.landmarks import FaceLandmarks
 
 logger = logging.getLogger(__name__)
 
@@ -208,4 +212,133 @@ def export_progressive_gif(
         loop=loop,
     )
     logger.info("Saved progressive GIF (%d frames): %s", len(pil_frames), out)
+    return out
+
+
+# ---------------------------------------------------------------------------
+# 3D mesh export (OBJ / PLY)
+# ---------------------------------------------------------------------------
+
+
+def _get_tessellation_triangles() -> list[tuple[int, int, int]]:
+    """Extract triangle faces from MediaPipe tessellation edges.
+
+    MediaPipe provides 2556 edges that encode 852 triangles (consecutive
+    triples of edges sharing exactly 3 vertices).
+
+    Returns:
+        List of (v0, v1, v2) vertex index triples.
+
+    Raises:
+        ImportError: If mediapipe is not available.
+    """
+    from mediapipe.tasks.python.vision.face_landmarker import FaceLandmarksConnections
+
+    edges = [(c.start, c.end) for c in FaceLandmarksConnections.FACE_LANDMARKS_TESSELATION]
+    triangles = []
+    for i in range(0, len(edges), 3):
+        verts = set()
+        for e in edges[i : i + 3]:
+            verts.update(e)
+        if len(verts) == 3:
+            triangles.append(tuple(sorted(verts)))
+    return triangles
+
+
+def export_mesh_obj(
+    face: FaceLandmarks,
+    output_path: str | Path,
+    scale: float = 100.0,
+) -> Path:
+    """Export face landmarks as a Wavefront OBJ mesh.
+
+    The 478 MediaPipe landmarks become vertices and the tessellation
+    edges define 852 triangle faces.
+
+    Args:
+        face: Extracted face landmarks (normalized 0-1 coordinates).
+        output_path: Path to save the .obj file.
+        scale: Scale factor applied to coordinates (default 100 maps
+               the 0-1 range to a 100-unit bounding box).
+
+    Returns:
+        Path to the saved OBJ file.
+    """
+    triangles = _get_tessellation_triangles()
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(out, "w") as f:
+        f.write("# LandmarkDiff face mesh export\n")
+        f.write(f"# {face.landmarks.shape[0]} vertices, {len(triangles)} faces\n\n")
+
+        for x, y, z in face.landmarks:
+            # Flip y so "up" is positive (MediaPipe y increases downward)
+            f.write(f"v {x * scale:.6f} {(1.0 - y) * scale:.6f} {z * scale:.6f}\n")
+
+        f.write("\n")
+        for v0, v1, v2 in triangles:
+            # OBJ faces are 1-indexed
+            f.write(f"f {v0 + 1} {v1 + 1} {v2 + 1}\n")
+
+    n_verts = face.landmarks.shape[0]
+    logger.info("Saved OBJ mesh (%d verts, %d faces): %s", n_verts, len(triangles), out)
+    return out
+
+
+def export_mesh_ply(
+    face: FaceLandmarks,
+    output_path: str | Path,
+    scale: float = 100.0,
+    binary: bool = False,
+) -> Path:
+    """Export face landmarks as a Stanford PLY mesh.
+
+    Args:
+        face: Extracted face landmarks.
+        output_path: Path to save the .ply file.
+        scale: Scale factor applied to coordinates.
+        binary: If True, write binary little-endian PLY for smaller files.
+
+    Returns:
+        Path to the saved PLY file.
+    """
+    import struct
+
+    triangles = _get_tessellation_triangles()
+    n_verts = face.landmarks.shape[0]
+    n_faces = len(triangles)
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+
+    fmt = "binary_little_endian" if binary else "ascii"
+    header = (
+        "ply\n"
+        f"format {fmt} 1.0\n"
+        "comment LandmarkDiff face mesh export\n"
+        f"element vertex {n_verts}\n"
+        "property float x\n"
+        "property float y\n"
+        "property float z\n"
+        f"element face {n_faces}\n"
+        "property list uchar int vertex_indices\n"
+        "end_header\n"
+    )
+
+    if binary:
+        with open(out, "wb") as f:
+            f.write(header.encode("ascii"))
+            for x, y, z in face.landmarks:
+                f.write(struct.pack("<fff", x * scale, (1.0 - y) * scale, z * scale))
+            for v0, v1, v2 in triangles:
+                f.write(struct.pack("<Biii", 3, v0, v1, v2))
+    else:
+        with open(out, "w") as f:
+            f.write(header)
+            for x, y, z in face.landmarks:
+                f.write(f"{x * scale:.6f} {(1.0 - y) * scale:.6f} {z * scale:.6f}\n")
+            for v0, v1, v2 in triangles:
+                f.write(f"3 {v0} {v1} {v2}\n")
+
+    logger.info("Saved PLY mesh (%d verts, %d faces, %s): %s", n_verts, n_faces, fmt, out)
     return out
