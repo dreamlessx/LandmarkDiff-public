@@ -507,6 +507,12 @@ class LandmarkDiffPipeline:
                     "num_inference_steps or switching to mode='tps' for CPU-only."
                 ) from exc
         else:
+            if controlnet_conditioning_scale != 0.9:
+                logger.warning(
+                    "controlnet_conditioning_scale has no effect in img2img mode "
+                    "(no ControlNet is used). Use mode='controlnet' for "
+                    "conditioning scale control."
+                )
             try:
                 raw_output = self._generate_img2img(
                     tps_warped,
