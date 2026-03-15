@@ -214,6 +214,57 @@ class FaceLandmarks:
         indices = LANDMARK_REGIONS.get(region, [])
         return self.landmarks[indices]
 
+    @property
+    def face_rotation(self) -> float:
+        """Estimate in-plane face rotation in degrees from eye corners.
+
+        Uses the line between left eye outer corner (landmark 33) and
+        right eye outer corner (landmark 263) to estimate roll angle.
+        Returns degrees counter-clockwise; 0 means upright.
+        """
+        left_eye = self.landmarks[33, :2]  # left eye outer corner
+        right_eye = self.landmarks[263, :2]  # right eye outer corner
+        dx = (right_eye[0] - left_eye[0]) * self.image_width
+        dy = (right_eye[1] - left_eye[1]) * self.image_height
+        return float(np.degrees(np.arctan2(dy, dx)))
+
+    @property
+    def face_bbox(self) -> tuple[int, int, int, int]:
+        """Axis-aligned bounding box with 20% padding, rotation-aware.
+
+        For rotated faces (>10 degrees), expands padding proportionally
+        to prevent tight crops from cutting off the face.
+
+        Returns:
+            (x_min, y_min, x_max, y_max) in pixel coordinates, clamped
+            to image bounds.
+        """
+        coords = self.pixel_coords
+        x_min, y_min = coords.min(axis=0)
+        x_max, y_max = coords.max(axis=0)
+
+        box_w = x_max - x_min
+        box_h = y_max - y_min
+
+        # Base padding: 20% of box size on each side
+        pad_frac = 0.2
+
+        # For rotated faces, increase padding proportionally to rotation
+        rotation = abs(self.face_rotation)
+        if rotation > 10.0:
+            # Scale padding: +1% per degree of rotation beyond 10
+            pad_frac += (rotation - 10.0) * 0.01
+
+        pad_x = box_w * pad_frac
+        pad_y = box_h * pad_frac
+
+        return (
+            int(max(0, x_min - pad_x)),
+            int(max(0, y_min - pad_y)),
+            int(min(self.image_width - 1, x_max + pad_x)),
+            int(min(self.image_height - 1, y_max + pad_y)),
+        )
+
 
 def extract_landmarks(
     image: np.ndarray,
