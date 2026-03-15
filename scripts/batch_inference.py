@@ -265,7 +265,7 @@ def main():
     parser.add_argument("--output", default="results/batch", help="Output directory")
     parser.add_argument("--procedure", default="rhinoplasty", choices=PROCEDURES)
     parser.add_argument(
-        "--all-procedures", action="store_true", help="Run all 4 procedures for each image"
+        "--all-procedures", action="store_true", help="Run all 6 procedures for each image"
     )
     parser.add_argument("--intensity", type=float, default=65.0)
     parser.add_argument(

@@ -316,10 +316,10 @@ def create_dataloader(
     shuffle: bool = True,
     sampler: Sampler | None = None,
     pin_memory: bool = True,
-    drop_last: bool = True,
+    drop_last: bool = False,
     persistent_workers: bool = False,
 ) -> DataLoader:
-    """Create a DataLoader with sensible defaults for training.
+    """Create a DataLoader with sensible defaults.
 
     Args:
         dataset: PyTorch Dataset.

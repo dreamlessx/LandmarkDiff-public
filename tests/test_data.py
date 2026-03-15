@@ -304,6 +304,16 @@ class TestCreateDataloader:
         batch = next(iter(loader))
         assert batch["input"].shape == (2, 3, 64, 64)
 
+    def test_default_keeps_last_batch(self, sample_data_dir):
+        """Default drop_last=False should not discard the final partial batch."""
+        ds = SurgicalPairDataset(sample_data_dir, resolution=64)
+        n = len(ds)
+        # Use a batch size that doesn't divide evenly
+        bs = max(2, n - 1) if n > 2 else 2
+        loader = create_dataloader(ds, batch_size=bs, num_workers=0, shuffle=False)
+        total = sum(batch["input"].shape[0] for batch in loader)
+        assert total == n
+
     def test_with_sampler(self, sample_data_dir):
         ds = SurgicalPairDataset(sample_data_dir, resolution=64)
         sampler = create_procedure_sampler(ds)
