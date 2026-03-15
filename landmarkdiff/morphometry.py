@@ -156,9 +156,7 @@ class NasalMorphometry:
         alar_face = float(alar_width / face_width)
         nose_face = float(nose_length / face_height)
         tip_deviation = float(abs(nose_tip[0] - midline_x) / face_width)
-        nostril_asymmetry = float(
-            abs(left_nostril[1] - right_nostril[1]) / face_height
-        )
+        nostril_asymmetry = float(abs(left_nostril[1] - right_nostril[1]) / face_height)
 
         return NasalRatios(
             alar_intercanthal=alar_intercanthal,
@@ -199,9 +197,7 @@ class NasalMorphometry:
 
             h, w = image.shape[:2]
             face = results.multi_face_landmarks[0]
-            landmarks = np.array(
-                [(lm.x * w, lm.y * h) for lm in face.landmark]
-            )
+            landmarks = np.array([(lm.x * w, lm.y * h) for lm in face.landmark])
             return self.compute(landmarks)
 
 
@@ -300,9 +296,7 @@ class FacialSymmetry:
 
             h, w = image.shape[:2]
             face = results.multi_face_landmarks[0]
-            landmarks = np.array(
-                [(lm.x * w, lm.y * h) for lm in face.landmark]
-            )
+            landmarks = np.array([(lm.x * w, lm.y * h) for lm in face.landmark])
             return self.compute(landmarks)
 
 

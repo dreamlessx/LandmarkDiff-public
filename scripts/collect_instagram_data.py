@@ -62,55 +62,119 @@ logger = logging.getLogger(__name__)
 
 PROCEDURE_KEYWORDS: dict[str, list[str]] = {
     "rhinoplasty": [
-        "rhinoplasty", "nosejob", "nose job", "nose surgery",
-        "septorhinoplasty", "nose reshaping", "nasal surgery",
-        "nose reduction", "nose tip", "dorsal hump",
-        "bulbous tip", "alar reduction", "nostril",
+        "rhinoplasty",
+        "nosejob",
+        "nose job",
+        "nose surgery",
+        "septorhinoplasty",
+        "nose reshaping",
+        "nasal surgery",
+        "nose reduction",
+        "nose tip",
+        "dorsal hump",
+        "bulbous tip",
+        "alar reduction",
+        "nostril",
     ],
     "blepharoplasty": [
-        "blepharoplasty", "eyelid surgery", "eyelid lift",
-        "eye lift", "upper bleph", "lower bleph",
-        "brow lift", "browlift", "upper eyelid",
-        "lower eyelid", "eye bag", "ptosis",
+        "blepharoplasty",
+        "eyelid surgery",
+        "eyelid lift",
+        "eye lift",
+        "upper bleph",
+        "lower bleph",
+        "brow lift",
+        "browlift",
+        "upper eyelid",
+        "lower eyelid",
+        "eye bag",
+        "ptosis",
     ],
     "rhytidectomy": [
-        "facelift", "face lift", "rhytidectomy",
-        "mini lift", "deep plane", "smas lift",
-        "neck lift", "necklift", "jowl", "midface lift",
-        "lower face", "facial rejuvenation",
+        "facelift",
+        "face lift",
+        "rhytidectomy",
+        "mini lift",
+        "deep plane",
+        "smas lift",
+        "neck lift",
+        "necklift",
+        "jowl",
+        "midface lift",
+        "lower face",
+        "facial rejuvenation",
     ],
     "orthognathic": [
-        "jaw surgery", "orthognathic", "mandibular",
-        "maxillary", "chin surgery", "genioplasty",
-        "mentoplasty", "sliding genioplasty",
-        "chin implant", "chin augmentation",
-        "jaw advancement", "jaw reduction", "v-line",
+        "jaw surgery",
+        "orthognathic",
+        "mandibular",
+        "maxillary",
+        "chin surgery",
+        "genioplasty",
+        "mentoplasty",
+        "sliding genioplasty",
+        "chin implant",
+        "chin augmentation",
+        "jaw advancement",
+        "jaw reduction",
+        "v-line",
     ],
     "brow_lift": [
-        "brow lift", "browlift", "forehead lift",
-        "brow ptosis", "endoscopic brow",
+        "brow lift",
+        "browlift",
+        "forehead lift",
+        "brow ptosis",
+        "endoscopic brow",
     ],
     "mentoplasty": [
-        "chin surgery", "mentoplasty", "chin implant",
-        "chin reduction", "chin augmentation",
-        "genioplasty", "sliding genioplasty",
+        "chin surgery",
+        "mentoplasty",
+        "chin implant",
+        "chin reduction",
+        "chin augmentation",
+        "genioplasty",
+        "sliding genioplasty",
     ],
 }
 
 # Hashtags and keywords that indicate a before/after post
 BEFORE_AFTER_INDICATORS = [
-    "beforeandafter", "before and after", "transformation",
-    "results", "postop", "post op", "preop", "pre op",
-    "surgical result", "outcome", "healing", "recovery",
-    "1 week", "2 weeks", "1 month", "3 months", "6 months",
-    "1 year", "final result",
+    "beforeandafter",
+    "before and after",
+    "transformation",
+    "results",
+    "postop",
+    "post op",
+    "preop",
+    "pre op",
+    "surgical result",
+    "outcome",
+    "healing",
+    "recovery",
+    "1 week",
+    "2 weeks",
+    "1 month",
+    "3 months",
+    "6 months",
+    "1 year",
+    "final result",
 ]
 
 # Keywords that indicate non-surgical content to skip
 SKIP_INDICATORS = [
-    "filler", "botox", "injectable", "prp", "microneedling",
-    "laser", "chemical peel", "skincare", "product",
-    "advertising", "ad ", "#ad", "sponsored",
+    "filler",
+    "botox",
+    "injectable",
+    "prp",
+    "microneedling",
+    "laser",
+    "chemical peel",
+    "skincare",
+    "product",
+    "advertising",
+    "ad ",
+    "#ad",
+    "sponsored",
 ]
 
 
@@ -200,6 +264,7 @@ def check_face_quality(
 # Face detection and alignment
 # ============================================================
 
+
 def detect_faces(image: np.ndarray) -> list[dict]:
     """Detect faces in image using MediaPipe.
 
@@ -229,12 +294,14 @@ def detect_faces(image: np.ndarray) -> list[dict]:
             xs = [lm.x * w for lm in face.landmark]
             ys = [lm.y * h for lm in face.landmark]
             landmarks = np.array([(lm.x * w, lm.y * h) for lm in face.landmark])
-            faces.append({
-                "bbox": (int(min(xs)), int(min(ys)), int(max(xs)), int(max(ys))),
-                "landmarks": landmarks,
-                "center_x": float(np.mean(xs)),
-                "center_y": float(np.mean(ys)),
-            })
+            faces.append(
+                {
+                    "bbox": (int(min(xs)), int(min(ys)), int(max(xs)), int(max(ys))),
+                    "landmarks": landmarks,
+                    "center_x": float(np.mean(xs)),
+                    "center_y": float(np.mean(ys)),
+                }
+            )
         return faces
 
 
@@ -266,7 +333,8 @@ def is_before_after_layout(image: np.ndarray) -> str | None:
 
 
 def split_comparison(
-    image: np.ndarray, layout: str,
+    image: np.ndarray,
+    layout: str,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Split a comparison image into before and after halves.
 
@@ -337,13 +405,16 @@ def align_and_crop_face(
         return None
 
     return cv2.resize(
-        crop, (target_size, target_size), interpolation=cv2.INTER_LANCZOS4,
+        crop,
+        (target_size, target_size),
+        interpolation=cv2.INTER_LANCZOS4,
     )
 
 
 # ============================================================
 # Image processing pipeline
 # ============================================================
+
 
 def process_image(
     image_path: Path,
@@ -393,9 +464,7 @@ def process_image(
     proc_dir.mkdir(parents=True, exist_ok=True)
 
     # Content hash for dedup
-    content_hash = hashlib.md5(
-        before.tobytes()[:4096] + after.tobytes()[:4096]
-    ).hexdigest()[:12]
+    content_hash = hashlib.md5(before.tobytes()[:4096] + after.tobytes()[:4096]).hexdigest()[:12]
 
     # Save pair using mega_scrape compatible naming
     pair_name = f"ig_{pair_idx:05d}_{content_hash}"
@@ -427,6 +496,7 @@ def process_image(
 # ============================================================
 # Instagram downloading
 # ============================================================
+
 
 def download_posts(
     account: str,
@@ -492,13 +562,15 @@ def download_posts(
             for ext in [".jpg", ".png", ".jpeg"]:
                 img_path = download_dir / account / f"{post.shortcode}{ext}"
                 if img_path.exists():
-                    downloaded.append({
-                        "path": img_path,
-                        "caption": caption,
-                        "shortcode": post.shortcode,
-                        "date": str(post.date_utc),
-                        "likes": post.likes,
-                    })
+                    downloaded.append(
+                        {
+                            "path": img_path,
+                            "caption": caption,
+                            "shortcode": post.shortcode,
+                            "date": str(post.date_utc),
+                            "likes": post.likes,
+                        }
+                    )
                     break
             count += 1
         except Exception as e:
@@ -509,7 +581,9 @@ def download_posts(
 
     logger.info(
         "Downloaded %d posts from @%s (skipped %d non-surgical)",
-        len(downloaded), account, skipped,
+        len(downloaded),
+        account,
+        skipped,
     )
     return downloaded
 
@@ -536,6 +610,7 @@ EXAMPLE_HASHTAGS = [
 # ============================================================
 # Main
 # ============================================================
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -630,9 +705,7 @@ def main() -> None:
             )
 
         if not accounts:
-            logger.error(
-                "No accounts specified. Use --accounts or --accounts-file"
-            )
+            logger.error("No accounts specified. Use --accounts or --accounts-file")
             sys.exit(1)
 
         download_dir = args.output / "_downloads"
@@ -641,7 +714,9 @@ def main() -> None:
         for account in accounts:
             logger.info("Downloading from @%s...", account)
             posts = download_posts(
-                account, download_dir, args.max_posts,
+                account,
+                download_dir,
+                args.max_posts,
                 filter_surgical=not args.no_filter,
             )
             image_data.extend(posts)
@@ -659,8 +734,11 @@ def main() -> None:
         caption = item.get("caption", "") if isinstance(item, dict) else ""
 
         result = process_image(
-            img_path, args.output, pair_idx,
-            caption=caption, target_size=args.target_size,
+            img_path,
+            args.output,
+            pair_idx,
+            caption=caption,
+            target_size=args.target_size,
         )
         if result:
             pair_idx += 1
@@ -692,7 +770,9 @@ def main() -> None:
 
     logger.info(
         "Collection complete: %d pairs from %d images (%d failed)",
-        successful, len(image_data), failed,
+        successful,
+        len(image_data),
+        failed,
     )
     for proc, count in sorted(proc_counts.items()):
         logger.info("  %s: %d pairs", proc, count)

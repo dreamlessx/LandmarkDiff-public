@@ -152,9 +152,7 @@ class TestNasalMorphometry:
         ratios_2d = morph.compute(pts_2d)
         ratios_3d = morph.compute(pts_3d)
 
-        assert ratios_2d.alar_intercanthal == pytest.approx(
-            ratios_3d.alar_intercanthal, abs=1e-6
-        )
+        assert ratios_2d.alar_intercanthal == pytest.approx(ratios_3d.alar_intercanthal, abs=1e-6)
 
 
 class TestNasalRatiosImprovement:
