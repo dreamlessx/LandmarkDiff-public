@@ -24,7 +24,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
 
 
 def infer_procedure(prefix: str) -> str:

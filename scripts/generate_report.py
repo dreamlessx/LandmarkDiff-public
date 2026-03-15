@@ -29,7 +29,7 @@ import numpy as np
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
 FITZ_COLORS = {
     "I": "#FAD6A5",
     "II": "#E8C298",

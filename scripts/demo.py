@@ -183,7 +183,7 @@ def run_synthetic_demo(output_dir: str = "scripts/demo_output") -> None:
     cv2.imwrite(str(out / "03_synthetic_canny.png"), canny)
 
     # Apply each procedure
-    for proc in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]:
+    for proc in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]:
         manip = apply_procedure_preset(face, proc, intensity=70.0, image_size=512)
         manip_img = render_landmark_image(manip, 512, 512)
         _, manip_canny, manip_wf = generate_conditioning(manip, 512, 512)
@@ -208,7 +208,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--procedure",
         default="rhinoplasty",
-        choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"],
+        choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"],
     )
     parser.add_argument(
         "--intensity", type=float, default=50.0, help="Manipulation intensity 0-100"

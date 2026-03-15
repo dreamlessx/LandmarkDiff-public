@@ -85,7 +85,7 @@ def run_all(
     pipe.load()
     print()
 
-    procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
 
     if image_path:
         images = [image_path]

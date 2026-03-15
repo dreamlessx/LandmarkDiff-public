@@ -153,7 +153,7 @@ def generate_html(
         html += "<table>\n<tr><th>Procedure</th><th>SSIM</th>"
         html += "<th>LPIPS</th><th>NME</th>"
         html += "<th>ArcFace</th><th>N</th></tr>\n"
-        for proc in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]:
+        for proc in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]:
             vals = per_proc.get(proc, {})
             if not vals:
                 continue

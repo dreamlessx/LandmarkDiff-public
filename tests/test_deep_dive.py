@@ -714,7 +714,7 @@ class TestIdentityLossComputation:
         loss._has_arcface = False
         pred = torch.rand(4, 3, 64, 64)
         target = torch.rand(4, 3, 64, 64)
-        for proc in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]:
+        for proc in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]:
             result = loss(pred, target, procedure=proc)
             assert torch.isfinite(result), f"Loss not finite for {proc}"
 
@@ -833,7 +833,7 @@ class TestCombinedLossWithIdentity:
         assert losses["identity"].item() == pytest.approx(0.0, abs=1e-7)
 
     @pytest.mark.parametrize(
-        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
     )
     def test_combined_with_each_procedure(self, procedure):
         combined = CombinedLoss(phase="B")

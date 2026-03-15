@@ -46,6 +46,8 @@ data:
     - blepharoplasty
     - rhytidectomy
     - orthognathic
+    - brow_lift
+    - mentoplasty
   displacement_model_path: data/displacement_model.npz
 
 inference:

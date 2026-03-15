@@ -107,10 +107,10 @@ def make_figure_2_procedures(
     out: Path,
     pipe: LandmarkDiffPipeline | None = None,
 ) -> None:
-    """Figure 2: All 4 procedures side by side."""
+    """Figure 2: All 6 procedures side by side."""
     s = 200
-    procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
-    short_names = ["Rhinoplasty", "Blepharoplasty", "Rhytidectomy", "Orthognathic"]
+    procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
+    short_names = ["Rhinoplasty", "Blepharoplasty", "Rhytidectomy", "Orthognathic", "Brow Lift", "Mentoplasty"]
 
     cols = [put_label(resize_sq(image, s), "Original")]
 
@@ -178,7 +178,7 @@ def make_figure_4_multi_face(
 ) -> None:
     """Figure 4: Multiple faces x all procedures grid."""
     s = 160
-    procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
     rows = []
 
     for name, image, face in images:

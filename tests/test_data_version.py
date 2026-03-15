@@ -38,7 +38,7 @@ class TestFileEntry:
         assert entry.procedure == "rhinoplasty"
 
     def test_procedure_inference(self, tmp_path):
-        for proc in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]:
+        for proc in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]:
             f = tmp_path / f"{proc}_test.png"
             f.write_bytes(b"x")
             entry = FileEntry.from_path(f, base_dir=tmp_path)

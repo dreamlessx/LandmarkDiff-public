@@ -101,7 +101,7 @@ def main():
     if existing > 0:
         print(f"Found {existing} existing pairs, continuing from {existing}")
 
-    procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
     rng = np.random.default_rng(args.seed)
 
     # Build work items: cycle through images × random procedures

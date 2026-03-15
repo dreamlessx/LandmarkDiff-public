@@ -64,7 +64,7 @@ from landmarkdiff.synthetic.tps_warp import warp_image_tps
 
 logger = logging.getLogger(__name__)
 
-PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
 
 
 def process_image(

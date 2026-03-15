@@ -195,7 +195,7 @@ def format_dashboard(
             "  7. Safety Validation      [identity + bounds]",
             "",
             "--- Supported Procedures ---",
-            "  rhinoplasty | blepharoplasty | rhytidectomy | orthognathic",
+            "  rhinoplasty | blepharoplasty | rhytidectomy | orthognathic | brow_lift | mentoplasty",
             "",
             "=" * 60,
         ]

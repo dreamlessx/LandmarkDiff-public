@@ -365,7 +365,7 @@ def main():
 
         # Determine procedure
         proc = "unknown"
-        for p in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]:
+        for p in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]:
             if p in prefix:
                 proc = p
                 break

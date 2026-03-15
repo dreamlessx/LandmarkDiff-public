@@ -29,8 +29,8 @@ def add_label(img: np.ndarray, text: str, font_scale: float = 0.5) -> np.ndarray
 
 
 def make_procedure_comparison(face_dir: str, output_path: str) -> None:
-    """Create a 4-procedure comparison grid from demo outputs."""
-    procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    """Create a 6-procedure comparison grid from demo outputs."""
+    procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
     base = Path(face_dir)
     rows = []
 
@@ -247,7 +247,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--procedure",
         type=str,
-        choices=["all", "rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"],
+        choices=["all", "rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"],
         default="all",
         help="Specific procedure to generate intensity sweep for (default: all)",
     )

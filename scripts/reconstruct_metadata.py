@@ -32,7 +32,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 BASE = Path(__file__).resolve().parent.parent / "data"
 COMBINED = BASE / "training_combined"
-PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
 
 
 def count_valid_pairs(directory: Path) -> int:

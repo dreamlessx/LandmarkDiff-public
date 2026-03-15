@@ -261,7 +261,7 @@ class TestCurriculumDDP:
 
         curriculum = ProcedureCurriculum(total_steps=1000)
         for i in range(n_samples):
-            proc = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"][i % 4]
+            proc = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"][i % 6]
             weights[i] = curriculum.get_weight(500, proc)
         assert weights.shape == (n_samples,)
         assert weights.min() > 0  # No zero weights

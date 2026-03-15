@@ -287,12 +287,14 @@ def generate_table4_procedures(
     if not proc_data:
         return "% No per-procedure data available"
 
-    procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
     proc_labels = {
         "rhinoplasty": "Rhinoplasty",
         "blepharoplasty": "Blepharoplasty",
         "rhytidectomy": "Rhytidectomy",
         "orthognathic": "Orthognathic",
+        "brow_lift": "Brow Lift",
+        "mentoplasty": "Mentoplasty",
     }
 
     metrics = [
@@ -365,7 +367,7 @@ def generate_displacement_table(
     ]
 
     total = 0
-    for proc in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]:
+    for proc in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]:
         if proc not in procedures:
             continue
         pd = procedures[proc]

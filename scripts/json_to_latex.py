@@ -17,12 +17,14 @@ import argparse
 import json
 from pathlib import Path
 
-PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
 PROCEDURE_NAMES = {
     "rhinoplasty": "Rhinoplasty",
     "blepharoplasty": "Blepharoplasty",
     "rhytidectomy": "Rhytidectomy",
     "orthognathic": "Orthognathic",
+    "brow_lift": "Brow Lift",
+    "mentoplasty": "Mentoplasty",
 }
 FITZ_TYPES = ["I", "II", "III", "IV", "V", "VI"]
 

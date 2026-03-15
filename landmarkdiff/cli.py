@@ -165,7 +165,14 @@ def main(argv: list[str] | None = None) -> None:
     p_infer.add_argument(
         "--procedure",
         default="rhinoplasty",
-        choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"],
+        choices=[
+            "rhinoplasty",
+            "blepharoplasty",
+            "rhytidectomy",
+            "orthognathic",
+            "brow_lift",
+            "mentoplasty",
+        ],
     )
     p_infer.add_argument("--intensity", type=float, default=65.0)
     p_infer.add_argument("--output", default="output.png")

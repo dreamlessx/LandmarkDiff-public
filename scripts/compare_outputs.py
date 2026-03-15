@@ -51,12 +51,14 @@ from landmarkdiff.manipulation import apply_procedure_preset
 from landmarkdiff.masking import generate_surgical_mask
 from landmarkdiff.synthetic.tps_warp import warp_image_tps
 
-PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
 PROC_LABELS = {
     "rhinoplasty": "Rhinoplasty",
     "blepharoplasty": "Blepharoplasty",
     "rhytidectomy": "Rhytidectomy",
     "orthognathic": "Orthognathic",
+    "brow_lift": "Brow Lift",
+    "mentoplasty": "Mentoplasty",
 }
 
 

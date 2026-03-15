@@ -121,7 +121,7 @@ def analyze_dataset(
             wave = pairs_meta[prefix].get("wave", "unknown")
         else:
             proc = "unknown"
-            for p in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]:
+            for p in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]:
                 if p in prefix:
                     proc = p
                     break

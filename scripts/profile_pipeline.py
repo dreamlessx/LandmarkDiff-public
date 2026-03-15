@@ -127,7 +127,7 @@ def profile_manipulation(face, repeats: int = 10) -> dict:
     """Profile landmark manipulation."""
     from landmarkdiff.manipulation import apply_procedure_preset
 
-    procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
     results = {}
 
     for proc in procedures:
@@ -179,7 +179,7 @@ def profile_masking(face, repeats: int = 10) -> dict:
     """Profile surgical mask generation."""
     from landmarkdiff.masking import generate_surgical_mask
 
-    procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+    procedures = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
     results = {}
 
     for proc in procedures:

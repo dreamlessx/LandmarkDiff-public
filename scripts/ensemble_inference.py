@@ -84,7 +84,7 @@ from landmarkdiff.postprocess import histogram_match_skin
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
 
 # Diffusion prompt tuned for CrucibleAI ControlNet conditioned on MediaPipe mesh
 PROMPT = "high quality photo of a face after cosmetic surgery, realistic skin texture"

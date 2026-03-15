@@ -18,7 +18,14 @@ def main():
         "--procedure",
         type=str,
         default="rhinoplasty",
-        choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"],
+        choices=[
+            "rhinoplasty",
+            "blepharoplasty",
+            "rhytidectomy",
+            "orthognathic",
+            "brow_lift",
+            "mentoplasty",
+        ],
     )
     parser.add_argument(
         "--intensity", type=float, default=60.0, help="Deformation intensity (0-100)"

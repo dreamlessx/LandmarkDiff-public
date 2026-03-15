@@ -70,7 +70,7 @@ def export_from_checkpoint(
         "total_parameters": total_params,
         "trainable_parameters": trainable_params,
         "format": "safetensors",
-        "procedures": ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"],
+        "procedures": ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"],
         "input_resolution": 512,
     }
     with open(out / "model_info.json", "w") as f:

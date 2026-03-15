@@ -55,7 +55,7 @@ def load_test_pairs(test_dir: Path) -> list[dict]:
 
         # Try to infer procedure from filename
         procedure = "unknown"
-        for proc in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]:
+        for proc in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]:
             if proc in prefix:
                 procedure = proc
                 break

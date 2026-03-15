@@ -292,7 +292,7 @@ def main():
     parser.add_argument(
         "--procedure",
         default="rhinoplasty",
-        choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"],
+        choices=["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"],
     )
     parser.add_argument(
         "--sweep",

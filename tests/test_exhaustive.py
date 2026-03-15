@@ -667,7 +667,7 @@ class TestGaussianRBFDeform:
 
 class TestApplyProcedurePreset:
     @pytest.mark.parametrize(
-        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
     )
     def test_all_procedures_work(self, face, procedure):
         result = apply_procedure_preset(face, procedure, intensity=50.0)
@@ -718,21 +718,21 @@ class TestApplyProcedurePreset:
         np.testing.assert_array_equal(face.landmarks, original)
 
     @pytest.mark.parametrize(
-        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
     )
     def test_procedure_landmarks_exist(self, procedure):
         assert procedure in PROCEDURE_LANDMARKS
         assert len(PROCEDURE_LANDMARKS[procedure]) > 0
 
     @pytest.mark.parametrize(
-        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
     )
     def test_procedure_radius_exists(self, procedure):
         assert procedure in PROCEDURE_RADIUS
         assert PROCEDURE_RADIUS[procedure] > 0
 
     @pytest.mark.parametrize(
-        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
     )
     def test_procedure_landmark_indices_valid(self, procedure):
         for idx in PROCEDURE_LANDMARKS[procedure]:
@@ -746,13 +746,13 @@ class TestApplyProcedurePreset:
 
 class TestMaskConfig:
     @pytest.mark.parametrize(
-        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
     )
     def test_config_exists(self, procedure):
         assert procedure in MASK_CONFIG
 
     @pytest.mark.parametrize(
-        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
     )
     def test_config_has_required_keys(self, procedure):
         config = MASK_CONFIG[procedure]
@@ -761,20 +761,20 @@ class TestMaskConfig:
         assert "feather_sigma" in config
 
     @pytest.mark.parametrize(
-        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
     )
     def test_indices_valid(self, procedure):
         for idx in MASK_CONFIG[procedure]["landmark_indices"]:
             assert 0 <= idx < 478
 
     @pytest.mark.parametrize(
-        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
     )
     def test_dilation_positive(self, procedure):
         assert MASK_CONFIG[procedure]["dilation_px"] > 0
 
     @pytest.mark.parametrize(
-        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
     )
     def test_sigma_positive(self, procedure):
         assert MASK_CONFIG[procedure]["feather_sigma"] > 0
@@ -782,7 +782,7 @@ class TestMaskConfig:
 
 class TestGenerateSurgicalMask:
     @pytest.mark.parametrize(
-        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
     )
     def test_all_procedures(self, face, procedure):
         mask = generate_surgical_mask(face, procedure, 512, 512)
@@ -794,7 +794,7 @@ class TestGenerateSurgicalMask:
             generate_surgical_mask(face, "invalid", 512, 512)
 
     @pytest.mark.parametrize(
-        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
     )
     def test_output_range(self, face, procedure):
         mask = generate_surgical_mask(face, procedure, 512, 512)
@@ -802,14 +802,14 @@ class TestGenerateSurgicalMask:
         assert mask.max() <= 1.0
 
     @pytest.mark.parametrize(
-        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
     )
     def test_mask_has_nonzero(self, face, procedure):
         mask = generate_surgical_mask(face, procedure, 512, 512)
         assert np.any(mask > 0)
 
     @pytest.mark.parametrize(
-        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
     )
     def test_mask_has_full_values(self, face, procedure):
         mask = generate_surgical_mask(face, procedure, 512, 512)
@@ -1073,7 +1073,7 @@ class TestPipelineInit:
         assert pipe.mode == mode
 
     def test_procedure_prompts_exist(self):
-        for proc in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]:
+        for proc in ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]:
             assert proc in PROCEDURE_PROMPTS
             assert len(PROCEDURE_PROMPTS[proc]) > 0
 
@@ -2082,7 +2082,7 @@ class TestCrossModuleConsistency:
     """Verify consistency across modules."""
 
     @pytest.mark.parametrize(
-        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
     )
     def test_mask_config_matches_procedure_landmarks(self, procedure):
         """Mask and manipulation should use same procedure names."""
@@ -2090,7 +2090,7 @@ class TestCrossModuleConsistency:
         assert procedure in PROCEDURE_LANDMARKS
 
     @pytest.mark.parametrize(
-        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
     )
     def test_procedure_prompts_exist(self, procedure):
         assert procedure in PROCEDURE_PROMPTS
@@ -2140,7 +2140,7 @@ class TestEndToEndPipeline:
         assert conditioning.shape == (512, 512, 3)
 
     @pytest.mark.parametrize(
-        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+        "procedure", ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
     )
     def test_all_procedures_pipeline(self, face, procedure):
         manipulated = apply_procedure_preset(face, procedure, 50.0)

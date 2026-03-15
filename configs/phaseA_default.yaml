@@ -45,6 +45,8 @@ data:
     - blepharoplasty
     - rhytidectomy
     - orthognathic
+    - brow_lift
+    - mentoplasty
   intensity_range: [30.0, 100.0]
 
 inference:

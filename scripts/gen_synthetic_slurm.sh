@@ -14,7 +14,7 @@ cd "$WORK_DIR"
 source $HOME/miniconda3/etc/profile.d/conda.sh
 conda activate landmarkdiff
 
-PROCEDURES=("rhinoplasty" "blepharoplasty" "rhytidectomy" "orthognathic")
+PROCEDURES=("rhinoplasty" "blepharoplasty" "rhytidectomy" "orthognathic" "brow_lift" "mentoplasty")
 PROC=${PROCEDURES[$SLURM_ARRAY_TASK_ID]}
 
 echo "Generating synthetic pairs for $PROC at $(date)"

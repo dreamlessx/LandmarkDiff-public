@@ -30,7 +30,7 @@ from landmarkdiff.manipulation import apply_procedure_preset
 from landmarkdiff.masking import generate_surgical_mask
 from landmarkdiff.synthetic.tps_warp import warp_image_tps
 
-PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic"]
+PROCEDURES = ["rhinoplasty", "blepharoplasty", "rhytidectomy", "orthognathic", "brow_lift", "mentoplasty"]
 DEFAULT_INTENSITY = 65.0
 
 

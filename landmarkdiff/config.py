@@ -110,6 +110,8 @@ class DataConfig:
             "blepharoplasty",
             "rhytidectomy",
             "orthognathic",
+            "brow_lift",
+            "mentoplasty",
         ]
     )
     intensity_range: tuple[float, float] = (30.0, 100.0)
