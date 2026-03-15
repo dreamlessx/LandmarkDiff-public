@@ -810,6 +810,77 @@ def run_inference(
     logger.info("Results saved to %s/", out)
 
 
+# ---------------------------------------------------------------------------
+# Mixed-precision inference utilities
+# ---------------------------------------------------------------------------
+
+
+def get_optimal_dtype(device: torch.device | None = None) -> torch.dtype:
+    """Select the optimal dtype for a device.
+
+    - CUDA with Tensor Cores (compute >= 7.0): float16
+    - CUDA without Tensor Cores: float32
+    - MPS (Apple Silicon): float32 (float16 is unreliable on MPS)
+    - CPU: float32
+
+    Returns:
+        torch.dtype suitable for the target device.
+    """
+    if device is None:
+        device = get_device()
+
+    if device.type == "cuda":
+        cap = torch.cuda.get_device_capability(device)
+        if cap[0] >= 7:
+            return torch.float16
+        return torch.float32
+    return torch.float32
+
+
+def estimate_vram_usage(
+    resolution: int = 512,
+    dtype: torch.dtype = torch.float16,
+    num_inference_steps: int = 20,
+    mode: str = "controlnet",
+) -> dict[str, float]:
+    """Estimate VRAM usage for a given inference configuration.
+
+    Returns a dict with estimated VRAM in GB for each component.
+    These are rough estimates based on SD1.5 + ControlNet architecture.
+    """
+    # Base model sizes in GB (SD1.5)
+    unet_params = 860e6  # ~860M parameters
+    controlnet_params = 361e6  # ~361M parameters
+    vae_params = 83e6  # ~83M parameters
+    text_encoder_params = 123e6  # ~123M parameters
+
+    bytes_per_param = 2 if dtype == torch.float16 else 4
+
+    unet_gb = unet_params * bytes_per_param / 1e9
+    cn_gb = controlnet_params * bytes_per_param / 1e9 if "controlnet" in mode else 0
+    vae_gb = vae_params * 4 / 1e9  # VAE always FP32
+    text_gb = text_encoder_params * bytes_per_param / 1e9
+
+    # Latent space activations (resolution/8 due to VAE downscale)
+    latent_size = resolution // 8
+    latent_channels = 4
+    latent_bytes = latent_size * latent_size * latent_channels * bytes_per_param
+    activations_gb = latent_bytes * num_inference_steps * 2 / 1e9  # rough
+
+    total = unet_gb + cn_gb + vae_gb + text_gb + activations_gb
+
+    return {
+        "unet_gb": round(unet_gb, 2),
+        "controlnet_gb": round(cn_gb, 2),
+        "vae_gb": round(vae_gb, 2),
+        "text_encoder_gb": round(text_gb, 2),
+        "activations_gb": round(activations_gb, 2),
+        "total_gb": round(total, 2),
+        "dtype": str(dtype),
+        "resolution": resolution,
+    }
+
+
 if __name__ == "__main__":
     import argparse
 
