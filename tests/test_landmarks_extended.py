@@ -193,13 +193,17 @@ class TestFaceBbox:
         lm_up[:, 1] = np.linspace(0.2, 0.8, 478)
         lm_up[33] = [0.3, 0.4, 0.0]
         lm_up[263] = [0.7, 0.4, 0.0]  # eyes level
-        face_up = FaceLandmarks(landmarks=lm_up, image_width=512, image_height=512, confidence=1.0)
+        face_up = FaceLandmarks(
+            landmarks=lm_up, image_width=512, image_height=512, confidence=1.0,
+        )
 
         # Rotated face (same landmarks, eyes tilted 30+ degrees)
         lm_rot = lm_up.copy()
         lm_rot[33] = [0.3, 0.3, 0.0]
         lm_rot[263] = [0.7, 0.6, 0.0]  # strong tilt
-        face_rot = FaceLandmarks(landmarks=lm_rot, image_width=512, image_height=512, confidence=1.0)
+        face_rot = FaceLandmarks(
+            landmarks=lm_rot, image_width=512, image_height=512, confidence=1.0,
+        )
 
         bbox_up = face_up.face_bbox
         bbox_rot = face_rot.face_bbox
