@@ -267,6 +267,131 @@ PROCEDURE_LANDMARKS: dict[str, list[int]] = {
         425,
         426,
     ],
+    "genioplasty": [
+        17,
+        149,
+        150,
+        152,
+        175,
+        176,
+        199,
+        200,
+        314,
+        377,
+        378,
+        396,
+        405,
+    ],
+    "malarplasty": [
+        34,
+        93,
+        116,
+        117,
+        123,
+        132,
+        187,
+        205,
+        213,
+        234,
+        264,
+        323,
+        345,
+        346,
+        352,
+        361,
+        411,
+        425,
+        435,
+        454,
+    ],
+    "lip_lift": [
+        0,
+        11,
+        12,
+        13,
+        14,
+        37,
+        39,
+        40,
+        61,
+        72,
+        73,
+        267,
+        269,
+        270,
+        291,
+        302,
+        303,
+    ],
+    "lip_augmentation": [
+        0,
+        11,
+        12,
+        13,
+        14,
+        37,
+        39,
+        40,
+        61,
+        72,
+        73,
+        80,
+        81,
+        82,
+        178,
+        181,
+        267,
+        269,
+        270,
+        291,
+        302,
+        303,
+        310,
+        311,
+        312,
+        402,
+        405,
+    ],
+    "forehead_reduction": [
+        8,
+        9,
+        10,
+        21,
+        54,
+        67,
+        68,
+        69,
+        103,
+        104,
+        108,
+        109,
+        251,
+        284,
+        297,
+        298,
+        299,
+        332,
+        333,
+        337,
+        338,
+    ],
+    "submental_liposuction": [
+        148,
+        149,
+        150,
+        152,
+        169,
+        170,
+        171,
+        175,
+        176,
+        199,
+        200,
+        377,
+        378,
+        396,
+        400,
+    ],
 }
 # Default influence radii per procedure (in pixels at 512x512)
 PROCEDURE_RADIUS: dict[str, float] = {
@@ -280,6 +405,12 @@ PROCEDURE_RADIUS: dict[str, float] = {
     "canthoplasty": 15.0,
     "buccal_fat_removal": 30.0,
     "dimpleplasty": 10.0,
+    "genioplasty": 30.0,
+    "malarplasty": 35.0,
+    "lip_lift": 15.0,
+    "lip_augmentation": 15.0,
+    "forehead_reduction": 30.0,
+    "submental_liposuction": 30.0,
 }
 
 
@@ -913,6 +1044,199 @@ def _get_procedure_handles(
                         landmark_index=idx,
                         displacement=np.array([-1.5 * scale, 0.5 * scale]),
                         influence_radius=radius,
+                    )
+                )
+
+    elif procedure == "genioplasty":
+        # Osseous chin repositioning: horizontal sliding advancement + vertical change.
+        # Differs from mentoplasty (implant) in affecting wider mandibular region.
+        # Primary chin segment: forward advancement (upward in 2D frontal view)
+        chin_core = [152, 175, 199, 200]
+        for idx in chin_core:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([0.0, -3.5 * scale]),
+                        influence_radius=radius,
+                    )
+                )
+        # Lower lip margin: follow chin with softer displacement
+        lip_margin = [17, 314, 405]
+        for idx in lip_margin:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([0.0, -1.5 * scale]),
+                        influence_radius=radius * 0.7,
+                    )
+                )
+        # Jawline transition: blend into natural contour
+        jaw_blend = [149, 150, 176, 377, 378, 396]
+        for idx in jaw_blend:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([0.0, -1.0 * scale]),
+                        influence_radius=radius * 0.6,
+                    )
+                )
+
+    elif procedure == "malarplasty":
+        # Cheekbone augmentation: outward displacement of zygomatic region.
+        # Left cheek -> move outward (left)
+        left_zygoma = [34, 93, 116, 117, 123, 132, 187, 205, 213, 234]
+        for idx in left_zygoma:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([-2.0 * scale, -0.5 * scale]),
+                        influence_radius=radius,
+                    )
+                )
+        # Right cheek -> move outward (right)
+        right_zygoma = [264, 323, 345, 346, 352, 361, 411, 425, 435, 454]
+        for idx in right_zygoma:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([2.0 * scale, -0.5 * scale]),
+                        influence_radius=radius,
+                    )
+                )
+
+    elif procedure == "lip_lift":
+        # Subnasal bullhorn lip lift: shorten philtrum, increase upper lip show.
+        # Upper lip border moves upward toward nose base
+        upper_lip_central = [0, 11, 12, 13, 14]
+        for idx in upper_lip_central:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([0.0, -3.0 * scale]),
+                        influence_radius=radius,
+                    )
+                )
+        # Lateral upper lip: tapered lift
+        upper_lip_left = [37, 39, 40, 61, 72, 73]
+        for idx in upper_lip_left:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([0.0, -1.5 * scale]),
+                        influence_radius=radius * 0.7,
+                    )
+                )
+        upper_lip_right = [267, 269, 270, 291, 302, 303]
+        for idx in upper_lip_right:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([0.0, -1.5 * scale]),
+                        influence_radius=radius * 0.7,
+                    )
+                )
+
+    elif procedure == "lip_augmentation":
+        # Volumetric lip augmentation: expand both lips outward from midline.
+        # Upper lip: move upward (away from mouth center)
+        upper_lip = [0, 11, 12, 13, 37, 39, 40, 61, 72, 73, 267, 269, 270, 291, 302, 303]
+        for idx in upper_lip:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([0.0, -2.0 * scale]),
+                        influence_radius=radius,
+                    )
+                )
+        # Lower lip: move downward
+        lower_lip = [14, 80, 81, 82, 178, 181, 310, 311, 312, 402, 405]
+        for idx in lower_lip:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([0.0, 2.0 * scale]),
+                        influence_radius=radius,
+                    )
+                )
+
+    elif procedure == "forehead_reduction":
+        # Hairline lowering: move forehead/hairline landmarks downward.
+        # Central hairline: strongest downward displacement
+        hairline_central = [10, 8, 9]
+        for idx in hairline_central:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([0.0, 3.0 * scale]),
+                        influence_radius=radius * 1.2,
+                    )
+                )
+        # Left lateral forehead
+        forehead_left = [21, 54, 67, 68, 69, 103, 104, 108, 109, 251]
+        for idx in forehead_left:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([0.0, 2.0 * scale]),
+                        influence_radius=radius,
+                    )
+                )
+        # Right lateral forehead
+        forehead_right = [284, 297, 298, 299, 332, 333, 337, 338]
+        for idx in forehead_right:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([0.0, 2.0 * scale]),
+                        influence_radius=radius,
+                    )
+                )
+
+    elif procedure == "submental_liposuction":
+        # Double chin reduction: lift submental tissue upward and inward.
+        # Central submental: strong upward pull
+        submental_core = [152, 175, 199, 200]
+        for idx in submental_core:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([0.0, -3.0 * scale]),
+                        influence_radius=radius,
+                    )
+                )
+        # Lateral submental: upward + inward pull
+        submental_left = [149, 150, 169, 170, 171, 176]
+        for idx in submental_left:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([1.0 * scale, -2.0 * scale]),
+                        influence_radius=radius * 0.8,
+                    )
+                )
+        submental_right = [377, 378, 396, 400]
+        for idx in submental_right:
+            if idx in indices:
+                handles.append(
+                    DeformationHandle(
+                        landmark_index=idx,
+                        displacement=np.array([-1.0 * scale, -2.0 * scale]),
+                        influence_radius=radius * 0.8,
                     )
                 )
 

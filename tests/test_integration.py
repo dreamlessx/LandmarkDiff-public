@@ -35,6 +35,12 @@ MASKABLE_PROCEDURES = [
     "canthoplasty",
     "buccal_fat_removal",
     "dimpleplasty",
+    "genioplasty",
+    "malarplasty",
+    "lip_lift",
+    "lip_augmentation",
+    "forehead_reduction",
+    "submental_liposuction",
 ]
 
 # All procedures for manipulation tests
@@ -49,6 +55,12 @@ ALL_PROCEDURES = [
     "canthoplasty",
     "buccal_fat_removal",
     "dimpleplasty",
+    "genioplasty",
+    "malarplasty",
+    "lip_lift",
+    "lip_augmentation",
+    "forehead_reduction",
+    "submental_liposuction",
 ]
 
 
