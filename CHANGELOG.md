@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] - 2026-03-15
+
+### Added
+- `NasalMorphometry` module for computing nasal ratios from Varghaei et al. (2025)
+- `FacialSymmetry` bilateral symmetry scoring via KDTree-based matching
+- `FaceLandmarks.pixel_coords_at()` for getting coordinates at any resolution
+- `FaceLandmarks.rescale()` for creating resolution-adjusted copies
+- `collect_instagram_data.py` script for curating public-domain training pairs
+- Competitive landscape table in README (9-method comparison)
+
+### Fixed
+- `DisplacementModel.load()` now raises `ValueError` on corrupted/empty `.npz` files instead of returning zero-initialized model
+- `get_face_embedding()` guards against near-zero ArcFace embeddings from occluded faces, preventing NaN similarity scores
+- CUDA OOM during inference now raises an informative `RuntimeError` instead of hanging
+- Remaining `print()` calls migrated to `logging` module
+
 ## [0.2.2] - 2026-03-14
 
 ### Added
@@ -68,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Gradio web demo
 - CLI interface
 
-[0.2.2]: https://github.com/dreamlessx/LandmarkDiff-public/compare/v0.2.0...HEAD
+[0.2.3]: https://github.com/dreamlessx/LandmarkDiff-public/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/dreamlessx/LandmarkDiff-public/compare/v0.2.0...v0.2.2
 [0.2.0]: https://github.com/dreamlessx/LandmarkDiff-public/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/dreamlessx/LandmarkDiff-public/releases/tag/v0.1.0

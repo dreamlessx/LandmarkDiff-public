@@ -1,6 +1,6 @@
 """LandmarkDiff: Anatomically-conditioned latent diffusion for facial surgery simulation."""
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 
 __all__ = [
     "api_client",
