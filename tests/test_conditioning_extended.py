@@ -223,6 +223,23 @@ class TestAutoCanny:
         edge_ratio = np.sum(edges > 0) / edges.size
         assert edge_ratio < 0.1
 
+    def test_highres_detects_thin_features(self):
+        """High-res images should still detect thin features after pre-blur."""
+        img = np.zeros((1024, 1024), dtype=np.uint8)
+        # Draw thin lines (1px wide) that simulate eyelashes/wrinkles
+        for y in range(200, 800, 40):
+            cv2.line(img, (200, y), (800, y), 180, 1)
+        edges = auto_canny(img)
+        assert edges.shape == (1024, 1024)
+        assert np.sum(edges > 0) > 0
+
+    def test_512_no_preblur(self):
+        """At 512px, no pre-blur should be applied (same behavior as before)."""
+        img = np.zeros((512, 512), dtype=np.uint8)
+        cv2.circle(img, (256, 256), 60, 200, -1)
+        edges = auto_canny(img)
+        assert np.sum(edges > 0) > 10
+
     def test_skeleton_produces_thin_edges(self):
         """Skeletonization should produce single-pixel-wide edges."""
         img = np.zeros((256, 256), dtype=np.uint8)

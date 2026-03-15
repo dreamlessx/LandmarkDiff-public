@@ -162,6 +162,7 @@ INNER_LIPS = [
 _CANNY_LOW_FACTOR = 0.66
 _CANNY_HIGH_FACTOR = 1.33
 _CANNY_DEFAULT_MEDIAN = 128.0  # fallback when no non-zero pixels exist
+_CANNY_REF_SIZE = 512  # reference resolution for Canny parameters
 
 ALL_CONTOURS = [
     JAWLINE_CONTOUR,
@@ -219,6 +220,11 @@ def auto_canny(image: np.ndarray) -> np.ndarray:
 
     Uses median-based thresholds (0.66*median, 1.33*median) instead of
     hardcoded 50/150 to handle all Fitzpatrick skin types.
+
+    For images larger than 512px, applies a light Gaussian pre-blur scaled
+    to the resolution ratio so that thin features (eyelashes, wrinkles) are
+    still captured by the fixed 3x3 Sobel kernel inside cv2.Canny.
+
     Post-processes with morphological skeletonization for 1-pixel edges.
 
     Args:
@@ -227,6 +233,14 @@ def auto_canny(image: np.ndarray) -> np.ndarray:
     Returns:
         Binary edge map (uint8, 0 or 255).
     """
+    # Resolution-adaptive pre-blur for high-res inputs
+    max_dim = max(image.shape[:2])
+    if max_dim > _CANNY_REF_SIZE:
+        scale = max_dim / _CANNY_REF_SIZE
+        ksize = int(scale * 2) | 1  # ensure odd, scales with resolution
+        ksize = max(ksize, 3)
+        image = cv2.GaussianBlur(image, (ksize, ksize), 0)
+
     median = np.median(image[image > 0]) if np.any(image > 0) else _CANNY_DEFAULT_MEDIAN
     low = int(max(0, _CANNY_LOW_FACTOR * median))
     high = int(min(255, _CANNY_HIGH_FACTOR * median))
