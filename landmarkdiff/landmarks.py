@@ -219,6 +219,21 @@ class FaceLandmarks:
         return self.landmarks[indices]
 
     @property
+    def landmark_confidence(self) -> np.ndarray:
+        """Per-landmark confidence weights based on z-depth dispersion.
+
+        Landmarks with extreme z-values relative to the face center tend
+        to be less reliable (self-occlusion, profile views). Returns a
+        (478,) array in [0.5, 1.0] where 1.0 = high confidence.
+        """
+        z = self.landmarks[:, 2]
+        z_center = np.median(z)
+        z_dev = np.abs(z - z_center)
+        z_max = z_dev.max() if z_dev.max() > 0 else 1.0
+        # Map deviation [0, max] to confidence [1.0, 0.5]
+        return 1.0 - 0.5 * (z_dev / z_max)
+
+    @property
     def face_rotation(self) -> float:
         """Estimate in-plane face rotation in degrees from eye corners.
 
