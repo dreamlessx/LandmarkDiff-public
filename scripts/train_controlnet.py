@@ -1001,7 +1001,9 @@ def train(
                         metrics=_ckpt_metrics,
                         phase=phase,
                     )
-                    logger.info("Checkpoint saved: %s | %s", ckpt_dir, train._ckpt_manager.summary())
+                    logger.info(
+                        "Checkpoint saved: %s | %s", ckpt_dir, train._ckpt_manager.summary()
+                    )
                 except ImportError:
                     # Fallback: save without manager
                     ckpt_dir = out / f"checkpoint-{global_step}"

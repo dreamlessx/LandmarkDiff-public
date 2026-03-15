@@ -1,4 +1,5 @@
 site_name: LandmarkDiff
+site_description: Photorealistic facial surgery outcome prediction from a single photo, powered by anatomically-conditioned latent diffusion.
 site_url: https://dreamlessx.github.io/LandmarkDiff-public
 repo_url: https://github.com/dreamlessx/LandmarkDiff-public
 repo_name: dreamlessx/LandmarkDiff-public
@@ -70,4 +71,7 @@ plugins:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/dreamlessx
+      link: https://github.com/dreamlessx/LandmarkDiff-public
+    - icon: fontawesome/solid/rocket
+      link: https://huggingface.co/spaces/dreamlessx/LandmarkDiff
+      name: Live Demo on Hugging Face

@@ -21,7 +21,7 @@ It works by extracting MediaPipe's 478-point face mesh from the input photo, app
 
 - [Quickstart notebook](../examples/quickstart.ipynb) -- load the pipeline, run predictions, compare procedures
 - [CHANGELOG](../CHANGELOG.md) -- what changed between releases
-- [Wiki](https://github.com/dreamlessx/LandmarkDiff-public/wiki) -- extended guides, FAQ, architecture notes
+- [Discussions](https://github.com/dreamlessx/LandmarkDiff-public/discussions) -- questions, ideas, and community discussion
 - [API reference](api/) -- per-module documentation
 
 ---

@@ -6,6 +6,7 @@
 
 [![CI](https://github.com/dreamlessx/LandmarkDiff-public/actions/workflows/ci.yml/badge.svg)](https://github.com/dreamlessx/LandmarkDiff-public/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/dreamlessx/LandmarkDiff-public/graph/badge.svg)](https://codecov.io/gh/dreamlessx/LandmarkDiff-public)
+[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://dreamlessx.github.io/LandmarkDiff-public/)
 [![PyPI version](https://img.shields.io/pypi/v/landmarkdiff.svg)](https://pypi.org/project/landmarkdiff/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10 | 3.11 | 3.12](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12-blue.svg)](https://www.python.org/downloads/)
