@@ -12,7 +12,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `FacialSymmetry` bilateral symmetry scoring via KDTree-based matching
 - `FaceLandmarks.pixel_coords_at()` for getting coordinates at any resolution
 - `FaceLandmarks.rescale()` for creating resolution-adjusted copies
-- `collect_instagram_data.py` script for curating public-domain training pairs
 - Competitive landscape table in README (9-method comparison)
 
 ### Fixed

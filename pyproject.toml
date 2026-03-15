@@ -163,7 +163,6 @@ ignore = [
 "scripts/run_ablation.py" = ["B023", "E501", "E731"]
 "scripts/run_tps_ablation.py" = ["B905"]
 "scripts/score_checkpoints.py" = ["E501"]
-"scripts/scrape_before_after.py" = ["SIM108"]
 "scripts/status_report.py" = ["SIM105", "SIM115"]
 "scripts/verify_dataset.py" = ["E501", "SIM102"]
 "scripts/visualize_displacements.py" = ["B905", "E402", "F841"]

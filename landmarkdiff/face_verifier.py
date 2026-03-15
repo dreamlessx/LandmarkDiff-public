@@ -8,7 +8,7 @@ End-to-end system that:
 5. Scores output realism using learned perceptual metrics
 
 Designed for:
-- Cleaning scraped training data (reject/fix bad images before pair generation)
+- Cleaning training data (reject/fix bad images before pair generation)
 - Post-diffusion quality gate (ensure generated faces pass realism threshold)
 - Filter removal (undo Snapchat/Instagram beauty filters for clinical use)
 """
