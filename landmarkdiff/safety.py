@@ -86,7 +86,7 @@ class SafetyValidator:
 
     def __init__(
         self,
-        identity_threshold: float = 0.6,
+        identity_threshold: float = 0.5,
         max_displacement_fraction: float = 0.05,
         min_face_confidence: float = 0.5,
         max_yaw_degrees: float = 45.0,

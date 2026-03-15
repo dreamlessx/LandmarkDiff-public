@@ -43,7 +43,7 @@ def sample_cases():
             safety_passed=False,
             identity_sim=0.45,
             fitzpatrick_type="V-VI",
-            failures=["Identity similarity 0.45 below threshold 0.6"],
+            failures=["Identity similarity 0.45 below threshold 0.5"],
         ),
         AuditCase(
             case_id="P005",

@@ -84,7 +84,7 @@ class TestDataclasses:
 
     def test_safety_config_defaults(self):
         cfg = SafetyConfig()
-        assert cfg.identity_threshold == 0.6
+        assert cfg.identity_threshold == 0.5
         assert cfg.watermark_enabled is True
         assert cfg.min_face_confidence == 0.5
 

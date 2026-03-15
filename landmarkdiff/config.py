@@ -140,7 +140,7 @@ class InferenceConfig:
 
     # Identity verification
     verify_identity: bool = True
-    identity_threshold: float = 0.6
+    identity_threshold: float = 0.5
 
 
 @dataclass
@@ -187,7 +187,7 @@ class SlurmConfig:
 class SafetyConfig:
     """Clinical safety and responsible AI parameters."""
 
-    identity_threshold: float = 0.6
+    identity_threshold: float = 0.5
     max_displacement_fraction: float = 0.05
     watermark_enabled: bool = True
     watermark_text: str = "AI-GENERATED PREDICTION"

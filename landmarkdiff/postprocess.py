@@ -365,19 +365,19 @@ def enhance_background_realesrgan(
 def verify_identity_arcface(
     original: np.ndarray,
     result: np.ndarray,
-    threshold: float = 0.6,
+    threshold: float = 0.5,
 ) -> dict:
     """Verify output preserves input identity using ArcFace neural net.
 
     Computes cosine similarity between ArcFace embeddings of the original
     and result images. If similarity drops below threshold, flags identity
-    drift — meaning the postprocessing or diffusion altered the person's
+    drift -- meaning the postprocessing or diffusion altered the person's
     appearance too much.
 
     Args:
         original: BGR original face image.
         result: BGR post-processed output image.
-        threshold: Minimum cosine similarity to pass (0.6 = same person).
+        threshold: Minimum cosine similarity to pass (0.5 = same person).
 
     Returns:
         Dict with 'similarity' (float), 'passed' (bool), 'message' (str).
@@ -514,7 +514,7 @@ def full_postprocess(
     use_laplacian_blend: bool = True,
     sharpen_strength: float = 0.25,
     verify_identity: bool = True,
-    identity_threshold: float = 0.6,
+    identity_threshold: float = 0.5,
 ) -> dict:
     """Full neural net + classical post-processing pipeline for maximum photorealism.
 

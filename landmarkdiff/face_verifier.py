@@ -722,12 +722,12 @@ def get_face_embedding(image: np.ndarray) -> np.ndarray | None:
 def verify_identity(
     original: np.ndarray,
     restored: np.ndarray,
-    threshold: float = 0.6,
+    threshold: float = 0.5,
 ) -> tuple[float, bool]:
     """Compare identity between original and restored using ArcFace.
 
     Returns (cosine_similarity, passed).
-    Similarity > threshold means same person (threshold=0.6 is conservative).
+    Similarity > threshold means same person (0.5 accommodates non-frontal poses).
     """
     emb_orig = get_face_embedding(original)
     emb_rest = get_face_embedding(restored)
@@ -750,11 +750,11 @@ def verify_identity(
 def verify_and_restore(
     image: np.ndarray,
     quality_threshold: float = 60.0,
-    identity_threshold: float = 0.6,
+    identity_threshold: float = 0.5,
     restore_mode: str = "auto",
     codeformer_fidelity: float = 0.7,
 ) -> RestorationResult:
-    """Full pipeline: analyze → restore → verify identity.
+    """Full pipeline: analyze -> restore -> verify identity.
 
     This is the main entry point for the face verifier. It:
     1. Analyzes the input for distortions
@@ -837,7 +837,7 @@ def verify_batch(
     image_dir: str,
     output_dir: str | None = None,
     quality_threshold: float = 60.0,
-    identity_threshold: float = 0.6,
+    identity_threshold: float = 0.5,
     restore_mode: str = "auto",
     save_rejected: bool = False,
     extensions: tuple[str, ...] = (".jpg", ".jpeg", ".png", ".webp", ".bmp"),

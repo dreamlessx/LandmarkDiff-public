@@ -51,7 +51,7 @@ class TestSafetyValidator:
     @pytest.fixture
     def validator(self):
         return SafetyValidator(
-            identity_threshold=0.6,
+            identity_threshold=0.5,
             max_displacement_fraction=0.05,
             watermark_enabled=True,
         )

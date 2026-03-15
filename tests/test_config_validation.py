@@ -290,7 +290,7 @@ class TestYAMLEdgeCases:
         cfg = ExperimentConfig.from_yaml(yaml_path)
         assert cfg.training.learning_rate == 1e-5
         assert cfg.model.base_model == "runwayml/stable-diffusion-v1-5"
-        assert cfg.safety.identity_threshold == 0.6
+        assert cfg.safety.identity_threshold == 0.5
 
 
 # ---------------------------------------------------------------------------
