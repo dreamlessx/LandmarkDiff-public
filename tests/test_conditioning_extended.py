@@ -333,5 +333,5 @@ class TestContourData:
             assert len(contour) >= 2, f"Contour {i} has fewer than 2 points"
 
     def test_total_contour_count(self):
-        """Should have exactly 10 contour groups."""
-        assert len(ALL_CONTOURS) == 10
+        """Should have exactly 11 contour groups (includes nose bridge upper)."""
+        assert len(ALL_CONTOURS) == 11

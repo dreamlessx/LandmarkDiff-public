@@ -418,6 +418,10 @@ def render_landmark_image(
             p2 = tuple(pts[conn.end])
             cv2.line(canvas, p1, p2, (255, 255, 255), 1, cv2.LINE_AA)
 
+        # Supplement missing nose bridge edges (landmarks 6-8-9-168)
+        for a, b in [(8, 9), (8, 168), (8, 6), (9, 168)]:
+            cv2.line(canvas, tuple(pts[a]), tuple(pts[b]), (192, 192, 192), 1, cv2.LINE_AA)
+
     except (ImportError, AttributeError):
         # Fallback: draw colored dots if tessellation not available
         idx_to_color: dict[int, tuple[int, int, int]] = {}
