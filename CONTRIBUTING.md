@@ -215,9 +215,9 @@ class TestFrobnicate:
 
 CI runs on every push to `main` and on every pull request. It checks:
 
-1. **Lint** -- `ruff check` and `ruff format --check`
-2. **Type check** -- `mypy`
-3. **Tests** -- `pytest` on Python 3.10, 3.11, and 3.12
+1. **Lint:** `ruff check` and `ruff format --check`
+2. **Type check:** `mypy`
+3. **Tests:** `pytest` on Python 3.10, 3.11, and 3.12
 
 All three must pass before a PR can be merged.
 
@@ -298,7 +298,7 @@ LandmarkDiff currently supports six surgical procedures. Each one is defined as 
 | `brow_lift`      | Forehead and brow elevation                | 18             | 25.0                   |
 | `mentoplasty`    | Chin augmentation / reduction              | 8              | 25.0                   |
 
-Both `brow_lift` and `mentoplasty` were contributed by community members -- see PRs [#35](https://github.com/dreamlessx/LandmarkDiff-public/pull/35) and [#36](https://github.com/dreamlessx/LandmarkDiff-public/pull/36).
+Both `brow_lift` and `mentoplasty` were contributed by community members; see PRs [#35](https://github.com/dreamlessx/LandmarkDiff-public/pull/35) and [#36](https://github.com/dreamlessx/LandmarkDiff-public/pull/36).
 
 ---
 
@@ -432,7 +432,7 @@ To add a new clinical flag:
 1. **Add the field** to the `ClinicalFlags` dataclass in `landmarkdiff/clinical.py`.
 2. **Implement the modifier** as a function in the same module. The modifier should adjust either the deformation handles, the mask, or the influence radii depending on the condition.
 3. **Wire it in.** Call your modifier from `apply_procedure_preset()` in `manipulation.py` (for deformation changes) or from the mask generation code in `masking.py` (for mask changes).
-4. **Add the flag to the Gradio demo** in `scripts/app.py` -- typically as a checkbox in Tab 1.
+4. **Add the flag to the Gradio demo** in `scripts/app.py`, typically as a checkbox in Tab 1.
 5. **Write tests** that verify the flag actually modifies the output relative to the unflagged case.
 6. **Document** the clinical rationale. Include references to the medical literature if possible.
 
@@ -448,9 +448,9 @@ The current pipeline operates on single 2D images. Lifting to 3D requires fittin
 
 Areas where contributions are welcome:
 
-- **FLAME integration** -- fitting [FLAME](https://flame.is.tue.mpg.de/) parameters from MediaPipe landmarks or dense face alignment, producing a textured 3D mesh from a single frame or short video.
-- **Neural implicit representations** -- NeRF or 3D Gaussian Splatting (3DGS) approaches for head reconstruction from a phone video scan. Particularly useful: methods that work with sparse views (10-30 frames) and reconstruct in under a minute.
-- **Mesh-landmark correspondence** -- mapping the 478 MediaPipe landmarks to FLAME mesh vertices so that existing 2D procedure presets can be projected into 3D displacement vectors.
+- **FLAME integration:** fitting [FLAME](https://flame.is.tue.mpg.de/) parameters from MediaPipe landmarks or dense face alignment, producing a textured 3D mesh from a single frame or short video.
+- **Neural implicit representations:** NeRF or 3D Gaussian Splatting (3DGS) approaches for head reconstruction from a phone video scan. Particularly useful: methods that work with sparse views (10-30 frames) and reconstruct in under a minute.
+- **Mesh-landmark correspondence:** mapping the 478 MediaPipe landmarks to FLAME mesh vertices so that existing 2D procedure presets can be projected into 3D displacement vectors.
 
 If you have experience with DECA, EMOCA, PanoHead, or similar, your expertise is directly applicable.
 
@@ -458,26 +458,26 @@ If you have experience with DECA, EMOCA, PanoHead, or similar, your expertise is
 
 Once a deformed 3D model exists, patients need to view it interactively.
 
-- **WebGL/three.js viewer** -- a browser-based viewer that renders the reconstructed face from arbitrary viewpoints, with controls for rotating, zooming, and comparing pre/post deformation side by side.
-- **Gradio 3D integration** -- extending the existing Gradio demo (`scripts/app.py`) to embed a 3D model viewer tab alongside the current 2D outputs.
-- **Texture and lighting** -- realistic relighting and texture transfer so the 3D preview looks natural rather than synthetic.
+- **WebGL/three.js viewer:** a browser-based viewer that renders the reconstructed face from arbitrary viewpoints, with controls for rotating, zooming, and comparing pre/post deformation side by side.
+- **Gradio 3D integration:** extending the existing Gradio demo (`scripts/app.py`) to embed a 3D model viewer tab alongside the current 2D outputs.
+- **Texture and lighting:** realistic relighting and texture transfer so the 3D preview looks natural rather than synthetic.
 
 ### Mobile capture pipeline
 
 The phone-scan capture workflow is a critical UX piece.
 
-- **Frame selection** -- given a video of a patient rotating their head, select the N most informative frames (coverage, sharpness, landmark confidence) for reconstruction.
-- **Real-time guidance** -- lightweight on-device feedback telling the patient to turn left, tilt up, etc., ensuring sufficient angular coverage.
-- **Landmark tracking across frames** -- temporally consistent MediaPipe tracking with outlier rejection and smoothing.
+- **Frame selection:** given a video of a patient rotating their head, select the N most informative frames (coverage, sharpness, landmark confidence) for reconstruction.
+- **Real-time guidance:** lightweight on-device feedback telling the patient to turn left, tilt up, etc., ensuring sufficient angular coverage.
+- **Landmark tracking across frames:** temporally consistent MediaPipe tracking with outlier rejection and smoothing.
 
 ### 3D evaluation metrics
 
 We will need metrics that go beyond 2D FID and LPIPS:
 
-- **3D landmark error** -- Euclidean distance between predicted and ground-truth 3D landmark positions.
-- **Mesh surface distance** -- Chamfer distance or Hausdorff distance between reconstructed and reference meshes.
-- **Multi-view consistency** -- measuring whether the deformed model renders consistently across viewpoints (no view-dependent artifacts).
-- **Identity preservation in 3D** -- extending the current ArcFace identity score to aggregate across multiple rendered views.
+- **3D landmark error:** Euclidean distance between predicted and ground-truth 3D landmark positions.
+- **Mesh surface distance:** Chamfer distance or Hausdorff distance between reconstructed and reference meshes.
+- **Multi-view consistency:** measuring whether the deformed model renders consistently across viewpoints (no view-dependent artifacts).
+- **Identity preservation in 3D:** extending the current ArcFace identity score to aggregate across multiple rendered views.
 
 If any of these areas interest you, open an issue tagged `enhancement` describing what you want to work on, and we can discuss the approach before you start coding.
 

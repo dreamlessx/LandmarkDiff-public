@@ -229,6 +229,6 @@ When `ehlers_danlos=True`:
 
 ## See Also
 
-- [manipulation](manipulation.md) -- `apply_procedure_preset` consumes clinical flags
-- [inference](inference.md) -- `LandmarkDiffPipeline.generate()` accepts clinical flags
-- [landmarks](landmarks.md) -- `LANDMARK_REGIONS` for valid region names
+- [manipulation](manipulation.md): `apply_procedure_preset` consumes clinical flags
+- [inference](inference.md): `LandmarkDiffPipeline.generate()` accepts clinical flags
+- [landmarks](landmarks.md): `LANDMARK_REGIONS` for valid region names

@@ -213,8 +213,8 @@ Auto-detect the best available compute device. Checks MPS first (Apple Silicon),
 
 ## See Also
 
-- [landmarks](landmarks.md) -- landmark extraction and `FaceLandmarks`
-- [manipulation](manipulation.md) -- procedure preset deformations
-- [conditioning](conditioning.md) -- conditioning image generation
-- [clinical](clinical.md) -- clinical edge case flags
-- [evaluation](evaluation.md) -- metrics for evaluating predictions
+- [landmarks](landmarks.md): landmark extraction and `FaceLandmarks`
+- [manipulation](manipulation.md): procedure preset deformations
+- [conditioning](conditioning.md): conditioning image generation
+- [clinical](clinical.md): clinical edge case flags
+- [evaluation](evaluation.md): metrics for evaluating predictions

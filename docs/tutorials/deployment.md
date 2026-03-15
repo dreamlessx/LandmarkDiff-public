@@ -87,9 +87,9 @@ docker compose --profile training run train
 
 All services mount these volumes:
 
-- `./data:/app/data` -- training data, test pairs
-- `./checkpoints:/app/checkpoints` -- model checkpoints
-- `model-cache:/root/.cache` -- shared HuggingFace model cache
+- `./data:/app/data`: training data, test pairs
+- `./checkpoints:/app/checkpoints`: model checkpoints
+- `model-cache:/root/.cache`: shared HuggingFace model cache
 
 Create the host directories before running:
 
@@ -118,9 +118,9 @@ RUN python -c "from diffusers import ControlNetModel; ControlNetModel.from_pretr
 1. Create a new Space at [huggingface.co/new-space](https://huggingface.co/new-space).
 2. Select **Gradio** as the SDK.
 3. Choose hardware:
-   - **CPU Basic** (free) -- works for TPS mode only
-   - **T4 Small** -- minimum for ControlNet inference
-   - **A10G Small** -- recommended for faster inference
+   - **CPU Basic** (free): works for TPS mode only
+   - **T4 Small**: minimum for ControlNet inference
+   - **A10G Small**: recommended for faster inference
 4. Push the repository contents to the Space.
 
 The `scripts/app.py` Gradio demo is compatible with HuggingFace Spaces out of the box. It auto-detects the environment and sets `share=False` (Spaces already provides a public URL).
@@ -146,8 +146,8 @@ pinned: false
 
 Set secrets in the Space settings (Settings > Repository Secrets):
 
-- `HF_TOKEN` -- if using gated models
-- `LANDMARKDIFF_MODE` -- set to `tps` for CPU Spaces
+- `HF_TOKEN`: if using gated models
+- `LANDMARKDIFF_MODE`: set to `tps` for CPU Spaces
 
 ### Persistence
 
@@ -180,7 +180,7 @@ from landmarkdiff.inference import LandmarkDiffPipeline
 
 logger = logging.getLogger(__name__)
 
-# Pipeline singleton -- loaded once at startup
+# Pipeline singleton: loaded once at startup
 _pipeline = None
 
 
@@ -498,6 +498,6 @@ async def predict(...):
 
 ## Next Steps
 
-- [Evaluation Guide](evaluation.md) -- Measure model quality
-- [Training Guide](training.md) -- Train your own checkpoint
-- [FAQ](../faq.md) -- Common questions and troubleshooting
+- [Evaluation Guide](evaluation.md): Measure model quality
+- [Training Guide](training.md): Train your own checkpoint
+- [FAQ](../faq.md): Common questions and troubleshooting

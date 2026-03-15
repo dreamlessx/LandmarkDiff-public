@@ -27,7 +27,7 @@ Core pipeline with TPS and ControlNet inference, six procedure presets, clinical
 
 ---
 
-## v0.3.0 -- Data-Driven Training
+## v0.3.0: Data-Driven Training
 
 **Target:** Q3 2026
 
@@ -60,7 +60,7 @@ The focus of this release is moving from hand-tuned displacement vectors to disp
 
 ---
 
-## v0.4.0 -- 3D Face Reconstruction
+## v0.4.0: 3D Face Reconstruction
 
 **Target:** Q4 2026
 
@@ -92,7 +92,7 @@ Move from single 2D images to full 3D face reconstruction from phone video. The 
 
 ---
 
-## v0.5.0 -- Interactive 3D Surgical Preview
+## v0.5.0: Interactive 3D Surgical Preview
 
 **Target:** Q1/Q2 2027
 
@@ -115,7 +115,7 @@ End-to-end mobile workflow: the patient captures a video scan on their phone and
 
 ---
 
-## v1.0.0 -- Clinical Validation
+## v1.0.0: Clinical Validation
 
 **Target:** 2027
 
@@ -156,9 +156,9 @@ Production-ready release with clinical validation data, 3D accuracy benchmarks, 
 
 We welcome contributions at every level. See [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
 
-- **New procedure presets** -- define custom displacement vectors for procedures not yet supported
-- **Clinical validation data** -- if you have access to before/after surgical datasets, we would like to hear from you
-- **Evaluation benchmarks** -- run LandmarkDiff on your own data and share results
-- **Feature requests** -- open an issue or start a [Discussion](https://github.com/dreamlessx/LandmarkDiff-public/discussions)
+- **New procedure presets**: define custom displacement vectors for procedures not yet supported
+- **Clinical validation data**: if you have access to before/after surgical datasets, we would like to hear from you
+- **Evaluation benchmarks**: run LandmarkDiff on your own data and share results
+- **Feature requests**: open an issue or start a [Discussion](https://github.com/dreamlessx/LandmarkDiff-public/discussions)
 
 Significant contributions earn co-authorship on the MICCAI 2026 paper. See the [Contributors table](../README.md#contributors) for recognition tiers.

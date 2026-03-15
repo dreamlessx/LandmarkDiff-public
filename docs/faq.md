@@ -64,7 +64,7 @@ face = extract_landmarks(image)
 # Correct
 coords = face.pixel_coords     # returns (478, 2) numpy array
 
-# Wrong -- will raise TypeError
+# Wrong: will raise TypeError
 coords = face.pixel_coords()   # pixel_coords is not callable
 ```
 
@@ -170,7 +170,7 @@ The Laplacian pyramid blending should handle this, but if you see artifacts:
 
 **TPS warp looks distorted**
 
-TPS mode is purely geometric -- it pushes pixels around without any neural generation. At high intensity (>70%) the distortion becomes obvious. This is expected. Use ControlNet mode for photorealistic results.
+TPS mode is purely geometric: it pushes pixels around without any neural generation. At high intensity (>70%) the distortion becomes obvious. This is expected. Use ControlNet mode for photorealistic results.
 
 ## Training Issues
 
@@ -223,14 +223,14 @@ The Gradio demo uses `share=True` by default in Colab, which creates a public UR
 
 The project uses mypy with `--ignore-missing-imports` because several dependencies (mediapipe, insightface, lpips, etc.) do not ship type stubs. Common mypy errors and fixes:
 
-1. **`Module has no attribute`** for optional imports -- Some modules are imported conditionally with try/except. mypy cannot track these. The `pyproject.toml` already includes `[[tool.mypy.overrides]]` entries for known modules.
+1. **`Module has no attribute`** for optional imports: Some modules are imported conditionally with try/except. mypy cannot track these. The `pyproject.toml` already includes `[[tool.mypy.overrides]]` entries for known modules.
 
-2. **`Incompatible types in assignment`** with numpy -- The `pixel_coords` property returns `np.ndarray` but mypy sometimes infers a different type. Use explicit type annotations:
+2. **`Incompatible types in assignment`** with numpy: The `pixel_coords` property returns `np.ndarray` but mypy sometimes infers a different type. Use explicit type annotations:
    ```python
    coords: np.ndarray = face.pixel_coords
    ```
 
-3. **`Cannot find implementation or library stub`** -- Install type stubs:
+3. **`Cannot find implementation or library stub`**: Install type stubs:
    ```bash
    pip install types-Pillow types-PyYAML
    ```
@@ -244,21 +244,21 @@ mypy landmarkdiff/ --ignore-missing-imports
 
 The project uses pre-commit with ruff (lint + format) and mypy. Common failures:
 
-1. **ruff format** -- Code was not formatted. Fix:
+1. **ruff format**: Code was not formatted. Fix:
    ```bash
    ruff format landmarkdiff/ scripts/ tests/
    ```
 
-2. **ruff check** -- Linting errors. Fix auto-fixable ones:
+2. **ruff check**: Linting errors. Fix auto-fixable ones:
    ```bash
    ruff check --fix landmarkdiff/ scripts/ tests/
    ```
 
-3. **trailing-whitespace or end-of-file-fixer** -- These hooks auto-fix the issue. Just re-stage the files and commit again.
+3. **trailing-whitespace or end-of-file-fixer**: These hooks auto-fix the issue. Just re-stage the files and commit again.
 
-4. **check-added-large-files** -- You are trying to commit a file larger than 1MB. Use Git LFS for model checkpoints and large data files.
+4. **check-added-large-files**: You are trying to commit a file larger than 1MB. Use Git LFS for model checkpoints and large data files.
 
-5. **mypy** -- Type errors. Run `mypy landmarkdiff/ --ignore-missing-imports` to see the full report and fix errors before committing.
+5. **mypy**: Type errors. Run `mypy landmarkdiff/ --ignore-missing-imports` to see the full report and fix errors before committing.
 
 To install pre-commit hooks after cloning:
 ```bash
@@ -275,21 +275,21 @@ pre-commit run --all-files
 
 Common Docker build issues:
 
-1. **CUDA version mismatch** -- The GPU Dockerfile (`Dockerfile`) uses `nvidia/cuda:12.1.1-devel-ubuntu22.04`. If your host has a different CUDA driver version, ensure driver compatibility (CUDA 12.1 requires driver >= 530).
+1. **CUDA version mismatch**: The GPU Dockerfile (`Dockerfile`) uses `nvidia/cuda:12.1.1-devel-ubuntu22.04`. If your host has a different CUDA driver version, ensure driver compatibility (CUDA 12.1 requires driver >= 530).
 
-2. **Out of disk space** -- The GPU image is large (~10 GB). Clean old images:
+2. **Out of disk space**: The GPU image is large (~10 GB). Clean old images:
    ```bash
    docker system prune -a
    ```
 
-3. **pip install fails inside container** -- Network issues or missing system packages. The Dockerfiles install the required system libraries (`libgl1-mesa-glx`, `libglib2.0-0`, etc.). If you modified the Dockerfile and see `ImportError: libGL.so.1`, add:
+3. **pip install fails inside container**: Network issues or missing system packages. The Dockerfiles install the required system libraries (`libgl1-mesa-glx`, `libglib2.0-0`, etc.). If you modified the Dockerfile and see `ImportError: libGL.so.1`, add:
    ```dockerfile
    RUN apt-get update && apt-get install -y libgl1-mesa-glx
    ```
 
 4. **CPU Dockerfile (`Dockerfile.cpu`)** installs CPU-only PyTorch from `https://download.pytorch.org/whl/cpu`. If you need GPU support, use the main `Dockerfile` instead.
 
-5. **Permission errors with mounted volumes** -- The container runs as root by default. If you mount host directories, ensure the directories exist and are writable:
+5. **Permission errors with mounted volumes**: The container runs as root by default. If you mount host directories, ensure the directories exist and are writable:
    ```bash
    mkdir -p data checkpoints
    docker compose up app
@@ -297,18 +297,18 @@ Common Docker build issues:
 
 **Sphinx documentation build fails**
 
-1. **Missing dependencies** -- Install the docs requirements:
+1. **Missing dependencies**: Install the docs requirements:
    ```bash
    pip install -r docs/requirements.txt
    ```
    Required packages: `sphinx>=7.0`, `furo`, `myst-parser`, `sphinx-autodoc-typehints`, `sphinx-copybutton`.
 
-2. **MyST markdown parse errors** -- The docs use MyST-flavored markdown. Common issues:
+2. **MyST markdown parse errors**: The docs use MyST-flavored markdown. Common issues:
    - Directive syntax uses `{toctree}` not `:toctree:` in code fences.
    - Heading levels must not skip (e.g., going from `#` to `###` without `##` in between).
    - Indentation inside directives must be consistent.
 
-3. **autodoc import errors** -- Sphinx tries to import `landmarkdiff` to generate API docs. Install the package first:
+3. **autodoc import errors**: Sphinx tries to import `landmarkdiff` to generate API docs. Install the package first:
    ```bash
    pip install -e .
    sphinx-build -b html docs/ docs/_build/html

@@ -295,6 +295,6 @@ print(metrics.summary())
 
 ## See Also
 
-- [inference](inference.md) -- pipeline that generates predictions to evaluate
-- [landmarks](landmarks.md) -- landmark extraction for NME computation
-- [clinical](clinical.md) -- clinical flags that affect predictions
+- [inference](inference.md): pipeline that generates predictions to evaluate
+- [landmarks](landmarks.md): landmark extraction for NME computation
+- [clinical](clinical.md): clinical flags that affect predictions

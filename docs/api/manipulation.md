@@ -47,12 +47,12 @@ A single deformation control point. Each handle moves its target landmark by `di
 
 | Procedure | Radius (px) | Rationale |
 |-----------|-------------|-----------|
-| `"rhinoplasty"` | 30.0 | Moderate -- smooth nasal transitions |
-| `"blepharoplasty"` | 15.0 | Tight -- avoid affecting brow |
-| `"rhytidectomy"` | 40.0 | Wide -- broad soft tissue mobilization |
-| `"orthognathic"` | 35.0 | Wide -- large jaw region |
-| `"brow_lift"` | 25.0 | Moderate -- brow and forehead |
-| `"mentoplasty"` | 25.0 | Moderate -- chin and lower contour |
+| `"rhinoplasty"` | 30.0 | Moderate: smooth nasal transitions |
+| `"blepharoplasty"` | 15.0 | Tight: avoid affecting brow |
+| `"rhytidectomy"` | 40.0 | Wide: broad soft tissue mobilization |
+| `"orthognathic"` | 35.0 | Wide: large jaw region |
+| `"brow_lift"` | 25.0 | Moderate: brow and forehead |
+| `"mentoplasty"` | 25.0 | Moderate: chin and lower contour |
 
 ---
 
@@ -153,22 +153,22 @@ deformed = apply_procedure_preset(
 
 Each procedure preset defines specific displacement vectors for different anatomical sub-regions within the targeted area. All displacements are calibrated at 512x512 resolution and scaled by `image_size / 512`.
 
-**Rhinoplasty** -- alar base narrowing (nostrils inward), tip refinement (upward rotation), dorsum narrowing (bridge squeeze).
+**Rhinoplasty**: alar base narrowing (nostrils inward), tip refinement (upward rotation), dorsum narrowing (bridge squeeze).
 
-**Blepharoplasty** -- upper lid elevation (central lid strongest), medial/lateral corner tapering (reduced displacement), subtle lower lid tightening.
+**Blepharoplasty**: upper lid elevation (central lid strongest), medial/lateral corner tapering (reduced displacement), subtle lower lid tightening.
 
-**Rhytidectomy** -- jowl lifting (upward + toward ear, strongest effect), submental tightening (upward only), temple/upper face lift (mild).
+**Rhytidectomy**: jowl lifting (upward + toward ear, strongest effect), submental tightening (upward only), temple/upper face lift (mild).
 
-**Orthognathic** -- mandible repositioning (upward), chin projection (upward), lateral jaw narrowing (bilateral symmetric inward pull).
+**Orthognathic**: mandible repositioning (upward), chin projection (upward), lateral jaw narrowing (bilateral symmetric inward pull).
 
-**Brow lift** -- brow elevation with lateral-to-medial gradient (lateral brow lifts more), forehead smoothing (subtle upward shift with wider influence radius).
+**Brow lift**: brow elevation with lateral-to-medial gradient (lateral brow lifts more), forehead smoothing (subtle upward shift with wider influence radius).
 
-**Mentoplasty** -- chin tip advancement (strongest displacement), lower contour follow-through, jaw angle transition (minimal pull for natural blending).
+**Mentoplasty**: chin tip advancement (strongest displacement), lower contour follow-through, jaw angle transition (minimal pull for natural blending).
 
 ---
 
 ## See Also
 
-- [landmarks](landmarks.md) -- `FaceLandmarks` dataclass and extraction
-- [clinical](clinical.md) -- `ClinicalFlags` for condition-specific behavior
-- [conditioning](conditioning.md) -- render deformed landmarks as ControlNet input
+- [landmarks](landmarks.md): `FaceLandmarks` dataclass and extraction
+- [clinical](clinical.md): `ClinicalFlags` for condition-specific behavior
+- [conditioning](conditioning.md): render deformed landmarks as ControlNet input

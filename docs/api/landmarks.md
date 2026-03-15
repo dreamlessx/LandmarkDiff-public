@@ -199,6 +199,6 @@ Load an image from disk as a BGR numpy array. Raises `FileNotFoundError` if the 
 
 ## See Also
 
-- [manipulation](manipulation.md) -- apply surgical deformations to extracted landmarks
-- [conditioning](conditioning.md) -- generate ControlNet conditioning from landmarks
-- [inference](inference.md) -- full prediction pipeline
+- [manipulation](manipulation.md): apply surgical deformations to extracted landmarks
+- [conditioning](conditioning.md): generate ControlNet conditioning from landmarks
+- [inference](inference.md): full prediction pipeline

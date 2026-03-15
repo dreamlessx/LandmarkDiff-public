@@ -19,10 +19,10 @@ It works by extracting MediaPipe's 478-point face mesh from the input photo, app
 
 ## Quick Links
 
-- [Quickstart notebook](../examples/quickstart.ipynb) -- load the pipeline, run predictions, compare procedures
-- [CHANGELOG](../CHANGELOG.md) -- what changed between releases
-- [Discussions](https://github.com/dreamlessx/LandmarkDiff-public/discussions) -- questions, ideas, and community discussion
-- [API reference](api/) -- per-module documentation
+- [Quickstart notebook](../examples/quickstart.ipynb): load the pipeline, run predictions, compare procedures
+- [CHANGELOG](../CHANGELOG.md): what changed between releases
+- [Discussions](https://github.com/dreamlessx/LandmarkDiff-public/discussions): questions, ideas, and community discussion
+- [API reference](api/): per-module documentation
 
 ---
 
@@ -829,7 +829,7 @@ make clean           # remove build artifacts
   title={LandmarkDiff: Anatomically-Conditioned Latent Diffusion for
          Photorealistic Facial Surgery Outcome Prediction},
   booktitle={Medical Image Computing and Computer Assisted Intervention
-             -- MICCAI},
+            : MICCAI},
   year={2026},
   publisher={Springer}
 }

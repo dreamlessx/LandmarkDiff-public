@@ -9,7 +9,7 @@ python_version: "3.11"
 app_file: app.py
 pinned: true
 license: mit
-short_description: Facial surgery prediction -- 2D foundation toward 3D
+short_description: Facial surgery prediction, 2D foundation toward 3D
 tags:
   - medical-imaging
   - face
@@ -46,14 +46,14 @@ Upload a face photo, select a surgical procedure, adjust intensity, and see the 
 
 ## How It Works
 
-1. **MediaPipe landmarks** -- 478-point facial mesh extraction
-2. **Anatomical displacement** -- procedure-specific landmark shifts scaled by intensity (0-100)
-3. **TPS deformation** -- thin-plate spline warps the image smoothly
-4. **Masked compositing** -- blends the surgical region back into the original photo
+1. **MediaPipe landmarks**: 478-point facial mesh extraction
+2. **Anatomical displacement**: procedure-specific landmark shifts scaled by intensity (0-100)
+3. **TPS deformation**: thin-plate spline warps the image smoothly
+4. **Masked compositing**: blends the surgical region back into the original photo
 
 GPU modes (ControlNet, img2img) with photorealistic rendering are available in the full package.
 
-**Roadmap:** This 2D TPS demo is the foundation. Next up -- 3D face reconstruction from phone video for interactive surgical preview.
+**Roadmap:** This 2D TPS demo is the foundation. Next up: 3D face reconstruction from phone video for interactive surgical preview.
 
 ## Photo Tips
 

@@ -6,8 +6,8 @@ Train LandmarkDiff from scratch on your own data. This guide covers every step: 
 
 Training has two phases:
 
-1. **Phase A** (synthetic data, diffusion loss only) -- teaches the model to generate faces conditioned on deformed landmark meshes
-2. **Phase B** (clinical data, full loss) -- fine-tunes on real surgical before/after pairs with identity and perceptual losses
+1. **Phase A** (synthetic data, diffusion loss only): teaches the model to generate faces conditioned on deformed landmark meshes
+2. **Phase B** (clinical data, full loss): fine-tunes on real surgical before/after pairs with identity and perceptual losses
 
 The multi-term loss for Phase B:
 
@@ -592,7 +592,7 @@ These settings are non-negotiable. Training will produce garbage without them:
 
 ## Next Steps
 
-- [Evaluation](evaluation.md) -- evaluate your trained checkpoints
-- [Custom Procedures](custom_procedures.md) -- add new surgical procedures
-- [GPU Training Guide](../GPU_TRAINING_GUIDE.md) -- HPC-specific setup details
-- [Deployment](deployment.md) -- deploy your trained model
+- [Evaluation](evaluation.md): evaluate your trained checkpoints
+- [Custom Procedures](custom_procedures.md): add new surgical procedures
+- [GPU Training Guide](../GPU_TRAINING_GUIDE.md): HPC-specific setup details
+- [Deployment](deployment.md): deploy your trained model

@@ -80,13 +80,13 @@ When a `DisplacementModel` (fitted from real before/after surgery pairs) is avai
 ## Stage 3: Generation
 
 ### TPS Mode (CPU)
-Pure geometric thin-plate spline warp. Maps original landmark positions to deformed positions and interpolates the full image. No diffusion model needed -- results are instant but lack the photorealistic texture synthesis of diffusion modes.
+Pure geometric thin-plate spline warp. Maps original landmark positions to deformed positions and interpolates the full image. No diffusion model needed: results are instant but lack the photorealistic texture synthesis of diffusion modes.
 
 ### img2img Mode
 Feeds the TPS-warped image into SD1.5 img2img pipeline with a procedure-specific prompt. A surgical mask (convex hull of procedure landmarks, dilated + feathered) controls the compositing region.
 
 ### ControlNet Mode
-Renders the deformed face mesh as a wireframe (2556-edge tessellation matching what CrucibleAI's ControlNet was trained on) and uses it as conditioning. The full MediaPipe tessellation and contour edges are drawn -- thin gray lines for tessellation, brighter white for contours. Uses DPM++ 2M Karras scheduler for photorealistic output.
+Renders the deformed face mesh as a wireframe (2556-edge tessellation matching what CrucibleAI's ControlNet was trained on) and uses it as conditioning. The full MediaPipe tessellation and contour edges are drawn: thin gray lines for tessellation, brighter white for contours. Uses DPM++ 2M Karras scheduler for photorealistic output.
 
 ### ControlNet + IP-Adapter Mode
 Extends ControlNet mode with h94/IP-Adapter-FaceID to condition generation on the input face embedding. This provides stronger identity preservation. The IP-Adapter scale defaults to 0.6.
@@ -95,17 +95,17 @@ Extends ControlNet mode with h94/IP-Adapter-FaceID to condition generation on th
 
 The post-processing pipeline applies six steps:
 
-1. **CodeFormer** -- Transformer-based face restoration using codebook lookup. Fidelity parameter (default 0.7) balances quality vs. identity preservation. Falls back to GFPGAN if unavailable.
+1. **CodeFormer**: Transformer-based face restoration using codebook lookup. Fidelity parameter (default 0.7) balances quality vs. identity preservation. Falls back to GFPGAN if unavailable.
 
-2. **Real-ESRGAN** -- Neural 4x upscaler applied only to background (non-face) regions, then downsampled back. Improves overall sharpness without interfering with the face restoration.
+2. **Real-ESRGAN**: Neural 4x upscaler applied only to background (non-face) regions, then downsampled back. Improves overall sharpness without interfering with the face restoration.
 
-3. **Histogram matching** -- CDF-based color matching in LAB space within the mask region. Ensures the generated face matches the original skin tone distribution, not just mean/std.
+3. **Histogram matching**: CDF-based color matching in LAB space within the mask region. Ensures the generated face matches the original skin tone distribution, not just mean/std.
 
-4. **Frequency-aware sharpening** -- Unsharp mask in LAB luminance channel only. Recovers fine skin texture (pores, fine lines) that diffusion tends to smooth out. Avoids color fringing by working in luminance only.
+4. **Frequency-aware sharpening**: Unsharp mask in LAB luminance channel only. Recovers fine skin texture (pores, fine lines) that diffusion tends to smooth out. Avoids color fringing by working in luminance only.
 
-5. **Laplacian pyramid blending** -- Multi-band blending at 6 pyramid levels. Low frequencies blend smoothly (no color seams), high frequencies transition sharply (preserving hair/texture boundaries). Replaces the visible halos from simple alpha blending.
+5. **Laplacian pyramid blending**: Multi-band blending at 6 pyramid levels. Low frequencies blend smoothly (no color seams), high frequencies transition sharply (preserving hair/texture boundaries). Replaces the visible halos from simple alpha blending.
 
-6. **ArcFace identity verification** -- Computes cosine similarity between ArcFace embeddings of the original and output. Flags identity drift if similarity drops below 0.6 (configurable threshold).
+6. **ArcFace identity verification**: Computes cosine similarity between ArcFace embeddings of the original and output. Flags identity drift if similarity drops below 0.6 (configurable threshold).
 
 ## Mask Generation
 

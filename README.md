@@ -29,17 +29,17 @@ Photorealistic facial surgery outcome prediction from a single photo, powered by
 <td width="50%" valign="top">
 
 **Input & Output**
-- Single 2D photo -- any clinical photo or phone selfie
+- Single 2D photo: any clinical photo or phone selfie
 - Photorealistic post-op prediction
-- Just a phone -- no depth sensors, no clinical equipment
+- Just a phone, no depth sensors, no clinical equipment
 
 </td>
 <td width="50%" valign="top">
 
 **Capabilities**
-- **6 procedures** -- rhinoplasty, blepharoplasty, rhytidectomy, orthognathic, brow lift, mentoplasty
-- **4 inference modes** -- TPS (CPU), img2img, ControlNet, ControlNet+IP
-- **5 clinical flags** -- vitiligo, Bell's palsy, keloid, Ehlers-Danlos, Fitzpatrick-stratified eval
+- **6 procedures:** rhinoplasty, blepharoplasty, rhytidectomy, orthognathic, brow lift, mentoplasty
+- **4 inference modes:** TPS (CPU), img2img, ControlNet, ControlNet+IP
+- **5 clinical flags:** vitiligo, Bell's palsy, keloid, Ehlers-Danlos, Fitzpatrick-stratified eval
 
 </td>
 </tr>
@@ -47,7 +47,7 @@ Photorealistic facial surgery outcome prediction from a single photo, powered by
 
 ### Where We're Headed
 
-The 2D pipeline ships now and works well. The end goal is full 3D: you hold up your phone, slowly rotate your head, and we reconstruct a 3D face model from that video alone. Surgical deformations then happen in 3D space -- anatomically grounded, not pixel-level warping -- and you get an interactive model you can rotate to see the predicted result from any angle. No depth sensors, no clinical scanning rigs. Just a phone camera and a short video. See the [Roadmap](#roadmap) for details on each step.
+The 2D pipeline ships now and works well. The end goal is full 3D: you hold up your phone, slowly rotate your head, and we reconstruct a 3D face model from that video alone. Surgical deformations then happen in 3D space (anatomically grounded, not pixel-level warping) and you get an interactive model you can rotate to see the predicted result from any angle. No depth sensors, no clinical scanning rigs. Just a phone camera and a short video. See the [Roadmap](#roadmap) for details on each step.
 
 LandmarkDiff extracts MediaPipe's 478-point face mesh from the input photo, applies procedure-specific Gaussian RBF deformations calibrated from anthropometric surgical data, renders the deformed mesh as a tessellation wireframe, and feeds that wireframe into a ControlNet-conditioned Stable Diffusion 1.5 backbone to synthesize the predicted face. The output is composited back onto the original image using Laplacian pyramid blending with feathered surgical masks, then refined through neural face restoration and identity verification.
 
@@ -56,7 +56,7 @@ LandmarkDiff extracts MediaPipe's 478-point face mesh from the input photo, appl
 <p align="center">
   <img src="demos/demo_pipeline_0.png" alt="LandmarkDiff pipeline" width="90%">
   <br>
-  <em>Full pipeline: input photo -- landmark extraction -- mesh deformation -- ControlNet synthesis -- compositing</em>
+  <em>Full pipeline: input photo, landmark extraction, mesh deformation, ControlNet synthesis, compositing</em>
 </p>
 
 ### Try the Live Demo
@@ -116,21 +116,21 @@ python scripts/run_inference.py photo.jpg --procedure rhinoplasty --intensity 60
 
 ## Features
 
-- **Single-photo input** -- works from any 2D clinical photograph or phone selfie, no 3D scanning hardware needed
-- **6 surgical procedure presets** -- rhinoplasty, blepharoplasty, rhytidectomy, orthognathic surgery, brow lift, mentoplasty (extensible to custom procedures)
-- **4 inference modes** -- TPS (instant CPU), img2img, ControlNet, and ControlNet+IP-Adapter with configurable quality/speed tradeoffs
-- **MediaPipe 478-point face mesh** -- anatomically grounded landmark extraction for precise deformation control
-- **Gaussian RBF deformation engine** -- smooth, spatially weighted displacements calibrated from anthropometric surgical data
-- **ControlNet-conditioned generation** -- photorealistic texture synthesis via Stable Diffusion 1.5 with wireframe conditioning
-- **Neural post-processing** -- CodeFormer face restoration, Real-ESRGAN upscaling, LAB histogram matching, Laplacian pyramid blending
-- **ArcFace identity verification** -- ensures the predicted face preserves patient identity (cosine similarity check)
-- **Clinical edge-case handling** -- built-in support for vitiligo, Bell's palsy, keloid-prone skin, and Ehlers-Danlos syndrome
-- **Fitzpatrick-stratified evaluation** -- all metrics (FID, LPIPS, SSIM, NME, identity) broken down by skin type I through VI
-- **Intensity slider (0-100%)** -- preview subtle through aggressive versions of any procedure
-- **Gradio web demo** -- 5-tab interface with single procedure, multi-procedure comparison, intensity sweep, face analysis, and multi-angle capture
-- **HPC training pipeline** -- SLURM scripts with preemption checkpointing, DDP multi-GPU, curriculum training configs
-- **Docker and Apptainer support** -- CPU and GPU container images for reproducible deployment
-- **PEP 561 typed package** -- ships with `py.typed` marker for downstream type checking
+- **Single-photo input:** works from any 2D clinical photograph or phone selfie, no 3D scanning hardware needed
+- **6 surgical procedure presets:** rhinoplasty, blepharoplasty, rhytidectomy, orthognathic surgery, brow lift, mentoplasty (extensible to custom procedures)
+- **4 inference modes:** TPS (instant CPU), img2img, ControlNet, and ControlNet+IP-Adapter with configurable quality/speed tradeoffs
+- **MediaPipe 478-point face mesh:** anatomically grounded landmark extraction for precise deformation control
+- **Gaussian RBF deformation engine:** smooth, spatially weighted displacements calibrated from anthropometric surgical data
+- **ControlNet-conditioned generation:** photorealistic texture synthesis via Stable Diffusion 1.5 with wireframe conditioning
+- **Neural post-processing:** CodeFormer face restoration, Real-ESRGAN upscaling, LAB histogram matching, Laplacian pyramid blending
+- **ArcFace identity verification:** ensures the predicted face preserves patient identity (cosine similarity check)
+- **Clinical edge-case handling:** built-in support for vitiligo, Bell's palsy, keloid-prone skin, and Ehlers-Danlos syndrome
+- **Fitzpatrick-stratified evaluation:** all metrics (FID, LPIPS, SSIM, NME, identity) broken down by skin type I through VI
+- **Intensity slider (0-100%):** preview subtle through aggressive versions of any procedure
+- **Gradio web demo:** 5-tab interface with single procedure, multi-procedure comparison, intensity sweep, face analysis, and multi-angle capture
+- **HPC training pipeline:** SLURM scripts with preemption checkpointing, DDP multi-GPU, curriculum training configs
+- **Docker and Apptainer support:** CPU and GPU container images for reproducible deployment
+- **PEP 561 typed package:** ships with `py.typed` marker for downstream type checking
 
 ---
 
@@ -140,35 +140,35 @@ python scripts/run_inference.py photo.jpg --procedure rhinoplasty --intensity 60
 
 Facial cosmetic surgery is one of the most common elective procedures worldwide. The American Society of Plastic Surgeons (ASPS) reported [15.6 million cosmetic procedures in the US in 2020](https://www.plasticsurgery.org/news/plastic-surgery-statistics), with rhinoplasty and blepharoplasty consistently ranking among the top 5 surgical procedures. These numbers have only grown since.
 
-The problem is expectation management. Roughly 10--15% of rhinoplasty patients seek revision surgery, and a significant driver is the gap between what patients expected and what they got (Rohrich & Ahmad, "A Practical Approach to Rhinoplasty," *Plastic and Reconstructive Surgery*, 2016). Preoperative visualization directly affects satisfaction -- patients who see a realistic preview report better alignment between expectations and results (Kandathil et al., "Examining Preoperative Expectations and Postoperative Satisfaction in Rhinoplasty Patients," *Facial Plastic Surgery & Aesthetic Medicine*, 2021). Systematic reviews of patient-reported outcomes in rhinoplasty confirm that expectation alignment is a key predictor of satisfaction (Leong & Iglesias, "A systematic review of patient-reported outcome measures in aesthetic and functional rhinoplasty," *Journal of Plastic, Reconstructive & Aesthetic Surgery*, 2016).
+The problem is expectation management. Roughly 10 to 15% of rhinoplasty patients seek revision surgery, and a significant driver is the gap between what patients expected and what they got (Rohrich & Ahmad, "A Practical Approach to Rhinoplasty," *Plastic and Reconstructive Surgery*, 2016). Preoperative visualization directly affects satisfaction; patients who see a realistic preview report better alignment between expectations and results (Kandathil et al., "Examining Preoperative Expectations and Postoperative Satisfaction in Rhinoplasty Patients," *Facial Plastic Surgery & Aesthetic Medicine*, 2021). Systematic reviews of patient-reported outcomes in rhinoplasty confirm that expectation alignment is a key predictor of satisfaction (Leong & Iglesias, "A systematic review of patient-reported outcome measures in aesthetic and functional rhinoplasty," *Journal of Plastic, Reconstructive & Aesthetic Surgery*, 2016).
 
-But here's the catch: the tools that produce good visualizations are expensive, proprietary, or both. Most surgeons -- especially outside wealthy urban practices -- don't have access to them.
+But here's the catch: the tools that produce good visualizations are expensive, proprietary, or both. Most surgeons, especially outside wealthy urban practices, don't have access to them.
 
 ### Existing Tools and Their Limitations
 
 **Tier 1: Clinical 3D Simulation**
 
-- **Canfield Scientific VECTRA** (~$30-100K) -- Dedicated structured-light 3D scanner paired with Mirror simulation software. The gold standard in top-tier practices. Produces accurate surface meshes with Face Sculptor for tissue movement simulation. Requires trained operators, expensive hardware, and in-office capture. Proprietary with no published validation studies on prediction accuracy. [Website](https://www.canfieldsci.com/imaging-systems/vectra-xt-3d-imaging-system/)
-- **Crisalix** (~$200-500/mo) -- Cloud-based 3D simulation from 2D photos. 17 years in market, PE-backed (BID Equity). Supports breast and face procedures. Uses geometric morphing, not AI or diffusion. More accessible than VECTRA, but subscription-based, proprietary, and there's no open evaluation of its fidelity. [Website](https://www.crisalix.com)
-- **AEDIT** ($60/mo consumer) -- Phone-based 3D scanning using 100+ photos via TrueDepth camera. Patented morphing with "100,000 facial recognition points." Covers rhinoplasty, lip filler, brow lift, and Botox simulation. Multiple patents on 3D reconstruction from phone input. Consumer-first approach, iOS only. [Website](https://aedit.com/aeditor-app)
+- **Canfield Scientific VECTRA** (~$30-100K): Dedicated structured-light 3D scanner paired with Mirror simulation software. The gold standard in top-tier practices. Produces accurate surface meshes with Face Sculptor for tissue movement simulation. Requires trained operators, expensive hardware, and in-office capture. Proprietary with no published validation studies on prediction accuracy. [Website](https://www.canfieldsci.com/imaging-systems/vectra-xt-3d-imaging-system/)
+- **Crisalix** (~$200-500/mo): Cloud-based 3D simulation from 2D photos. 17 years in market, PE-backed (BID Equity). Supports breast and face procedures. Uses geometric morphing, not AI or diffusion. More accessible than VECTRA, but subscription-based, proprietary, and there's no open evaluation of its fidelity. [Website](https://www.crisalix.com)
+- **AEDIT** ($60/mo consumer): Phone-based 3D scanning using 100+ photos via TrueDepth camera. Patented morphing with "100,000 facial recognition points." Covers rhinoplasty, lip filler, brow lift, and Botox simulation. Multiple patents on 3D reconstruction from phone input. Consumer-first approach, iOS only. [Website](https://aedit.com/aeditor-app)
 
 **Tier 2: Practice Management + Lite Simulation**
 
-- **FaceTouchUp** (~$50-100/mo) -- 2D morphing tool with AR overlay. Affordable and quick for consultations, but results look like warped photographs because that's exactly what they are -- geometric transforms with no understanding of how skin, light, or tissue actually behave. [Website](https://www.facetouchup.com)
-- **TouchMD / Symplast / Consentz** -- EMR and practice management platforms with basic photo ghosting or overlay features, not true surgical simulation.
+- **FaceTouchUp** (~$50-100/mo): 2D morphing tool with AR overlay. Affordable and quick for consultations, but results look like warped photographs because that's exactly what they are, geometric transforms with no understanding of how skin, light, or tissue actually behave. [Website](https://www.facetouchup.com)
+- **TouchMD / Symplast / Consentz:** EMR and practice management platforms with basic photo ghosting or overlay features, not true surgical simulation.
 
 **Tier 3: Consumer Beauty Tech**
 
-- **Perfect Corp** -- AI-powered face reshape for beauty and med spa applications. Focused on fillers and Botox visualization, not structural surgical prediction. [Website](https://www.perfectcorp.com)
-- **GlamAR** -- Virtual try-on API for beauty brands. Cosmetics overlay layer, not surgical simulation. [Website](https://www.glamar.io)
+- **Perfect Corp:** AI-powered face reshape for beauty and med spa applications. Focused on fillers and Botox visualization, not structural surgical prediction. [Website](https://www.perfectcorp.com)
+- **GlamAR:** Virtual try-on API for beauty brands. Cosmetics overlay layer, not surgical simulation. [Website](https://www.glamar.io)
 
 **Academic approaches:**
 
 Most recent academic work on face manipulation focuses on generic editing (make someone look older, change their expression, swap identities) rather than surgery-specific prediction. A few notable examples:
 
-- **DiscoFaceGAN** (Deng et al., CVPR 2020) -- Disentangled controllable face generation using 3DMM coefficients. Powerful for attribute editing, but designed for general-purpose face manipulation, not surgical planning. No procedure-specific deformation models.
-- **FaceShifter** (Li et al., 2019) -- High-fidelity face swapping with occlusion awareness. Impressive identity transfer, but the goal is swapping one person's face onto another, not simulating what a surgical procedure would do to the same person.
-- **DiffFace** (Kim et al., 2022) -- Diffusion-based face swapping with facial guidance. Shows the potential of diffusion models for face manipulation, but targets identity transfer, not surgical outcome prediction.
+- **DiscoFaceGAN** (Deng et al., CVPR 2020): Disentangled controllable face generation using 3DMM coefficients. Powerful for attribute editing, but designed for general-purpose face manipulation, not surgical planning. No procedure-specific deformation models.
+- **FaceShifter** (Li et al., 2019): High-fidelity face swapping with occlusion awareness. Impressive identity transfer, but the goal is swapping one person's face onto another, not simulating what a surgical procedure would do to the same person.
+- **DiffFace** (Kim et al., 2022): Diffusion-based face swapping with facial guidance. Shows the potential of diffusion models for face manipulation, but targets identity transfer, not surgical outcome prediction.
 
 The common thread: none of the commercial tools use diffusion models (all rely on geometric warping or morphing), almost none of the academic work uses real surgical data to drive deformations, none evaluates fairness across skin tones, and none handles clinical edge cases like Bell's palsy or keloid-prone skin.
 
@@ -186,7 +186,7 @@ The common thread: none of the commercial tools use diffusion models (all rely o
 
 ### What Makes LandmarkDiff Different
 
-LandmarkDiff is not trying to compete with VECTRA on 3D accuracy -- we're solving a different problem. We want to make surgery visualization accessible to any surgeon with a phone and any patient who walks into a consultation, while being honest about what the tool can and can't do.
+LandmarkDiff is not trying to compete with VECTRA on 3D accuracy; we're solving a different problem. We want to make surgery visualization accessible to any surgeon with a phone and any patient who walks into a consultation, while being honest about what the tool can and can't do.
 
 **No existing tool uses diffusion models.** Every competitor in the comparison table above relies on geometric warping or morphing. LandmarkDiff is the first published system to apply ControlNet-conditioned latent diffusion to surgical outcome prediction, producing photorealistic texture synthesis rather than geometric pixel manipulation. Combined with open-source access, published research, and Fitzpatrick-stratified fairness evaluation, this positions LandmarkDiff as both the most technically advanced and most transparent surgical visualization system available.
 
@@ -195,9 +195,9 @@ Concretely:
 - **Open source (MIT license).** Unlike every commercial tool listed above, you can inspect, modify, and extend the code. If you don't trust the output, you can trace exactly how it was generated.
 - **Single 2D photo input.** No $50K+ hardware, no multi-view capture rigs. A standard clinical photograph or phone selfie is enough.
 - **Anatomically grounded deformations.** Procedure-specific landmark displacements are fitted from real surgical data (pre/post pairs), not hand-tuned or based on generic face editing semantics.
-- **Diffusion-based photorealism.** ControlNet-guided Stable Diffusion produces realistic skin texture, lighting, and shadows -- not geometric morphs.
+- **Diffusion-based photorealism.** ControlNet-guided Stable Diffusion produces realistic skin texture, lighting, and shadows, not geometric morphs.
 - **Clinical edge-case handling.** Built-in flags and modified behavior for vitiligo, Bell's palsy, keloid-prone skin, and Ehlers-Danlos syndrome.
-- **Fitzpatrick-stratified fairness evaluation.** All metrics are broken down by Fitzpatrick skin type (I--VI) to catch and prevent performance disparities across skin tones.
+- **Fitzpatrick-stratified fairness evaluation.** All metrics are broken down by Fitzpatrick skin type (I through VI) to catch and prevent performance disparities across skin tones.
 - **Roadmap toward 3D.** We're working on phone-video-to-3D reconstruction to eventually provide accessible 3D visualization without Vectra-class hardware.
 
 **Honest limitations:** We don't have prospective clinical validation yet (that's planned). Our deformation model is calibrated from a limited dataset. We currently produce 2D output, not 3D. And diffusion models can hallucinate details, so outputs should always be reviewed by a clinician before showing to patients. This is a research tool, not a medical device. The comparison above reflects publicly available information as of March 2026. Commercial tools may have undisclosed technical capabilities.
@@ -205,9 +205,9 @@ Concretely:
 ### References
 
 1. American Society of Plastic Surgeons. [2020 Plastic Surgery Statistics Report](https://www.plasticsurgery.org/news/plastic-surgery-statistics). ASPS, 2021.
-2. Rohrich RJ, Ahmad J. "A Practical Approach to Rhinoplasty." *Plastic and Reconstructive Surgery*. 2016;137(4):725e--746e.
-3. Kandathil CK, et al. "Examining Preoperative Expectations and Postoperative Satisfaction in Rhinoplasty Patients: A Single-Center Study." *Facial Plastic Surgery & Aesthetic Medicine*. 2021;23(1):33--38.
-4. Leong SC, Iglesias MA. "A systematic review of patient-reported outcome measures in aesthetic and functional rhinoplasty." *Journal of Plastic, Reconstructive & Aesthetic Surgery*. 2016;69(12):1635--1645.
+2. Rohrich RJ, Ahmad J. "A Practical Approach to Rhinoplasty." *Plastic and Reconstructive Surgery*. 2016;137(4):725e-746e.
+3. Kandathil CK, et al. "Examining Preoperative Expectations and Postoperative Satisfaction in Rhinoplasty Patients: A Single-Center Study." *Facial Plastic Surgery & Aesthetic Medicine*. 2021;23(1):33-38.
+4. Leong SC, Iglesias MA. "A systematic review of patient-reported outcome measures in aesthetic and functional rhinoplasty." *Journal of Plastic, Reconstructive & Aesthetic Surgery*. 2016;69(12):1635-1645.
 5. Deng Y, et al. "Disentangled and Controllable Face Image Generation via 3D Imitative-Contrastive Learning." CVPR 2020.
 6. Li L, et al. "FaceShifter: Towards High Fidelity And Occlusion Aware Face Swapping." arXiv:1912.13457, 2019.
 7. Kim K, et al. "DiffFace: Diffusion-based Face Swapping with Facial Guidance." arXiv:2212.13344, 2022.
@@ -294,7 +294,7 @@ graph LR
 
     E --> F1 --> F2 --> F3 --> F4 --> F5 --> G
 
-    subgraph future ["Planned -- 3D Extension"]
+    subgraph future ["Planned: 3D Extension"]
         H1["Phone Video<br/>Capture"]:::planned
         H2["FLAME 3D<br/>Reconstruction"]:::planned
         H3["3D Surgical<br/>Deformation"]:::planned
@@ -366,11 +366,11 @@ Six-step refinement:
 ### Pipeline Visualization
 
 <p align="center">
-  <img src="demos/demo_pipeline_0.png" alt="Pipeline demo -- rhinoplasty on diverse faces" width="90%">
+  <img src="demos/demo_pipeline_0.png" alt="Pipeline demo, rhinoplasty on diverse faces" width="90%">
 </p>
 
 <p align="center">
-  <img src="demos/demo_pipeline_1.png" alt="Pipeline demo -- rhinoplasty result" width="90%">
+  <img src="demos/demo_pipeline_1.png" alt="Pipeline demo, rhinoplasty result" width="90%">
 </p>
 
 Each image shows five pipeline stages: **Input | Original Mesh | Manipulated Mesh | Surgical Mask | TPS-warped Result**. These are geometric-only (TPS mode, CPU) outputs; ControlNet photorealistic results will be added after training completes.
@@ -543,8 +543,8 @@ Scores range from 0 to 100, where 90-100 indicates high symmetry, 70-89 mild asy
 
 The demo's **Symmetry Analysis** tab offers two modes:
 
-- **Single photo** -- upload any face photo to get a per-region symmetry breakdown with a color-coded overlay (green/yellow/red).
-- **Pre vs. post comparison** -- upload before and after photos to see how a procedure changed the symmetry profile, with per-region deltas.
+- **Single photo:** upload any face photo to get a per-region symmetry breakdown with a color-coded overlay (green/yellow/red).
+- **Pre vs. post comparison:** upload before and after photos to see how a procedure changed the symmetry profile, with per-region deltas.
 
 Symmetry scores are also computed automatically during inference runs and reported alongside the prediction output.
 
@@ -1006,25 +1006,25 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for the detailed roadmap with full milest
 - [ ] ControlNet fine-tuning on 50K+ synthetic pairs (in progress)
 - [ ] Populate results tables in paper
 
-### Next (v0.3.0) -- Data-Driven Training
+### Next (v0.3.0): Data-Driven Training
 - [ ] Anatomically constrained displacement sampling with per-procedure variance
 - [ ] ControlNet fine-tuning on 50K+ synthetic pairs (Phase A)
 - [ ] Combined loss training on clinical pairs (Phase B)
 - [ ] Additional procedure presets (otoplasty, genioplasty)
 - [ ] MICCAI 2026 workshop paper and arXiv preprint
 
-### v0.4.0 -- 3D Face Reconstruction
-- [ ] Phone video capture -- rotate head, reconstruct full 3D face from frames
+### v0.4.0: 3D Face Reconstruction
+- [ ] Phone video capture: rotate head, reconstruct full 3D face from frames
 - [ ] FLAME 3D morphable model fitting from monocular video
 - [ ] FLUX.1-dev or SDXL backbone upgrade (higher quality generation at 1024x1024)
 - [ ] IP-Adapter FaceID v2 for stronger identity preservation
 
-### v0.5.0 -- Interactive 3D Surgical Preview
-- [ ] 3D surgical deformation -- procedure-specific warps in 3D space
-- [ ] Interactive 3D preview -- rotate the predicted result from any angle
+### v0.5.0: Interactive 3D Surgical Preview
+- [ ] 3D surgical deformation: procedure-specific warps in 3D space
+- [ ] Interactive 3D preview: rotate the predicted result from any angle
 - [ ] Mobile-optimized capture and preview workflow
 
-### Future (v1.0.0) -- Clinical Validation
+### Future (v1.0.0): Clinical Validation
 - [ ] IRB-approved prospective clinical validation study
 - [ ] Multi-view consistency loss across frontal/profile predictions
 - [ ] Physics-informed tissue simulation (FEM for soft tissue response)

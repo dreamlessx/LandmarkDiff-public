@@ -65,10 +65,10 @@ result = pipeline.generate("photo.jpg", procedure="rhinoplasty", intensity=60)
 ```
 
 The `result` dictionary contains:
-- `result["output"]` -- the final composited image
-- `result["input"]` -- the original 512x512 input
-- `result["conditioning"]` -- the deformed wireframe mesh overlay
-- `result["mask"]` -- the surgical region mask
+- `result["output"]`: the final composited image
+- `result["input"]`: the original 512x512 input
+- `result["conditioning"]`: the deformed wireframe mesh overlay
+- `result["mask"]`: the surgical region mask
 
 ## 4. GPU Mode (Photorealistic Results)
 
@@ -178,10 +178,10 @@ step2 = apply_procedure_preset(step1, "mentoplasty", intensity=40)
 
 ## Next Steps
 
-- [Custom Procedures](custom_procedures.md) -- define your own surgical procedure preset
-- [Training](training.md) -- train on your own data
-- [Evaluation](evaluation.md) -- evaluate prediction quality with metrics
-- [Deployment](deployment.md) -- deploy as an API or Docker service
-- [API Reference](../api/landmarks.md) -- full module documentation
-- [Procedure Docs](../procedures/rhinoplasty.md) -- detailed anatomy and displacement info for each procedure
-- [Interactive Notebook](https://github.com/dreamlessx/LandmarkDiff-public/blob/main/notebooks/quickstart.ipynb) -- step-by-step Jupyter notebook with visualizations
+- [Custom Procedures](custom_procedures.md): define your own surgical procedure preset
+- [Training](training.md): train on your own data
+- [Evaluation](evaluation.md): evaluate prediction quality with metrics
+- [Deployment](deployment.md): deploy as an API or Docker service
+- [API Reference](../api/landmarks.md): full module documentation
+- [Procedure Docs](../procedures/rhinoplasty.md): detailed anatomy and displacement info for each procedure
+- [Interactive Notebook](https://github.com/dreamlessx/LandmarkDiff-public/blob/main/notebooks/quickstart.ipynb): step-by-step Jupyter notebook with visualizations

@@ -16,7 +16,7 @@ This pulls in `lpips`, `torch-fidelity`, `scikit-image`, and `insightface` (for 
 
 LandmarkDiff ships four evaluation scripts, each suited to a different workflow.
 
-### scripts/evaluate.py -- Full pipeline evaluation
+### scripts/evaluate.py: Full pipeline evaluation
 
 Runs inference on test pairs and computes all metrics end-to-end. Use this when you want to evaluate a checkpoint against paired before/after images.
 
@@ -75,7 +75,7 @@ If a `metadata.json` file exists, it should map pair IDs to procedure and intens
 }
 ```
 
-### scripts/evaluate_quality.py -- Metric-only evaluation
+### scripts/evaluate_quality.py: Metric-only evaluation
 
 Computes metrics on existing predictions without running inference. Useful when you already have generated images and just need the numbers.
 
@@ -96,11 +96,11 @@ python scripts/evaluate_quality.py \
 ```
 
 This produces three output files:
-- `quality_results.json` -- aggregate and stratified metrics
-- `quality_per_sample.json` -- per-image breakdown
-- `quality_results.md` -- markdown table for papers or PRs
+- `quality_results.json`: aggregate and stratified metrics
+- `quality_per_sample.json`: per-image breakdown
+- `quality_results.md`: markdown table for papers or PRs
 
-### scripts/evaluate_checkpoint.py -- Checkpoint evaluation
+### scripts/evaluate_checkpoint.py: Checkpoint evaluation
 
 Evaluates a trained ControlNet checkpoint directly by loading the model, running generation from conditioning images, and computing all metrics. This bypasses the full LandmarkDiffPipeline and tests the ControlNet in isolation.
 
@@ -116,7 +116,7 @@ python scripts/evaluate_checkpoint.py \
 
 When `--save_images` is set, it saves side-by-side comparison images (conditioning | generated | target) for visual inspection.
 
-### scripts/evaluate_on_hda.py -- Clinical ground truth evaluation
+### scripts/evaluate_on_hda.py: Clinical ground truth evaluation
 
 Evaluates against real surgery before/after pairs from the HDA dataset. This is the clinical validation script.
 
@@ -182,7 +182,7 @@ python scripts/evaluate_on_hda.py \
 
 **Target:** < 50.
 
-**Interpretation:** FID below 30 indicates high-quality generation. Between 30 and 50 is acceptable. Above 100 suggests the model is producing unrealistic images. FID is sensitive to dataset size -- with fewer than 50 images, the estimate is unstable.
+**Interpretation:** FID below 30 indicates high-quality generation. Between 30 and 50 is acceptable. Above 100 suggests the model is producing unrealistic images. FID is sensitive to dataset size: with fewer than 50 images, the estimate is unstable.
 
 **Requirements:** The `torch-fidelity` package. Runs on GPU if available, CPU otherwise (much slower).
 
@@ -194,7 +194,7 @@ python scripts/evaluate_on_hda.py \
 
 **Target:** > 0.85.
 
-**Interpretation:** Above 0.90 is strong identity preservation. Between 0.80 and 0.90 is acceptable. Below 0.60 triggers the pipeline's identity drift warning. Orthognathic surgery typically has lower identity similarity because jaw repositioning changes facial proportions substantially -- this is expected and the pipeline disables identity loss for orthognathic predictions during training.
+**Interpretation:** Above 0.90 is strong identity preservation. Between 0.80 and 0.90 is acceptable. Below 0.60 triggers the pipeline's identity drift warning. Orthognathic surgery typically has lower identity similarity because jaw repositioning changes facial proportions substantially: this is expected and the pipeline disables identity loss for orthognathic predictions during training.
 
 **Fallback:** If InsightFace is not installed, falls back to SSIM as a rough proxy for identity similarity.
 
@@ -414,6 +414,6 @@ results_dict = metrics.to_dict()
 
 ## Next Steps
 
-- [Training Guide](training.md) -- Train your own ControlNet checkpoint
-- [Deployment Guide](deployment.md) -- Deploy models for production inference
-- [GPU Training Guide](../GPU_TRAINING_GUIDE.md) -- HPC setup and multi-GPU training
+- [Training Guide](training.md): Train your own ControlNet checkpoint
+- [Deployment Guide](deployment.md): Deploy models for production inference
+- [GPU Training Guide](../GPU_TRAINING_GUIDE.md): HPC setup and multi-GPU training

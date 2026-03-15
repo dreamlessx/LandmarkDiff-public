@@ -85,9 +85,9 @@ def generate_conditioning(
 
 Generate all conditioning signals for the pipeline in one call. Produces three outputs used at different stages:
 
-1. **Landmark image** -- full 2556-edge tessellation mesh (BGR, from `render_landmark_image`). This is the primary ControlNet conditioning signal.
-2. **Canny edges** -- auto-thresholded edge map of the wireframe (grayscale). Used in compositing.
-3. **Wireframe** -- anatomical adjacency wireframe (grayscale). Used for visualization and additional conditioning.
+1. **Landmark image**: full 2556-edge tessellation mesh (BGR, from `render_landmark_image`). This is the primary ControlNet conditioning signal.
+2. **Canny edges**: auto-thresholded edge map of the wireframe (grayscale). Used in compositing.
+3. **Wireframe**: anatomical adjacency wireframe (grayscale). Used for visualization and additional conditioning.
 
 **Parameters:**
 
@@ -142,6 +142,6 @@ These are used instead of Delaunay triangulation because the topology is fixed a
 
 ## See Also
 
-- [landmarks](landmarks.md) -- `FaceLandmarks`, `render_landmark_image`
-- [manipulation](manipulation.md) -- deform landmarks before conditioning
-- [inference](inference.md) -- full pipeline that consumes conditioning images
+- [landmarks](landmarks.md): `FaceLandmarks`, `render_landmark_image`
+- [manipulation](manipulation.md): deform landmarks before conditioning
+- [inference](inference.md): full pipeline that consumes conditioning images

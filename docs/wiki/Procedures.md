@@ -31,7 +31,7 @@ Bilateral squeeze of the nasal bridge. Left dorsum (195, 197, 236) moves right, 
 Targets the periorbital region with three effects:
 
 ### Upper Lid Elevation (Primary)
-Central upper lid landmarks move upward. Left: 159, 160, 161. Right: 386, 385, 384. Displacement: (0, -2.0 * scale). This is the primary surgical effect -- removing excess skin/fat from the upper eyelid.
+Central upper lid landmarks move upward. Left: 159, 160, 161. Right: 386, 385, 384. Displacement: (0, -2.0 * scale). This is the primary surgical effect: removing excess skin/fat from the upper eyelid.
 
 ### Corner Tapering
 Medial and lateral lid corners receive reduced displacement for a natural tapered effect. Left: 158, 157, 133, 33. Right: 387, 388, 362, 263. Displacement: (0, -0.8 * scale) at 0.7x influence radius.
@@ -42,7 +42,7 @@ Subtle upward pull on lower lid landmarks. Left: 145, 153, 154. Right: 374, 380,
 **Full landmark set (28 indices):**
 `33, 7, 163, 144, 145, 153, 154, 155, 157, 158, 159, 160, 161, 246, 362, 382, 381, 380, 374, 373, 390, 249, 263, 466, 388, 387, 386, 385, 384, 398`
 
-**Clinical note:** The tight influence radius (15px) is important here -- the periorbital region is small and spreading deformation too far creates unnatural cheek distortion.
+**Clinical note:** The tight influence radius (15px) is important here: the periorbital region is small and spreading deformation too far creates unnatural cheek distortion.
 
 ---
 
@@ -56,7 +56,7 @@ The most complex procedure, targeting three facial zones with different displace
 Bilateral lift toward the ears. Left jowl (132, 136, 172, 58, 150, 176): displacement (-2.5 * scale, -3.0 * scale). Right jowl (361, 365, 397, 288, 379, 400): displacement (+2.5 * scale, -3.0 * scale). Full influence radius. The lateral+vertical pull simulates the SMAS plication direction.
 
 ### Submental / Chin
-Upward-only displacement on chin landmarks (152, 148, 377, 378). Displacement: (0, -2.0 * scale) at 0.8x radius. No lateral movement -- this region doesn't benefit from lateral tension.
+Upward-only displacement on chin landmarks (152, 148, 377, 378). Displacement: (0, -2.0 * scale) at 0.8x radius. No lateral movement: this region doesn't benefit from lateral tension.
 
 ### Temple / Upper Face
 Very mild lift. Left temple (10, 21, 54, 67, 103, 109, 162, 127): displacement (-0.5 * scale, -1.0 * scale). Right temple (284, 297, 332, 338, 323, 356, 389, 454): displacement (+0.5 * scale, -1.0 * scale). Reduced radius (0.6x). The forehead and temples are mostly untouched in a standard facelift.
@@ -64,7 +64,7 @@ Very mild lift. Left temple (10, 21, 54, 67, 103, 109, 162, 127): displacement (
 **Full landmark set (33 indices):**
 `10, 21, 54, 58, 67, 93, 103, 109, 127, 132, 136, 150, 162, 172, 176, 187, 207, 213, 234, 284, 297, 323, 332, 338, 356, 361, 365, 379, 389, 397, 400, 427, 454`
 
-**Clinical note:** The wide influence radius (40px) is intentional -- facelifts redistribute tissue broadly. Ehlers-Danlos clinical flag scales this to 60px for hypermobile tissue.
+**Clinical note:** The wide influence radius (40px) is intentional: facelifts redistribute tissue broadly. Ehlers-Danlos clinical flag scales this to 60px for hypermobile tissue.
 
 ---
 

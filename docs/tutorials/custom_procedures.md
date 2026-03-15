@@ -10,7 +10,7 @@ Both PRs are good references for the scope of changes needed.
 
 ## How It Works
 
-LandmarkDiff uses **Gaussian RBF (Radial Basis Function) deformation** to move facial landmarks. Each procedure is defined by a list of **deformation handles** -- anchor points on the face that get displaced in a specific direction, with influence that falls off smoothly to neighboring landmarks.
+LandmarkDiff uses **Gaussian RBF (Radial Basis Function) deformation** to move facial landmarks. Each procedure is defined by a list of **deformation handles**: anchor points on the face that get displaced in a specific direction, with influence that falls off smoothly to neighboring landmarks.
 
 A deformation handle has three components:
 - **`landmark_index`**: which MediaPipe landmark to move (0-477)

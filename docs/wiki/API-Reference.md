@@ -249,10 +249,10 @@ field = model.get_displacement_field(
 ```
 
 **Properties:**
-- `procedures` -- list of procedure names the model was fitted on
-- `fitted` -- whether the model has been fitted
-- `stats` -- nested dict of per-procedure statistics
-- `n_samples` -- dict of sample counts per procedure
+- `procedures`: list of procedure names the model was fitted on
+- `fitted`: whether the model has been fitted
+- `stats`: nested dict of per-procedure statistics
+- `n_samples`: dict of sample counts per procedure
 
 ### `extract_displacements(before_img, after_img) -> dict | None`
 

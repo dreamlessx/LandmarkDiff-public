@@ -57,7 +57,7 @@ result = pipe.generate(image, clinical_flags=flags)
 2. During `apply_procedure_preset()`, deformation handles whose `landmark_index` falls on the affected side are removed from the handle list. Only the healthy side receives deformation.
 
 **Parameters:**
-- `bells_palsy_side`: Which side is affected -- `"left"` or `"right"`
+- `bells_palsy_side`: Which side is affected: `"left"` or `"right"`
 
 **Affected landmark groups (left side example):**
 - Eye: 33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246
@@ -92,7 +92,7 @@ result = pipe.generate(image, clinical_flags=flags)
 
 In `apply_procedure_preset()`, when `clinical_flags.ehlers_danlos` is True, the procedure's influence radius is multiplied by 1.5 before building deformation handles. For example, rhinoplasty's radius goes from 30.0 to 45.0, and rhytidectomy's from 40.0 to 60.0.
 
-This single change affects all downstream deformations -- each handle's Gaussian RBF falloff covers a wider area, creating broader, more distributed tissue displacement.
+This single change affects all downstream deformations: each handle's Gaussian RBF falloff covers a wider area, creating broader, more distributed tissue displacement.
 
 ## Combining Flags
 

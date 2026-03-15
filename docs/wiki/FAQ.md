@@ -28,7 +28,7 @@ See the detailed guide on the [Contributing](Contributing) page. In summary:
 
 **TPS (Thin Plate Spline):**
 - CPU-only, instant results (~50ms)
-- Pure geometric warp -- moves pixels, no texture synthesis
+- Pure geometric warp: moves pixels, no texture synthesis
 - Good for quick previews and interactive demos
 - No model download needed
 
@@ -72,7 +72,7 @@ Three mechanisms protect identity:
 
 2. **IP-Adapter (controlnet_ip mode):** Feeds an ArcFace embedding of the input face into the generation process, biasing SD1.5 toward preserving the person's identity.
 
-3. **ArcFace verification (post-processing):** After generation, cosine similarity between ArcFace embeddings of input and output is computed. If it drops below 0.6, the output is flagged with an identity drift warning. This is a quality gate, not a rejection -- the output is still returned.
+3. **ArcFace verification (post-processing):** After generation, cosine similarity between ArcFace embeddings of input and output is computed. If it drops below 0.6, the output is flagged with an identity drift warning. This is a quality gate, not a rejection: the output is still returned.
 
 ## What face poses are supported?
 
@@ -97,7 +97,7 @@ pipe = LandmarkDiffPipeline(
 )
 ```
 
-Any SD1.5-compatible checkpoint should work. SD2.x and SDXL checkpoints are not supported -- the ControlNet is trained specifically for SD1.5's architecture.
+Any SD1.5-compatible checkpoint should work. SD2.x and SDXL checkpoints are not supported: the ControlNet is trained specifically for SD1.5's architecture.
 
 ## What image formats are supported?
 

@@ -1,4 +1,4 @@
-# Social Media Drafts -- LandmarkDiff
+# Social Media Drafts: LandmarkDiff
 
 All drafts are written from the perspective of `dreamlessx`.
 Links:
@@ -10,7 +10,7 @@ Links:
 
 ---
 
-## 1. r/MachineLearning -- [Project] Post
+## 1. r/MachineLearning: [Project] Post
 
 **Flair**: [Project]
 
@@ -37,14 +37,14 @@ and mentoplasty (chin).
 
 The pipeline has three stages:
 
-1. **Landmark extraction** -- MediaPipe FaceMesh extracts 478 3D facial landmarks. These define
+1. **Landmark extraction**: MediaPipe FaceMesh extracts 478 3D facial landmarks. These define
    anatomically meaningful control points across the face.
 
-2. **Procedure-specific deformation** -- Gaussian RBF (radial basis function) interpolation drives
+2. **Procedure-specific deformation**: Gaussian RBF (radial basis function) interpolation drives
    landmark displacements that correspond to each procedure's anatomical effect. There is also a
    data-driven displacement mode that fits displacement fields from real before/after surgery pairs.
 
-3. **Conditioned synthesis** -- Deformed landmark positions are rendered as a wireframe and fed
+3. **Conditioned synthesis**: Deformed landmark positions are rendered as a wireframe and fed
    as a conditioning input to a ControlNet-conditioned Stable Diffusion 1.5 pipeline (built on
    CrucibleAI's ControlNet). The wireframe spatially grounds the diffusion process to the predicted
    anatomy rather than letting the model hallucinate structure.
@@ -92,7 +92,7 @@ The core vision pipeline:
 - Extract 478 anatomical control points with MediaPipe FaceMesh
 - Apply procedure-specific Gaussian RBF displacements (rhinoplasty, brow lift, facelift, etc.)
 - Fit thin-plate spline (TPS) warp from original to displaced control points
-- Apply warp to the full image -- fast, smooth, and anatomically consistent
+- Apply warp to the full image: fast, smooth, and anatomically consistent
 - Optionally pass the warped result through ControlNet + SD1.5 for texture synthesis
 
 The TPS CPU demo runs in-browser on HF Spaces, no GPU needed. The ControlNet GPU pipeline
@@ -110,7 +110,7 @@ Disclaimer: research tool, not medical advice.
 
 **Title**:
 ```
-Using facial mesh wireframes as ControlNet conditioning inputs for surgery outcome prediction -- LandmarkDiff
+Using facial mesh wireframes as ControlNet conditioning inputs for surgery outcome prediction: LandmarkDiff
 ```
 
 **Body**:
@@ -122,7 +122,7 @@ spatial prior for surgical outcome synthesis.
 
 Standard ControlNet-based generation takes a conditioning image (edges, pose, depth, etc.) and
 guides the diffusion process spatially. In LandmarkDiff, the conditioning input is a rendered
-wireframe of *deformed* facial landmarks -- the face mesh after procedure-specific landmark
+wireframe of *deformed* facial landmarks: the face mesh after procedure-specific landmark
 displacements are applied.
 
 The deformation is driven by Gaussian RBF interpolation on MediaPipe's 478-point 3D face mesh.
@@ -144,7 +144,7 @@ anatomy rather than being free to move facial features arbitrarily. This is impo
 surgical visualization, where geometric plausibility is as important as texture quality.
 
 There is also a lightweight CPU mode (`tps`) that skips diffusion entirely and produces a pure
-TPS warp -- useful for fast preview without GPU.
+TPS warp: useful for fast preview without GPU.
 
 Code (MIT): https://github.com/dreamlessx/LandmarkDiff-public
 Demo (CPU TPS + GPU ControlNet): https://huggingface.co/spaces/dreamlessx/LandmarkDiff
@@ -158,7 +158,7 @@ Disclaimer: research tool, not medical advice.
 
 **Title**:
 ```
-Open-source research tool for visualizing facial surgery outcomes from a single photo -- LandmarkDiff
+Open-source research tool for visualizing facial surgery outcomes from a single photo: LandmarkDiff
 ```
 
 **Body**:
@@ -226,7 +226,7 @@ Thread below.
 
 **Tweet 2 (the face mesh)**:
 ```
-2/ The geometric backbone is MediaPipe FaceMesh -- 478 3D landmarks per frame.
+2/ The geometric backbone is MediaPipe FaceMesh: 478 3D landmarks per frame.
 
 These aren't just face keypoints. They cover the full facial surface: orbit, nasal cartilage,
 lip, chin, forehead, zygomatic arch.
@@ -298,7 +298,7 @@ Feedback, contributions, and forks welcome.
 
 **Title**:
 ```
-Show HN: LandmarkDiff -- facial surgery outcome prediction with MediaPipe mesh + ControlNet SD1.5
+Show HN: LandmarkDiff: facial surgery outcome prediction with MediaPipe mesh + ControlNet SD1.5
 ```
 
 **Description**:
@@ -314,7 +314,7 @@ orthognathic surgery, brow lift, and mentoplasty.
 
 The pipeline has four inference modes:
 
-- tps: thin-plate spline warp, CPU only, no diffusion -- fast and useful as a geometric baseline
+- tps: thin-plate spline warp, CPU only, no diffusion: fast and useful as a geometric baseline
 - img2img: standard SD1.5 img2img conditioned on the warped image
 - controlnet: ControlNet conditioning on the deformed wireframe for spatially grounded synthesis
 - controlnet_ip: adds IP-Adapter for stronger patient identity preservation

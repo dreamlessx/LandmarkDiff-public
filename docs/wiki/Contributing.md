@@ -22,14 +22,14 @@ Thanks for your interest in contributing to LandmarkDiff. This project is active
 ## What We Need Help With
 
 ### High Priority
-- **New procedure presets** -- define displacement vectors for additional surgical procedures (e.g., otoplasty, lip augmentation)
-- **Clinical validation** -- if you have access to pre/post-operative photo datasets, we would love to collaborate
-- **Multi-view consistency** -- improving prediction quality across different face angles
+- **New procedure presets**: define displacement vectors for additional surgical procedures (e.g., otoplasty, lip augmentation)
+- **Clinical validation**: if you have access to pre/post-operative photo datasets, we would love to collaborate
+- **Multi-view consistency**: improving prediction quality across different face angles
 
 ### Medium Priority
-- **Evaluation metrics** -- domain-specific metrics for surgical outcome quality
-- **Data augmentation** -- new clinical photography degradation types
-- **Performance** -- faster inference, reduced memory usage, batched processing
+- **Evaluation metrics**: domain-specific metrics for surgical outcome quality
+- **Data augmentation**: new clinical photography degradation types
+- **Performance**: faster inference, reduced memory usage, batched processing
 
 ### Always Welcome
 - Bug fixes

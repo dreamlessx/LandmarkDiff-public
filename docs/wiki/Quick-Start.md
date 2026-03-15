@@ -12,7 +12,7 @@ For GPU modes (img2img, controlnet, controlnet_ip), you also need a CUDA-capable
 
 ---
 
-## Mode 1: TPS (Thin Plate Spline) -- CPU, Instant
+## Mode 1: TPS (Thin Plate Spline): CPU, Instant
 
 The simplest mode. No GPU, no model downloads, no diffusion. Pure geometric warping.
 
@@ -39,7 +39,7 @@ cv2.imwrite("prediction_tps.png", result["output"])
 
 ---
 
-## Mode 2: img2img -- GPU, ~5 seconds
+## Mode 2: img2img: GPU, ~5 seconds
 
 Feeds the TPS-warped image into Stable Diffusion 1.5 img2img for texture refinement. The diffusion model only modifies the surgical region (via mask compositing).
 
@@ -66,7 +66,7 @@ cv2.imwrite("prediction_img2img.png", result["output"])
 
 ---
 
-## Mode 3: ControlNet -- GPU, ~8 seconds
+## Mode 3: ControlNet: GPU, ~8 seconds
 
 Renders the deformed face mesh as a wireframe and uses CrucibleAI/ControlNetMediaPipeFace to generate the face from conditioning. Best photorealistic quality.
 
@@ -93,7 +93,7 @@ cv2.imwrite("prediction_controlnet.png", result["output"])
 
 ---
 
-## Mode 4: ControlNet + IP-Adapter -- GPU, ~10 seconds
+## Mode 4: ControlNet + IP-Adapter: GPU, ~10 seconds
 
 Same as ControlNet, with the addition of h94/IP-Adapter-FaceID for identity-preserving generation. Conditions the diffusion model on an ArcFace embedding of the input face.
 
@@ -307,7 +307,7 @@ For a guided walkthrough with inline visualizations, see the [quickstart noteboo
 
 ## Next Steps
 
-- [Procedures](Procedures) -- detailed guide for each surgical procedure
-- [API Reference](API-Reference) -- full class and function documentation
-- [Architecture](Architecture) -- how the pipeline works internally
-- [Training](Training) -- how to train your own ControlNet
+- [Procedures](Procedures): detailed guide for each surgical procedure
+- [API Reference](API-Reference): full class and function documentation
+- [Architecture](Architecture): how the pipeline works internally
+- [Training](Training): how to train your own ControlNet

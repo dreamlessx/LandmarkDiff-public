@@ -6,7 +6,7 @@
 
 **Fixes (try in order):**
 
-1. Use `tps` mode if you only need geometric warping -- no GPU needed at all.
+1. Use `tps` mode if you only need geometric warping: no GPU needed at all.
 
 2. The pipeline enables `model_cpu_offload()` by default, which should keep peak VRAM under 6 GB for ControlNet mode. If this still fails, check that no other process is using the GPU:
    ```bash
