@@ -231,15 +231,19 @@ class TestGetBest:
 class TestPrintSummary:
     """Tests for summary printing."""
 
-    def test_print_empty(self, tracker, capsys):
-        tracker.print_summary()
-        out = capsys.readouterr().out
-        assert "No experiments found" in out
+    def test_print_empty(self, tracker, caplog):
+        import logging
 
-    def test_print_with_experiments(self, tracker, capsys):
+        with caplog.at_level(logging.INFO, logger="landmarkdiff.experiment_tracker"):
+            tracker.print_summary()
+        assert "No experiments found" in caplog.text
+
+    def test_print_with_experiments(self, tracker, caplog):
+        import logging
+
         exp_id = tracker.start("test_run", config={})
         tracker.finish(exp_id, results={"fid": 42.0, "ssim": 0.87})
-        tracker.print_summary()
-        out = capsys.readouterr().out
-        assert "test_run" in out
-        assert "completed" in out
+        with caplog.at_level(logging.INFO, logger="landmarkdiff.experiment_tracker"):
+            tracker.print_summary()
+        assert "test_run" in caplog.text
+        assert "completed" in caplog.text
