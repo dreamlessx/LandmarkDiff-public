@@ -1,0 +1,348 @@
+openapi: "3.0.3"
+info:
+  title: LandmarkDiff API
+  version: "0.2.0"
+  description: |
+    REST API for surgical outcome prediction using landmark-guided
+    diffusion models.  Accepts face images and returns predicted
+    post-surgical results with configurable procedure type and intensity.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: LandmarkDiff
+    url: https://github.com/dreamlessx/LandmarkDiff-public
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      tags: [system]
+      responses:
+        "200":
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /procedures:
+    get:
+      summary: List available procedures
+      operationId: listProcedures
+      tags: [procedures]
+      responses:
+        "200":
+          description: List of supported surgical procedures
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcedureListResponse"
+
+  /predict:
+    post:
+      summary: Run surgical outcome prediction
+      operationId: predict
+      tags: [prediction]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image]
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: Input face image (JPEG, PNG, WebP, HEIC)
+                procedure:
+                  type: string
+                  default: rhinoplasty
+                  enum:
+                    - rhinoplasty
+                    - blepharoplasty
+                    - rhytidectomy
+                    - orthognathic
+                    - brow_lift
+                    - mentoplasty
+                    - alarplasty
+                    - canthoplasty
+                    - buccal_fat_removal
+                    - dimpleplasty
+                    - genioplasty
+                    - malarplasty
+                    - lip_lift
+                    - lip_augmentation
+                    - forehead_reduction
+                    - submental_liposuction
+                    - otoplasty
+                  description: Surgical procedure type
+                intensity:
+                  type: number
+                  format: float
+                  default: 65.0
+                  minimum: 0
+                  maximum: 100
+                  description: Modification intensity (0=none, 100=maximum)
+                seed:
+                  type: integer
+                  default: 42
+                  description: Random seed for reproducible results
+                mode:
+                  type: string
+                  default: tps
+                  enum: [tps, img2img, controlnet, controlnet_ip, controlnet_fast]
+                  description: |
+                    Inference mode:
+                    - tps: Pure geometric warp (CPU, instant)
+                    - img2img: SD1.5 img2img with mask compositing
+                    - controlnet: CrucibleAI ControlNet + SD1.5
+                    - controlnet_ip: ControlNet with IP-Adapter identity
+                    - controlnet_fast: ControlNet with LCM-LoRA (4 steps)
+      responses:
+        "200":
+          description: Prediction result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PredictionResponse"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: No face detected in image
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /analyze:
+    post:
+      summary: Analyze face without generating prediction
+      operationId: analyzeFace
+      tags: [analysis]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image]
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: Input face image
+      responses:
+        "200":
+          description: Face analysis results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisResponse"
+        "422":
+          description: No face detected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /batch:
+    post:
+      summary: Batch prediction on multiple images
+      operationId: batchPredict
+      tags: [prediction]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [images]
+              properties:
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Multiple input face images
+                procedure:
+                  type: string
+                  default: rhinoplasty
+                  description: Procedure to apply to all images
+                intensity:
+                  type: number
+                  format: float
+                  default: 65.0
+                  minimum: 0
+                  maximum: 100
+                seed:
+                  type: integer
+                  default: 42
+      responses:
+        "200":
+          description: Batch prediction results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchResponse"
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: healthy
+        version:
+          type: string
+          example: "0.2.0"
+        device:
+          type: string
+          example: cuda
+        mode:
+          type: string
+          example: controlnet
+        procedures_available:
+          type: integer
+          example: 17
+
+    ProcedureListResponse:
+      type: object
+      properties:
+        procedures:
+          type: array
+          items:
+            type: string
+          example:
+            - rhinoplasty
+            - blepharoplasty
+            - rhytidectomy
+            - orthognathic
+            - brow_lift
+            - mentoplasty
+
+    PredictionResponse:
+      type: object
+      properties:
+        output_image:
+          type: string
+          format: byte
+          description: Base64-encoded output image (PNG)
+        procedure:
+          type: string
+          example: rhinoplasty
+        intensity:
+          type: number
+          example: 65.0
+        confidence:
+          type: number
+          description: Face detection confidence (0-1)
+          example: 0.95
+        view_info:
+          $ref: "#/components/schemas/ViewInfo"
+        quality_warnings:
+          type: array
+          items:
+            type: string
+          description: Input quality warnings (empty if good)
+        metrics:
+          type: object
+          additionalProperties:
+            type: number
+          description: Optional quality metrics
+        metadata:
+          type: object
+          additionalProperties: true
+
+    AnalysisResponse:
+      type: object
+      properties:
+        landmarks:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+            minItems: 3
+            maxItems: 3
+          description: "478 landmarks as [x, y, z] normalized coordinates"
+        confidence:
+          type: number
+          example: 0.95
+        view_info:
+          $ref: "#/components/schemas/ViewInfo"
+        fitzpatrick_type:
+          type: string
+          enum: [I, II, III, IV, V, VI]
+          description: Estimated Fitzpatrick skin type
+        measurements:
+          type: object
+          properties:
+            goode_ratio:
+              type: number
+              description: Nasal projection/length ratio
+            nasofrontal_angle:
+              type: number
+              description: Nasofrontal angle in degrees
+            canthal_tilt:
+              type: number
+              description: Mean canthal tilt in degrees
+
+    BatchResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/PredictionResponse"
+        total:
+          type: integer
+          description: Total number of images processed
+        successful:
+          type: integer
+          description: Number of successful predictions
+        failed:
+          type: integer
+          description: Number of failed predictions
+
+    ViewInfo:
+      type: object
+      properties:
+        yaw:
+          type: number
+          description: Estimated yaw angle in degrees
+          example: 2.5
+        pitch:
+          type: number
+          description: Estimated pitch angle in degrees
+          example: -3.1
+        view:
+          type: string
+          enum: [frontal, three_quarter, profile]
+          example: frontal
+        is_frontal:
+          type: boolean
+          example: true
+        warning:
+          type: string
+          nullable: true
+          description: View-related warning message
+
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+          description: Error message
+          example: No face detected in image

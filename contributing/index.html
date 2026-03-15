@@ -1,0 +1,2837 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Photorealistic facial surgery outcome prediction from a single photo, powered by anatomically-conditioned latent diffusion.">
+      
+      
+      
+        <link rel="canonical" href="https://dreamlessx.github.io/LandmarkDiff-public/contributing/">
+      
+      
+        <link rel="prev" href="../benchmarks/">
+      
+      
+        <link rel="next" href="../changelog/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
+    
+    
+      
+        <title>Contributing - LandmarkDiff</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#contributing-to-landmarkdiff" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="LandmarkDiff" class="md-header__button md-logo" aria-label="LandmarkDiff" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LandmarkDiff
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Contributing
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/dreamlessx/LandmarkDiff-public" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dreamlessx/LandmarkDiff-public
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../install/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tutorials/custom_procedures/" class="md-tabs__link">
+          
+  
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../api/landmarks/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../model_zoo/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Model Zoo
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../benchmarks/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Benchmarks
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../changelog/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="LandmarkDiff" class="md-nav__button md-logo" aria-label="LandmarkDiff" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    LandmarkDiff
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/dreamlessx/LandmarkDiff-public" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dreamlessx/LandmarkDiff-public
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/custom_procedures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom Procedures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/training/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Training
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/evaluation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/landmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Landmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/manipulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manipulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/conditioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conditioning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/evaluation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/clinical/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clinical
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../model_zoo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Zoo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#development-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Development Setup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Development Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#install-extras" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install extras
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pre-commit-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pre-commit hooks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify-your-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify your setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-style" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Style
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Code Style">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#linting-and-formatting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linting and formatting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-checking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type checking
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#general-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        General conventions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#running-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#writing-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writing tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#submitting-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Submitting Changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Submitting Changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-to-expect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What to expect
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tips
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pr-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PR Checklist
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supported-procedures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported Procedures
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-new-procedure-preset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a New Procedure Preset
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding a New Procedure Preset">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-research-the-procedure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Research the procedure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-identify-landmarks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Identify landmarks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-add-the-preset-to-landmarkdiffmanipulationpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Add the preset to landmarkdiff/manipulation.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-register-in-the-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Register in the CLI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-add-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Add tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-6-update-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Update documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-7-open-a-pr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7: Open a PR
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-clinical-flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding Clinical Flags
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3d-reconstruction-contributions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3D Reconstruction Contributions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3D Reconstruction Contributions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#3d-face-reconstruction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3D face reconstruction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3d-viewer-and-rendering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3D viewer and rendering
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mobile-capture-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mobile capture pipeline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3d-evaluation-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3D evaluation metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Documentation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#building-docs-locally" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Building docs locally
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#doc-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Doc conventions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-to-update-docs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When to update docs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue Labels
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recognition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recognition
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#community-guidelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Community Guidelines
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#development-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Development Setup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Development Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#install-extras" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install extras
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pre-commit-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pre-commit hooks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verify-your-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify your setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-style" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Style
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Code Style">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#linting-and-formatting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linting and formatting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-checking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type checking
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#general-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        General conventions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#running-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#writing-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writing tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ci" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#submitting-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Submitting Changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Submitting Changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-to-expect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What to expect
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tips
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pr-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PR Checklist
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supported-procedures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported Procedures
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-new-procedure-preset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a New Procedure Preset
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding a New Procedure Preset">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-research-the-procedure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Research the procedure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-identify-landmarks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Identify landmarks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-add-the-preset-to-landmarkdiffmanipulationpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Add the preset to landmarkdiff/manipulation.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-register-in-the-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Register in the CLI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-add-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Add tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-6-update-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Update documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-7-open-a-pr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7: Open a PR
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-clinical-flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding Clinical Flags
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3d-reconstruction-contributions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3D Reconstruction Contributions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3D Reconstruction Contributions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#3d-face-reconstruction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3D face reconstruction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3d-viewer-and-rendering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3D viewer and rendering
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mobile-capture-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mobile capture pipeline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3d-evaluation-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3D evaluation metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Documentation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#building-docs-locally" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Building docs locally
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#doc-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Doc conventions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-to-update-docs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When to update docs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#issue-labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue Labels
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recognition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recognition
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#community-guidelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Community Guidelines
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="contributing-to-landmarkdiff">Contributing to LandmarkDiff<a class="headerlink" href="#contributing-to-landmarkdiff" title="Permanent link">&para;</a></h1>
+<p>Thanks for your interest in contributing. Whether you're fixing a typo, adding a new procedure preset, or building a whole new module, this guide will help you get set up and moving quickly.</p>
+<p>If you have questions that this guide doesn't answer, feel free to open a <a href="https://github.com/dreamlessx/LandmarkDiff-public/discussions">Discussion</a>.</p>
+<h2 id="table-of-contents">Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="#quick-start">Quick Start</a></li>
+<li><a href="#development-setup">Development Setup</a></li>
+<li><a href="#code-style">Code Style</a></li>
+<li><a href="#testing">Testing</a></li>
+<li><a href="#submitting-changes">Submitting Changes</a></li>
+<li><a href="#pr-checklist">PR Checklist</a></li>
+<li><a href="#supported-procedures">Supported Procedures</a></li>
+<li><a href="#adding-a-new-procedure-preset">Adding a New Procedure Preset</a></li>
+<li><a href="#adding-clinical-flags">Adding Clinical Flags</a></li>
+<li><a href="#3d-reconstruction-contributions">3D Reconstruction Contributions</a></li>
+<li><a href="#documentation">Documentation</a></li>
+<li><a href="#issue-labels">Issue Labels</a></li>
+<li><a href="#recognition">Recognition</a></li>
+<li><a href="#community-guidelines">Community Guidelines</a></li>
+</ul>
+<hr />
+<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
+<p>First-time setup in five commands:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># 1. Fork the repo on GitHub, then clone your fork</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/&lt;your-username&gt;/LandmarkDiff-public.git
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nb">cd</span><span class="w"> </span>LandmarkDiff-public
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># 2. Create a virtual environment</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nb">source</span><span class="w"> </span>.venv/bin/activate<span class="w">  </span><span class="c1"># on Windows: .venv\Scripts\activate</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1"># 3. Install with all dev dependencies</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[train,eval,app,dev]&quot;</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="c1"># 4. Run the tests</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>pytest<span class="w"> </span>tests/<span class="w"> </span>-x
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="c1"># 5. Run lints</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>ruff<span class="w"> </span>check<span class="w"> </span>.<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>ruff<span class="w"> </span>format<span class="w"> </span>--check<span class="w"> </span>.
+</code></pre></div>
+<p>If all tests pass and linting is clean, you're ready to contribute.</p>
+<hr />
+<h2 id="development-setup">Development Setup<a class="headerlink" href="#development-setup" title="Permanent link">&para;</a></h2>
+<h3 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Python 3.10 or later</li>
+<li>Git</li>
+<li>A virtual environment tool (venv, conda, etc.)</li>
+<li>GPU with 6GB+ VRAM is helpful but not required (TPS mode runs on CPU)</li>
+</ul>
+<h3 id="install-extras">Install extras<a class="headerlink" href="#install-extras" title="Permanent link">&para;</a></h3>
+<p>The <code>[dev]</code> extra pulls in pytest, ruff, mypy, and everything else you need for local development. The other extras are optional depending on what you're working on:</p>
+<table>
+<thead>
+<tr>
+<th>Extra</th>
+<th>What it includes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dev</code></td>
+<td>pytest, ruff, mypy, pre-commit, coverage</td>
+</tr>
+<tr>
+<td><code>train</code></td>
+<td>PyTorch, diffusers, accelerate</td>
+</tr>
+<tr>
+<td><code>eval</code></td>
+<td>FID, LPIPS, ArcFace metrics</td>
+</tr>
+<tr>
+<td><code>app</code></td>
+<td>Gradio, CodeFormer, Real-ESRGAN</td>
+</tr>
+</tbody>
+</table>
+<p>Install any combination:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Dev only</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Everything</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[train,eval,app,dev]&quot;</span>
+</code></pre></div>
+<h3 id="pre-commit-hooks">Pre-commit hooks<a class="headerlink" href="#pre-commit-hooks" title="Permanent link">&para;</a></h3>
+<p>We use pre-commit to catch lint and format issues before they reach CI:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pip<span class="w"> </span>install<span class="w"> </span>pre-commit
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>pre-commit<span class="w"> </span>install
+</code></pre></div>
+<p>After this, <code>ruff check</code> and <code>ruff format --check</code> will run automatically on every commit.</p>
+<h3 id="verify-your-setup">Verify your setup<a class="headerlink" href="#verify-your-setup" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>make<span class="w"> </span>check
+</code></pre></div>
+<p>This runs lint, type checking, and the test suite. If everything passes, you're ready.</p>
+<hr />
+<h2 id="code-style">Code Style<a class="headerlink" href="#code-style" title="Permanent link">&para;</a></h2>
+<h3 id="linting-and-formatting">Linting and formatting<a class="headerlink" href="#linting-and-formatting" title="Permanent link">&para;</a></h3>
+<p>We use <a href="https://github.com/astral-sh/ruff">ruff</a> for both linting and formatting.</p>
+<ul>
+<li><strong>Line length:</strong> 100 characters</li>
+<li><strong>Target Python:</strong> 3.10</li>
+<li><strong>Enabled rules:</strong> E (pycodestyle), F (pyflakes), I (isort), N (pep8-naming), UP (pyupgrade), B (bugbear), SIM (simplify)</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Check for lint issues</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>ruff<span class="w"> </span>check<span class="w"> </span>.
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Auto-format</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>ruff<span class="w"> </span>format<span class="w"> </span>.
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># Auto-fix lint issues where possible</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>ruff<span class="w"> </span>check<span class="w"> </span>--fix<span class="w"> </span>.
+</code></pre></div>
+<p>Or use the Makefile shortcuts:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>make<span class="w"> </span>lint<span class="w">      </span><span class="c1"># check only</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>make<span class="w"> </span>format<span class="w">    </span><span class="c1"># auto-fix + format</span>
+</code></pre></div>
+<h3 id="type-checking">Type checking<a class="headerlink" href="#type-checking" title="Permanent link">&para;</a></h3>
+<p>We use <a href="https://mypy-lang.org/">mypy</a> for static type analysis:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>mypy<span class="w"> </span>landmarkdiff/
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="c1"># or</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>make<span class="w"> </span>type-check
+</code></pre></div>
+<p>Type annotations are not required everywhere, but we appreciate them on public function signatures. If you add a new module, make sure mypy doesn't introduce new errors.</p>
+<h3 id="general-conventions">General conventions<a class="headerlink" href="#general-conventions" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use <code>from __future__ import annotations</code> at the top of new modules for modern annotation syntax.</li>
+<li>Use <code>TYPE_CHECKING</code> guards for imports that are only needed for type hints.</li>
+<li>Docstrings follow Google style (compatible with sphinx napoleon).</li>
+<li>Keep files under 500 lines when practical.</li>
+</ul>
+<hr />
+<h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h2>
+<p>Tests live in the <code>tests/</code> directory and use <a href="https://docs.pytest.org/">pytest</a>.</p>
+<h3 id="running-tests">Running tests<a class="headerlink" href="#running-tests" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Full suite</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>pytest<span class="w"> </span>tests/<span class="w"> </span>-v
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Stop on first failure</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>pytest<span class="w"> </span>tests/<span class="w"> </span>-x
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># With coverage</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>pytest<span class="w"> </span>tests/<span class="w"> </span>-v<span class="w"> </span>--cov<span class="o">=</span>landmarkdiff<span class="w"> </span>--cov-report<span class="o">=</span>term-missing
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="c1"># Skip slow tests (GPU, large data)</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>pytest<span class="w"> </span>tests/<span class="w"> </span>-v<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;not slow&quot;</span>
+</code></pre></div>
+<p>Or:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>make<span class="w"> </span><span class="nb">test</span><span class="w">       </span><span class="c1"># full suite</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>make<span class="w"> </span>test-fast<span class="w">  </span><span class="c1"># skip slow tests</span>
+</code></pre></div>
+<h3 id="writing-tests">Writing tests<a class="headerlink" href="#writing-tests" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Test files go in <code>tests/</code> and should be named <code>test_&lt;module&gt;.py</code>.</li>
+<li>Use plain pytest assertions. No need for <code>unittest.TestCase</code>.</li>
+<li>Mock external dependencies (MediaPipe, PyTorch models, file I/O) so tests run without a GPU.</li>
+<li>If your test needs a GPU or takes more than a few seconds, mark it with <code>@pytest.mark.slow</code>.</li>
+<li>Each new feature or bug fix should come with at least one test that exercises the change.</li>
+</ul>
+<p>Example test structure:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="sd">&quot;&quot;&quot;Tests for the frobnication module.&quot;&quot;&quot;</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">landmarkdiff.frobnication</span><span class="w"> </span><span class="kn">import</span> <span class="n">frobnicate</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="k">class</span><span class="w"> </span><span class="nc">TestFrobnicate</span><span class="p">:</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">test_basic</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>        <span class="n">result</span> <span class="o">=</span> <span class="n">frobnicate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>        <span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">10</span><span class="p">,)</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">test_invalid_input</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>        <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">match</span><span class="o">=</span><span class="s2">&quot;must be non-empty&quot;</span><span class="p">):</span>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>            <span class="n">frobnicate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([]))</span>
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>    <span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">slow</span>
+<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">test_gpu_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a>        <span class="c1"># Only runs when slow tests are enabled</span>
+<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a>        <span class="o">...</span>
+</code></pre></div>
+<h3 id="ci">CI<a class="headerlink" href="#ci" title="Permanent link">&para;</a></h3>
+<p>CI runs on every push to <code>main</code> and on every pull request. It checks:</p>
+<ol>
+<li><strong>Lint</strong> -- <code>ruff check</code> and <code>ruff format --check</code></li>
+<li><strong>Type check</strong> -- <code>mypy</code></li>
+<li><strong>Tests</strong> -- <code>pytest</code> on Python 3.10, 3.11, and 3.12</li>
+</ol>
+<p>All three must pass before a PR can be merged.</p>
+<hr />
+<h2 id="submitting-changes">Submitting Changes<a class="headerlink" href="#submitting-changes" title="Permanent link">&para;</a></h2>
+<h3 id="workflow">Workflow<a class="headerlink" href="#workflow" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Fork</strong> the repository on GitHub.</li>
+<li><strong>Create a branch</strong> from <code>main</code> with a descriptive name:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>add-otoplasty-preset
+</code></pre></div></li>
+<li><strong>Make your changes.</strong> Write code, add tests, update docs as needed.</li>
+<li><strong>Run the checks locally:</strong>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>pytest<span class="w"> </span>tests/<span class="w"> </span>-x
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>ruff<span class="w"> </span>check<span class="w"> </span>.<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>ruff<span class="w"> </span>format<span class="w"> </span>--check<span class="w"> </span>.
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>mypy<span class="w"> </span>landmarkdiff/
+</code></pre></div></li>
+<li><strong>Commit</strong> with a clear message. We don't enforce a rigid format, but try to be descriptive:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>Add otoplasty procedure preset
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>Targets 15 ear landmarks with lateral displacement for
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>ear pinning simulation. Includes unit tests and docs.
+</code></pre></div></li>
+<li><strong>Push</strong> your branch and <strong>open a pull request</strong> against <code>main</code>.</li>
+<li>Fill out the <a href=".github/PULL_REQUEST_TEMPLATE.md">PR template</a>. The checklist will remind you of the standard checks.</li>
+</ol>
+<h3 id="what-to-expect">What to expect<a class="headerlink" href="#what-to-expect" title="Permanent link">&para;</a></h3>
+<ul>
+<li>A maintainer will review your PR, usually within a few days.</li>
+<li>CI will run automatically. If it fails, check the logs and push a fix.</li>
+<li>We may suggest changes. This is normal and not a rejection. Iterate until everyone is happy.</li>
+<li>Once approved, a maintainer will merge your PR.</li>
+</ul>
+<h3 id="tips">Tips<a class="headerlink" href="#tips" title="Permanent link">&para;</a></h3>
+<ul>
+<li>For major changes (new modules, architectural decisions, new loss functions), open an issue first to discuss the approach. This avoids wasted effort if the direction doesn't align with the project goals.</li>
+<li>Small, focused PRs are easier to review than large ones. If your change touches multiple areas, consider splitting it up.</li>
+<li>If your PR adds a new procedure preset, the review will check anatomical plausibility of the displacement vectors in addition to code quality.</li>
+</ul>
+<hr />
+<h2 id="pr-checklist">PR Checklist<a class="headerlink" href="#pr-checklist" title="Permanent link">&para;</a></h2>
+<p>Before opening your pull request, verify the following locally:</p>
+<ul>
+<li>[ ] <strong>Tests pass:</strong> <code>pytest tests/ -x</code></li>
+<li>[ ] <strong>Linting passes:</strong> <code>ruff check . &amp;&amp; ruff format --check .</code></li>
+<li>[ ] <strong>Type checking passes:</strong> <code>mypy landmarkdiff/</code></li>
+<li>[ ] <strong>New code has type hints</strong> on all public function signatures</li>
+<li>[ ] <strong>Docstrings follow Google style</strong> (see existing code for examples)</li>
+<li>[ ] <strong>No new warnings</strong> from mypy or ruff</li>
+<li>[ ] <strong>Docs updated</strong> if you changed public API or added a feature</li>
+</ul>
+<p>If your PR adds a new procedure preset, also verify:</p>
+<ul>
+<li>[ ] Procedure appears in <code>PROCEDURE_LANDMARKS</code>, <code>PROCEDURE_RADIUS</code>, and <code>_get_procedure_handles()</code></li>
+<li>[ ] Procedure is registered in the CLI choices in <code>landmarkdiff/__main__.py</code></li>
+<li>[ ] Tests cover intensity levels 0, 50, and 100</li>
+<li>[ ] README "Supported Procedures" section is updated</li>
+</ul>
+<hr />
+<h2 id="supported-procedures">Supported Procedures<a class="headerlink" href="#supported-procedures" title="Permanent link">&para;</a></h2>
+<p>LandmarkDiff currently supports six surgical procedures. Each one is defined as a set of <a href="https://github.com/google/mediapipe/blob/master/mediapipe/modules/face_geometry/data/canonical_face_model_uv_visualization.png">MediaPipe 478-point face mesh</a> landmark indices, a Gaussian RBF influence radius, and per-landmark displacement vectors.</p>
+<table>
+<thead>
+<tr>
+<th>Procedure</th>
+<th>Description</th>
+<th>Landmark count</th>
+<th>Radius (px at 512x512)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rhinoplasty</code></td>
+<td>Nose reshaping (bridge, tip, alar base)</td>
+<td>24</td>
+<td>30.0</td>
+</tr>
+<tr>
+<td><code>blepharoplasty</code></td>
+<td>Eyelid surgery (upper and lower)</td>
+<td>28</td>
+<td>15.0</td>
+</tr>
+<tr>
+<td><code>rhytidectomy</code></td>
+<td>Facelift (cheeks, jawline, temples)</td>
+<td>32</td>
+<td>40.0</td>
+</tr>
+<tr>
+<td><code>orthognathic</code></td>
+<td>Jaw surgery (maxilla, mandible, chin)</td>
+<td>46</td>
+<td>35.0</td>
+</tr>
+<tr>
+<td><code>brow_lift</code></td>
+<td>Forehead and brow elevation</td>
+<td>18</td>
+<td>25.0</td>
+</tr>
+<tr>
+<td><code>mentoplasty</code></td>
+<td>Chin augmentation / reduction</td>
+<td>8</td>
+<td>25.0</td>
+</tr>
+</tbody>
+</table>
+<p>Both <code>brow_lift</code> and <code>mentoplasty</code> were contributed by community members -- see PRs <a href="https://github.com/dreamlessx/LandmarkDiff-public/pull/35">#35</a> and <a href="https://github.com/dreamlessx/LandmarkDiff-public/pull/36">#36</a>.</p>
+<hr />
+<h2 id="adding-a-new-procedure-preset">Adding a New Procedure Preset<a class="headerlink" href="#adding-a-new-procedure-preset" title="Permanent link">&para;</a></h2>
+<p>New procedure presets are one of the most impactful contributions. Here is the step-by-step process.</p>
+<h3 id="step-1-research-the-procedure">Step 1: Research the procedure<a class="headerlink" href="#step-1-research-the-procedure" title="Permanent link">&para;</a></h3>
+<p>Understand which anatomical structures are affected and in what directions. Look at surgical textbooks, published anthropometric data, or before/after imagery to understand the typical tissue displacement patterns.</p>
+<h3 id="step-2-identify-landmarks">Step 2: Identify landmarks<a class="headerlink" href="#step-2-identify-landmarks" title="Permanent link">&para;</a></h3>
+<p>Find the relevant landmark indices in the <a href="https://github.com/google/mediapipe/blob/master/mediapipe/modules/face_geometry/data/canonical_face_model_uv_visualization.png">MediaPipe 478-point face mesh</a>. You can use the landmark visualization example to see all 478 points on a test face:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>python<span class="w"> </span>examples/landmark_visualization.py<span class="w"> </span>/path/to/face.jpg
+</code></pre></div>
+<h3 id="step-3-add-the-preset-to-landmarkdiffmanipulationpy">Step 3: Add the preset to <code>landmarkdiff/manipulation.py</code><a class="headerlink" href="#step-3-add-the-preset-to-landmarkdiffmanipulationpy" title="Permanent link">&para;</a></h3>
+<p>You need to touch three data structures in <code>landmarkdiff/manipulation.py</code>:</p>
+<p><strong>a) Add your landmark indices to <code>PROCEDURE_LANDMARKS</code>:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="n">PROCEDURE_LANDMARKS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>    <span class="s2">&quot;rhinoplasty&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">...</span><span class="p">],</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>    <span class="s2">&quot;blepharoplasty&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">...</span><span class="p">],</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>    <span class="s2">&quot;rhytidectomy&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">...</span><span class="p">],</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>    <span class="s2">&quot;orthognathic&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">...</span><span class="p">],</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>    <span class="s2">&quot;brow_lift&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">...</span><span class="p">],</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>    <span class="s2">&quot;mentoplasty&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">...</span><span class="p">],</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>    <span class="c1"># Add your new procedure here</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>    <span class="s2">&quot;otoplasty&quot;</span><span class="p">:</span> <span class="p">[</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>        <span class="mi">234</span><span class="p">,</span> <span class="mi">93</span><span class="p">,</span> <span class="mi">132</span><span class="p">,</span> <span class="o">...</span>  <span class="c1"># ear landmarks</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>    <span class="p">],</span>
+<a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong>b) Set the Gaussian RBF influence radius in <code>PROCEDURE_RADIUS</code>:</strong></p>
+<p>Smaller radius (15-20px) for fine structures (e.g., eyelids), larger (35-40px) for broad tissue mobilization (e.g., facelift). Values are in pixels at 512x512 resolution.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">PROCEDURE_RADIUS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>    <span class="s2">&quot;rhinoplasty&quot;</span><span class="p">:</span> <span class="mf">30.0</span><span class="p">,</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>    <span class="s2">&quot;blepharoplasty&quot;</span><span class="p">:</span> <span class="mf">15.0</span><span class="p">,</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>    <span class="s2">&quot;rhytidectomy&quot;</span><span class="p">:</span> <span class="mf">40.0</span><span class="p">,</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>    <span class="s2">&quot;orthognathic&quot;</span><span class="p">:</span> <span class="mf">35.0</span><span class="p">,</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>    <span class="s2">&quot;brow_lift&quot;</span><span class="p">:</span> <span class="mf">25.0</span><span class="p">,</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>    <span class="s2">&quot;mentoplasty&quot;</span><span class="p">:</span> <span class="mf">25.0</span><span class="p">,</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>    <span class="s2">&quot;otoplasty&quot;</span><span class="p">:</span> <span class="mf">20.0</span><span class="p">,</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong>c) Define displacement vectors in <code>_get_procedure_handles()</code>:</strong></p>
+<p>Each displacement is a <code>(dx, dy)</code> pair in pixels (at 512x512 resolution), scaled by the intensity parameter. Positive x is rightward, positive y is downward.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_get_procedure_handles</span><span class="p">(</span><span class="n">procedure</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">radius</span><span class="p">):</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>    <span class="c1"># ... existing procedure cases ...</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>    <span class="k">elif</span> <span class="n">procedure</span> <span class="o">==</span> <span class="s2">&quot;otoplasty&quot;</span><span class="p">:</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>            <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span> <span class="o">=</span> <span class="n">_otoplasty_displacement</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>            <span class="n">handles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">DeformationHandle</span><span class="p">(</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>                <span class="n">landmark_index</span><span class="o">=</span><span class="n">idx</span><span class="p">,</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>                <span class="n">displacement</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">dx</span> <span class="o">*</span> <span class="n">scale</span><span class="p">,</span> <span class="n">dy</span> <span class="o">*</span> <span class="n">scale</span><span class="p">]),</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>                <span class="n">influence_radius</span><span class="o">=</span><span class="n">radius</span><span class="p">,</span>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>            <span class="p">))</span>
+</code></pre></div>
+<h3 id="step-4-register-in-the-cli">Step 4: Register in the CLI<a class="headerlink" href="#step-4-register-in-the-cli" title="Permanent link">&para;</a></h3>
+<p>Add your procedure name to the <code>choices</code> list in <code>landmarkdiff/__main__.py</code> so the CLI recognizes it:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="n">infer</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>    <span class="s2">&quot;--procedure&quot;</span><span class="p">,</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>    <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>    <span class="n">default</span><span class="o">=</span><span class="s2">&quot;rhinoplasty&quot;</span><span class="p">,</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>    <span class="n">choices</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>        <span class="s2">&quot;rhinoplasty&quot;</span><span class="p">,</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>        <span class="s2">&quot;blepharoplasty&quot;</span><span class="p">,</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>        <span class="s2">&quot;rhytidectomy&quot;</span><span class="p">,</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>        <span class="s2">&quot;orthognathic&quot;</span><span class="p">,</span>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>        <span class="s2">&quot;brow_lift&quot;</span><span class="p">,</span>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>        <span class="s2">&quot;mentoplasty&quot;</span><span class="p">,</span>
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>        <span class="s2">&quot;otoplasty&quot;</span><span class="p">,</span>  <span class="c1"># &lt;-- add here</span>
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a>    <span class="p">],</span>
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a><span class="p">)</span>
+</code></pre></div>
+<h3 id="step-5-add-tests">Step 5: Add tests<a class="headerlink" href="#step-5-add-tests" title="Permanent link">&para;</a></h3>
+<p>Create or extend a test file in <code>tests/</code>. At minimum, test:</p>
+<ul>
+<li>The preset applies without errors at various intensity levels (0, 50, 100).</li>
+<li>The output landmarks differ from the input (something actually moved).</li>
+<li>Only the expected landmarks change significantly.</li>
+<li>The landmark count is preserved (478 in, 478 out).</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_otoplasty_preset</span><span class="p">():</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>    <span class="n">face</span> <span class="o">=</span> <span class="n">make_dummy_face</span><span class="p">()</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">apply_procedure_preset</span><span class="p">(</span><span class="n">face</span><span class="p">,</span> <span class="s2">&quot;otoplasty&quot;</span><span class="p">,</span> <span class="n">intensity</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>    <span class="k">assert</span> <span class="n">result</span><span class="o">.</span><span class="n">landmarks</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">face</span><span class="o">.</span><span class="n">landmarks</span><span class="o">.</span><span class="n">shape</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>    <span class="k">assert</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">landmarks</span><span class="p">,</span> <span class="n">face</span><span class="o">.</span><span class="n">landmarks</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="step-6-update-documentation">Step 6: Update documentation<a class="headerlink" href="#step-6-update-documentation" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Add a section to <code>README.md</code> under "Supported Procedures" following the existing format (description, landmark indices, influence radius).</li>
+<li>If you used published references for the displacement vectors, cite them.</li>
+</ul>
+<h3 id="step-7-open-a-pr">Step 7: Open a PR<a class="headerlink" href="#step-7-open-a-pr" title="Permanent link">&para;</a></h3>
+<p>Use the "New Procedure Preset" type in the PR template checklist. Mention the anatomical rationale in your PR description.</p>
+<p>See PRs <a href="https://github.com/dreamlessx/LandmarkDiff-public/pull/35">#35</a> (brow lift) and <a href="https://github.com/dreamlessx/LandmarkDiff-public/pull/36">#36</a> (mentoplasty) for real examples of successful procedure contributions.</p>
+<hr />
+<h2 id="adding-clinical-flags">Adding Clinical Flags<a class="headerlink" href="#adding-clinical-flags" title="Permanent link">&para;</a></h2>
+<p>Clinical flags modify how deformations and masks behave for patients with specific conditions. The existing flags (vitiligo, Bell's palsy, keloid-prone skin, Ehlers-Danlos) are defined in <code>landmarkdiff/clinical.py</code>.</p>
+<p>To add a new clinical flag:</p>
+<ol>
+<li><strong>Add the field</strong> to the <code>ClinicalFlags</code> dataclass in <code>landmarkdiff/clinical.py</code>.</li>
+<li><strong>Implement the modifier</strong> as a function in the same module. The modifier should adjust either the deformation handles, the mask, or the influence radii depending on the condition.</li>
+<li><strong>Wire it in.</strong> Call your modifier from <code>apply_procedure_preset()</code> in <code>manipulation.py</code> (for deformation changes) or from the mask generation code in <code>masking.py</code> (for mask changes).</li>
+<li><strong>Add the flag to the Gradio demo</strong> in <code>scripts/app.py</code> -- typically as a checkbox in Tab 1.</li>
+<li><strong>Write tests</strong> that verify the flag actually modifies the output relative to the unflagged case.</li>
+<li><strong>Document</strong> the clinical rationale. Include references to the medical literature if possible.</li>
+</ol>
+<hr />
+<h2 id="3d-reconstruction-contributions">3D Reconstruction Contributions<a class="headerlink" href="#3d-reconstruction-contributions" title="Permanent link">&para;</a></h2>
+<p>LandmarkDiff is moving toward a 3D-native pipeline: a patient captures a short video scan of their face with a phone (rotating their head, similar to Apple's personalized spatial audio head scanning), and the system reconstructs a 3D face model, applies surgical deformations in 3D space, and renders a realistic preview from any angle. This is future work, but contributors can start exploring these areas now.</p>
+<h3 id="3d-face-reconstruction">3D face reconstruction<a class="headerlink" href="#3d-face-reconstruction" title="Permanent link">&para;</a></h3>
+<p>The current pipeline operates on single 2D images. Lifting to 3D requires fitting a parametric face model or learning an implicit representation from a video sequence.</p>
+<p>Areas where contributions are welcome:</p>
+<ul>
+<li><strong>FLAME integration</strong> -- fitting <a href="https://flame.is.tue.mpg.de/">FLAME</a> parameters from MediaPipe landmarks or dense face alignment, producing a textured 3D mesh from a single frame or short video.</li>
+<li><strong>Neural implicit representations</strong> -- NeRF or 3D Gaussian Splatting (3DGS) approaches for head reconstruction from a phone video scan. Particularly useful: methods that work with sparse views (10-30 frames) and reconstruct in under a minute.</li>
+<li><strong>Mesh-landmark correspondence</strong> -- mapping the 478 MediaPipe landmarks to FLAME mesh vertices so that existing 2D procedure presets can be projected into 3D displacement vectors.</li>
+</ul>
+<p>If you have experience with DECA, EMOCA, PanoHead, or similar, your expertise is directly applicable.</p>
+<h3 id="3d-viewer-and-rendering">3D viewer and rendering<a class="headerlink" href="#3d-viewer-and-rendering" title="Permanent link">&para;</a></h3>
+<p>Once a deformed 3D model exists, patients need to view it interactively.</p>
+<ul>
+<li><strong>WebGL/three.js viewer</strong> -- a browser-based viewer that renders the reconstructed face from arbitrary viewpoints, with controls for rotating, zooming, and comparing pre/post deformation side by side.</li>
+<li><strong>Gradio 3D integration</strong> -- extending the existing Gradio demo (<code>scripts/app.py</code>) to embed a 3D model viewer tab alongside the current 2D outputs.</li>
+<li><strong>Texture and lighting</strong> -- realistic relighting and texture transfer so the 3D preview looks natural rather than synthetic.</li>
+</ul>
+<h3 id="mobile-capture-pipeline">Mobile capture pipeline<a class="headerlink" href="#mobile-capture-pipeline" title="Permanent link">&para;</a></h3>
+<p>The phone-scan capture workflow is a critical UX piece.</p>
+<ul>
+<li><strong>Frame selection</strong> -- given a video of a patient rotating their head, select the N most informative frames (coverage, sharpness, landmark confidence) for reconstruction.</li>
+<li><strong>Real-time guidance</strong> -- lightweight on-device feedback telling the patient to turn left, tilt up, etc., ensuring sufficient angular coverage.</li>
+<li><strong>Landmark tracking across frames</strong> -- temporally consistent MediaPipe tracking with outlier rejection and smoothing.</li>
+</ul>
+<h3 id="3d-evaluation-metrics">3D evaluation metrics<a class="headerlink" href="#3d-evaluation-metrics" title="Permanent link">&para;</a></h3>
+<p>We will need metrics that go beyond 2D FID and LPIPS:</p>
+<ul>
+<li><strong>3D landmark error</strong> -- Euclidean distance between predicted and ground-truth 3D landmark positions.</li>
+<li><strong>Mesh surface distance</strong> -- Chamfer distance or Hausdorff distance between reconstructed and reference meshes.</li>
+<li><strong>Multi-view consistency</strong> -- measuring whether the deformed model renders consistently across viewpoints (no view-dependent artifacts).</li>
+<li><strong>Identity preservation in 3D</strong> -- extending the current ArcFace identity score to aggregate across multiple rendered views.</li>
+</ul>
+<p>If any of these areas interest you, open an issue tagged <code>enhancement</code> describing what you want to work on, and we can discuss the approach before you start coding.</p>
+<hr />
+<h2 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h2>
+<p>Documentation is built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using the <a href="https://pradyunsg.me/furo/">Furo</a> theme and <a href="https://myst-parser.readthedocs.io/">MyST</a> for Markdown support.</p>
+<h3 id="building-docs-locally">Building docs locally<a class="headerlink" href="#building-docs-locally" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Install doc dependencies</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>docs/requirements.txt
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="c1"># Build HTML docs</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="nb">cd</span><span class="w"> </span>docs
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>sphinx-build<span class="w"> </span>-b<span class="w"> </span>html<span class="w"> </span>.<span class="w"> </span>_build/html
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a><span class="c1"># Open in browser</span>
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>open<span class="w"> </span>_build/html/index.html<span class="w">  </span><span class="c1"># macOS</span>
+<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a>xdg-open<span class="w"> </span>_build/html/index.html<span class="w">  </span><span class="c1"># Linux</span>
+</code></pre></div>
+<h3 id="doc-conventions">Doc conventions<a class="headerlink" href="#doc-conventions" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Docs are written in Markdown (MyST), not reStructuredText.</li>
+<li>API reference docs are auto-generated from docstrings via <code>sphinx.ext.autodoc</code>.</li>
+<li>Tutorials go in <code>docs/tutorials/</code>.</li>
+<li>API docs go in <code>docs/api/</code>.</li>
+<li>Use Google-style docstrings in Python code so napoleon can parse them.</li>
+</ul>
+<h3 id="when-to-update-docs">When to update docs<a class="headerlink" href="#when-to-update-docs" title="Permanent link">&para;</a></h3>
+<ul>
+<li>New public API (class, function, module): add or update the relevant API doc.</li>
+<li>New procedure or clinical flag: update the README and add a tutorial if the feature is complex.</li>
+<li>Changed behavior: update any docs that describe the old behavior.</li>
+</ul>
+<hr />
+<h2 id="issue-labels">Issue Labels<a class="headerlink" href="#issue-labels" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bug</code></td>
+<td>Something broken or producing wrong results</td>
+</tr>
+<tr>
+<td><code>enhancement</code></td>
+<td>New feature or improvement to existing functionality</td>
+</tr>
+<tr>
+<td><code>new-procedure</code></td>
+<td>Proposal or implementation of a new surgical procedure preset</td>
+</tr>
+<tr>
+<td><code>documentation</code></td>
+<td>Docs-only changes</td>
+</tr>
+<tr>
+<td><code>good first issue</code></td>
+<td>Suitable for newcomers to the project</td>
+</tr>
+<tr>
+<td><code>help wanted</code></td>
+<td>Maintainer is looking for community input or implementation</td>
+</tr>
+<tr>
+<td><code>ci</code></td>
+<td>CI/CD pipeline changes</td>
+</tr>
+<tr>
+<td><code>question</code></td>
+<td>Needs discussion, not necessarily a code change</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="recognition">Recognition<a class="headerlink" href="#recognition" title="Permanent link">&para;</a></h2>
+<p>We track all contributions and contributors are acknowledged in the project:</p>
+<table>
+<thead>
+<tr>
+<th>Contribution Level</th>
+<th>Recognition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bug fix or typo</td>
+<td>Listed in <a href="CONTRIBUTORS.md">CONTRIBUTORS.md</a></td>
+</tr>
+<tr>
+<td>New procedure preset</td>
+<td>Acknowledged in paper and README</td>
+</tr>
+<tr>
+<td>Feature module (new loss, metric, clinical handler)</td>
+<td>Co-author on paper</td>
+</tr>
+<tr>
+<td>Clinical validation data</td>
+<td>Co-author on paper</td>
+</tr>
+<tr>
+<td>Sustained multi-feature contributions</td>
+<td>Co-author on paper</td>
+</tr>
+</tbody>
+</table>
+<p>See <a href="CONTRIBUTORS.md">CONTRIBUTORS.md</a> for the current list.</p>
+<hr />
+<h2 id="community-guidelines">Community Guidelines<a class="headerlink" href="#community-guidelines" title="Permanent link">&para;</a></h2>
+<p>Please read and follow our <a href="CODE_OF_CONDUCT.md">Code of Conduct</a>. The short version: be respectful, be constructive, assume good intent.</p>
+<p>If you experience or witness unacceptable behavior, report it to the project maintainers. All reports are taken seriously and handled confidentially.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/dreamlessx/LandmarkDiff-public" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://huggingface.co/spaces/dreamlessx/LandmarkDiff" target="_blank" rel="noopener" title="Live Demo on Hugging Face" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M128 320H24.5c-24.9 0-40.2-27.1-27.4-48.5L50 183.3c8.7-14.5 24.3-23.3 41.2-23.3h95C262.3 31.1 375.8 24.6 451.7 35.7c12.8 1.9 22.8 11.9 24.6 24.6 11.1 75.9 4.6 189.4-124.3 265.5v95c0 16.9-8.8 32.5-23.3 41.2l-88.2 52.9c-21.3 12.8-48.5-2.6-48.5-27.4V384c0-35.3-28.7-64-64-64h-.1zm272-160a48 48 0 1 0-96 0 48 48 0 1 0 96 0"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "content.code.copy", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

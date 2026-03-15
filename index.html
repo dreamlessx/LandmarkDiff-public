@@ -1,0 +1,4133 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Photorealistic facial surgery outcome prediction from a single photo, powered by anatomically-conditioned latent diffusion.">
+      
+      
+      
+        <link rel="canonical" href="https://dreamlessx.github.io/LandmarkDiff-public/">
+      
+      
+      
+        <link rel="next" href="install/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
+    
+    
+      
+        <title>LandmarkDiff</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#landmarkdiff" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="LandmarkDiff" class="md-header__button md-logo" aria-label="LandmarkDiff" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LandmarkDiff
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Home
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/dreamlessx/LandmarkDiff-public" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dreamlessx/LandmarkDiff-public
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="install/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="tutorials/custom_procedures/" class="md-tabs__link">
+          
+  
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="api/landmarks/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="model_zoo/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Model Zoo
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="benchmarks/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Benchmarks
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="contributing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="changelog/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="LandmarkDiff" class="md-nav__button md-logo" aria-label="LandmarkDiff" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    LandmarkDiff
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/dreamlessx/LandmarkDiff-public" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    dreamlessx/LandmarkDiff-public
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="." class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-links" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Links
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-landmarkdiff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why LandmarkDiff
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supported-procedures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported Procedures
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Supported Procedures">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rhinoplasty-nose-reshaping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rhinoplasty (Nose Reshaping)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#blepharoplasty-eyelid-surgery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Blepharoplasty (Eyelid Surgery)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rhytidectomy-facelift" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rhytidectomy (Facelift)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orthognathic-surgery-jaw-repositioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Orthognathic Surgery (Jaw Repositioning)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-your-own-procedure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding Your Own Procedure
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How It Works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stage-1-landmark-extraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 1: Landmark Extraction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-2-gaussian-rbf-deformation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 2: Gaussian RBF Deformation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-3-conditioning-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 3: Conditioning Generation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-4-diffusion-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 4: Diffusion Generation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-5-post-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 5: Post-Processing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#demo-outputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Demo Outputs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-a-single-prediction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run a single prediction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cpu-only-mode-no-gpu-needed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CPU-only mode (no GPU needed)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#batch-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Batch processing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inference-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inference Modes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gradio-web-demo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gradio Web Demo
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Gradio Web Demo">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tab-1-single-procedure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tab 1: Single Procedure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tab-2-multi-procedure-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tab 2: Multi-Procedure Comparison
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tab-3-intensity-sweep" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tab 3: Intensity Sweep
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tab-4-face-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tab 4: Face Analysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tab-5-multi-angle-capture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tab 5: Multi-Angle Capture
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#training" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Training">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-a-synthetic-data-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase A: Synthetic Data (current)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-b-clinical-combined-loss-planned" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase B: Clinical + Combined Loss (planned)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#training-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#slurm-hpc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SLURM (HPC)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#evaluation-and-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evaluation and Metrics
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Evaluation and Metrics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#primary-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Primary Metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fitzpatrick-stratification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fitzpatrick Stratification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running Evaluation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#clinical-edge-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clinical Edge Cases
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Clinical Edge Cases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#vitiligo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vitiligo
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bells-palsy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bell's Palsy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keloid-prone-skin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keloid-Prone Skin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ehlers-danlos-syndrome" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ehlers-Danlos Syndrome
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-clinical-flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using Clinical Flags
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#post-processing-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Post-Processing Pipeline
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Post-Processing Pipeline">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-codeformer-face-restoration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. CodeFormer Face Restoration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-real-esrgan-background-enhancement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Real-ESRGAN Background Enhancement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-skin-tone-matching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Skin Tone Matching
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-frequency-aware-sharpening" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Frequency-Aware Sharpening
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-laplacian-pyramid-blending" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Laplacian Pyramid Blending
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-arcface-identity-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. ArcFace Identity Verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project Structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#training-configstrainingyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training (configs/training.yaml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inference-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inference Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#benchmarks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Benchmarks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Benchmarks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inference-speed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inference Speed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#training-throughput" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training Throughput
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vram-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VRAM Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#model-zoo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Model Zoo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#make-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Make Targets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#roadmap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Roadmap
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Roadmap">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#current-v01-spring-2026" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current (v0.1 - Spring 2026)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#next-v02-summer-2026" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next (v0.2 - Summer 2026)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#future-v10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Future (v1.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#publication-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Publication Targets
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#citation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Citation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#current-contributors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current Contributors
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        License
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acknowledgments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acknowledgments
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="install/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tutorials/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tutorials/custom_procedures/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom Procedures
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tutorials/training/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Training
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tutorials/evaluation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tutorials/deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/landmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Landmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/manipulation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manipulation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/conditioning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conditioning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/evaluation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/clinical/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clinical
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="model_zoo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model Zoo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-links" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Links
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-landmarkdiff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why LandmarkDiff
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supported-procedures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported Procedures
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Supported Procedures">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rhinoplasty-nose-reshaping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rhinoplasty (Nose Reshaping)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#blepharoplasty-eyelid-surgery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Blepharoplasty (Eyelid Surgery)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rhytidectomy-facelift" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rhytidectomy (Facelift)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orthognathic-surgery-jaw-repositioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Orthognathic Surgery (Jaw Repositioning)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-your-own-procedure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding Your Own Procedure
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Works
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="How It Works">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stage-1-landmark-extraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 1: Landmark Extraction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-2-gaussian-rbf-deformation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 2: Gaussian RBF Deformation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-3-conditioning-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 3: Conditioning Generation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-4-diffusion-generation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 4: Diffusion Generation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stage-5-post-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stage 5: Post-Processing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#demo-outputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Demo Outputs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-a-single-prediction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run a single prediction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cpu-only-mode-no-gpu-needed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CPU-only mode (no GPU needed)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#batch-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Batch processing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#inference-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inference Modes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gradio-web-demo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gradio Web Demo
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Gradio Web Demo">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tab-1-single-procedure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tab 1: Single Procedure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tab-2-multi-procedure-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tab 2: Multi-Procedure Comparison
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tab-3-intensity-sweep" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tab 3: Intensity Sweep
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tab-4-face-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tab 4: Face Analysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tab-5-multi-angle-capture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tab 5: Multi-Angle Capture
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#training" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Training">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-a-synthetic-data-current" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase A: Synthetic Data (current)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-b-clinical-combined-loss-planned" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase B: Clinical + Combined Loss (planned)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#training-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#slurm-hpc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SLURM (HPC)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#evaluation-and-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evaluation and Metrics
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Evaluation and Metrics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#primary-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Primary Metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fitzpatrick-stratification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fitzpatrick Stratification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running Evaluation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#clinical-edge-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clinical Edge Cases
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Clinical Edge Cases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#vitiligo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vitiligo
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bells-palsy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bell's Palsy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keloid-prone-skin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keloid-Prone Skin
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ehlers-danlos-syndrome" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ehlers-Danlos Syndrome
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-clinical-flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using Clinical Flags
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#post-processing-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Post-Processing Pipeline
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Post-Processing Pipeline">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-codeformer-face-restoration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. CodeFormer Face Restoration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-real-esrgan-background-enhancement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Real-ESRGAN Background Enhancement
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-skin-tone-matching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Skin Tone Matching
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-frequency-aware-sharpening" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Frequency-Aware Sharpening
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-laplacian-pyramid-blending" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Laplacian Pyramid Blending
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-arcface-identity-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. ArcFace Identity Verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project Structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#training-configstrainingyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training (configs/training.yaml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inference-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inference Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#benchmarks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Benchmarks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Benchmarks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inference-speed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inference Speed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#training-throughput" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training Throughput
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vram-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VRAM Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#model-zoo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Model Zoo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#make-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Make Targets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#roadmap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Roadmap
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Roadmap">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#current-v01-spring-2026" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current (v0.1 - Spring 2026)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#next-v02-summer-2026" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next (v0.2 - Summer 2026)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#future-v10" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Future (v1.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#publication-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Publication Targets
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#citation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Citation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributors
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#current-contributors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current Contributors
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contributing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        License
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acknowledgments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acknowledgments
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="landmarkdiff">LandmarkDiff<a class="headerlink" href="#landmarkdiff" title="Permanent link">&para;</a></h1>
+<p><a href="https://github.com/dreamlessx/LandmarkDiff-public/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/dreamlessx/LandmarkDiff-public/actions/workflows/ci.yml/badge.svg" /></a>
+<a href="https://opensource.org/licenses/MIT"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg" /></a>
+<a href="https://www.python.org/downloads/"><img alt="Python 3.10+" src="https://img.shields.io/badge/python-3.10+-blue.svg" /></a>
+<a href="https://pytorch.org/"><img alt="PyTorch 2.1+" src="https://img.shields.io/badge/pytorch-2.1+-ee4c2c.svg" /></a>
+<a href="https://github.com/astral-sh/ruff"><img alt="Code style: ruff" src="https://img.shields.io/badge/code%20style-ruff-000000.svg" /></a>
+<a href="https://colab.research.google.com/github/dreamlessx/LandmarkDiff-public/blob/main/notebooks/quickstart.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
+<p>Photorealistic facial surgery outcome prediction from standard clinical photography, powered by anatomically-conditioned latent diffusion.</p>
+<p>LandmarkDiff takes a patient's pre-operative photograph and a specified surgical procedure, then generates a photorealistic prediction of what that patient will look like post-operatively. The entire pipeline runs on a single 2D photo - no 3D CT scans, no depth sensors, no multi-view capture required.</p>
+<p>It works by extracting MediaPipe's 478-point face mesh from the input photo, applying procedure-specific Gaussian RBF deformations calibrated from anthropometric surgical data, rendering the deformed mesh as a tessellation wireframe, and feeding that wireframe into a ControlNet-conditioned Stable Diffusion 1.5 backbone to synthesize the predicted face. The output is composited back onto the original image using Laplacian pyramid blending with feathered surgical masks, then refined through neural face restoration and identity verification.</p>
+<blockquote>
+<p><strong>Paper:</strong> "LandmarkDiff: Anatomically-Conditioned Latent Diffusion for Photorealistic Facial Surgery Outcome Prediction," targeting MICCAI 2026.</p>
+</blockquote>
+<hr />
+<h2 id="quick-links">Quick Links<a class="headerlink" href="#quick-links" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../examples/quickstart.ipynb">Quickstart notebook</a> -- load the pipeline, run predictions, compare procedures</li>
+<li><a href="../CHANGELOG.md">CHANGELOG</a> -- what changed between releases</li>
+<li><a href="https://github.com/dreamlessx/LandmarkDiff-public/discussions">Discussions</a> -- questions, ideas, and community discussion</li>
+<li><a href="api/">API reference</a> -- per-module documentation</li>
+</ul>
+<hr />
+<h2 id="table-of-contents">Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
+<p><strong>Getting started</strong>
+- <a href="#why-landmarkdiff">Why LandmarkDiff</a>
+- <a href="#quick-start">Quick Start</a>
+- <a href="#inference-modes">Inference Modes</a>
+- <a href="#gradio-web-demo">Gradio Web Demo</a></p>
+<p><strong>Core pipeline</strong>
+- <a href="#supported-procedures">Supported Procedures</a>
+- <a href="#how-it-works">How It Works</a>
+- <a href="#clinical-edge-cases">Clinical Edge Cases</a>
+- <a href="#post-processing-pipeline">Post-Processing Pipeline</a></p>
+<p><strong>Training and evaluation</strong>
+- <a href="#training">Training</a>
+- <a href="#evaluation-and-metrics">Evaluation and Metrics</a>
+- <a href="#benchmarks">Benchmarks</a>
+- <a href="#model-zoo">Model Zoo</a></p>
+<p><strong>Reference</strong>
+- <a href="#demo-outputs">Demo Outputs</a>
+- <a href="#project-structure">Project Structure</a>
+- <a href="#configuration">Configuration</a>
+- <a href="#requirements">Requirements</a>
+- <a href="#docker">Docker</a>
+- <a href="#roadmap">Roadmap</a></p>
+<p><strong>Community</strong>
+- <a href="#citation">Citation</a>
+- <a href="#contributors">Contributors</a>
+- <a href="#contributing">Contributing</a>
+- <a href="#license">License</a>
+- <a href="#acknowledgments">Acknowledgments</a></p>
+<hr />
+<h2 id="why-landmarkdiff">Why LandmarkDiff<a class="headerlink" href="#why-landmarkdiff" title="Permanent link">&para;</a></h2>
+<p>Patients considering facial surgery want to see what they'll look like afterward. Current approaches either require expensive 3D imaging hardware (structured light, CT, MRI) or produce cartoonish 2D warps that don't look real. LandmarkDiff bridges that gap:</p>
+<ul>
+<li><strong>2D input only.</strong> Works from any standard clinical photograph or even a phone selfie. No 3D scanners, no depth sensors, no multi-view rigs.</li>
+<li><strong>Photorealistic output.</strong> Diffusion-based generation produces natural skin texture, lighting, and shadows - not just a geometric morph.</li>
+<li><strong>Anatomically grounded.</strong> Deformations are driven by procedure-specific landmark displacements calibrated from anthropometric surgical literature, not arbitrary pixel pushing.</li>
+<li><strong>Identity preserving.</strong> ArcFace verification ensures the output still looks like the same patient, not a different person.</li>
+<li><strong>Clinically aware.</strong> Built-in handling for vitiligo, Bell's palsy, keloid-prone skin, and Ehlers-Danlos syndrome - conditions that affect how facial tissue responds to surgery.</li>
+<li><strong>Fair across skin tones.</strong> All evaluation metrics are stratified by Fitzpatrick skin type (I through VI) to catch and prevent performance disparities.</li>
+</ul>
+<hr />
+<h2 id="supported-procedures">Supported Procedures<a class="headerlink" href="#supported-procedures" title="Permanent link">&para;</a></h2>
+<p>LandmarkDiff ships with four procedure presets, each targeting specific anatomical regions with calibrated displacement vectors.</p>
+<h3 id="rhinoplasty-nose-reshaping">Rhinoplasty (Nose Reshaping)<a class="headerlink" href="#rhinoplasty-nose-reshaping" title="Permanent link">&para;</a></h3>
+<p>Targets 24 landmarks across the nasal bridge, tip, and alar base. Key deformations include alar base narrowing (nostril width reduction), tip refinement with upward rotation, and dorsal hump reduction. Uses a 30px Gaussian RBF influence radius for smooth transitions across the nasal region.</p>
+<p><strong>Landmark indices:</strong> 1, 2, 4, 5, 6, 19, 94, 141, 168, 195, 197, 236, 240, 274, 275, 278, 279, 294, 326, 327, 360, 363, 370, 456, 460</p>
+<h3 id="blepharoplasty-eyelid-surgery">Blepharoplasty (Eyelid Surgery)<a class="headerlink" href="#blepharoplasty-eyelid-surgery" title="Permanent link">&para;</a></h3>
+<p>Targets 28 landmarks around the upper and lower eyelids. Deformations include upper lid elevation (hooded eye correction), medial and lateral canthal tapering, and lower lid tightening. Uses a tighter 15px influence radius to avoid affecting surrounding structures like the brow.</p>
+<p><strong>Landmark indices:</strong> 33, 7, 163, 144, 145, 153, 154, 155, 157, 158, 159, 160, 161, 246, 362, 382, 381, 380, 374, 373, 390, 249, 263, 466, 388, 387, 386, 385, 384, 398</p>
+<h3 id="rhytidectomy-facelift">Rhytidectomy (Facelift)<a class="headerlink" href="#rhytidectomy-facelift" title="Permanent link">&para;</a></h3>
+<p>Targets 32 landmarks along the jawline, cheeks, and periauricular region. Deformations include jowl lifting (upward and lateral traction), submental tightening, and gentle temple lifting to simulate tissue redistribution. Uses a wider 40px influence radius for the broad soft tissue mobilization typical of facelifts.</p>
+<p><strong>Landmark indices:</strong> 10, 21, 54, 58, 67, 93, 103, 109, 127, 132, 136, 150, 162, 172, 176, 187, 207, 213, 234, 284, 297, 323, 332, 338, 356, 361, 365, 379, 389, 397, 400, 427, 454</p>
+<h3 id="orthognathic-surgery-jaw-repositioning">Orthognathic Surgery (Jaw Repositioning)<a class="headerlink" href="#orthognathic-surgery-jaw-repositioning" title="Permanent link">&para;</a></h3>
+<p>Targets 47 landmarks across the mandible, maxilla, and chin. Deformations simulate mandibular advancement or setback, chin projection changes, and lateral jaw narrowing. Uses a 35px influence radius. Note that identity loss is disabled for orthognathic predictions because jaw repositioning inherently changes facial proportions more than the other procedures.</p>
+<p><strong>Landmark indices:</strong> 0, 17, 18, 36, 37, 39, 40, 57, 61, 78, 80, 81, 82, 84, 87, 88, 91, 95, 146, 167, 169, 170, 175, 181, 191, 200, 201, 202, 204, 208, 211, 212, 214, 269, 270, 291, 311, 312, 317, 321, 324, 325, 375, 396, 405, 407, 415</p>
+<h3 id="adding-your-own-procedure">Adding Your Own Procedure<a class="headerlink" href="#adding-your-own-procedure" title="Permanent link">&para;</a></h3>
+<p>You can define custom procedures by specifying which landmarks to move, how far, and in what direction. See <a href="tutorials/custom_procedures/">tutorials/custom_procedures.md</a> for a step-by-step guide.</p>
+<hr />
+<h2 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h2>
+<p>LandmarkDiff is a five-stage pipeline. Each stage is independently testable and swappable.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>                         Input Photo (512x512)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>                                |
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>                    [1] MediaPipe Face Mesh
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>                    478 landmarks, 3D coords
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                                |
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>                    [2] Gaussian RBF Deformation
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>                    Procedure-specific displacement
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>                    vectors scaled by intensity (0-100%)
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>                                |
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>                    [3] Conditioning Generation
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>                    2556-edge tessellation wireframe
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>                    + adaptive Canny edges + mask
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>                                |
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>                    [4] ControlNet + Stable Diffusion 1.5
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>                    CrucibleAI/ControlNetMediaPipeFace
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>                    conditioned latent space generation
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>                                |
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>                    [5] Post-Processing
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>                    Laplacian pyramid blend (6 levels)
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>                    + CodeFormer face restoration
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>                    + Real-ESRGAN background upscale
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>                    + ArcFace identity verification
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>                                |
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>                        Predicted Post-Op Face
+</code></pre></div>
+<h3 id="stage-1-landmark-extraction">Stage 1: Landmark Extraction<a class="headerlink" href="#stage-1-landmark-extraction" title="Permanent link">&para;</a></h3>
+<p>MediaPipe Face Mesh detects 478 facial landmarks in 3D (x, y, z normalized coordinates) at roughly 30 fps on CPU. The landmarks are grouped into anatomical regions:</p>
+<table>
+<thead>
+<tr>
+<th>Region</th>
+<th>Landmark count</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Jawline</td>
+<td>33</td>
+</tr>
+<tr>
+<td>Left eye</td>
+<td>16</td>
+</tr>
+<tr>
+<td>Right eye</td>
+<td>16</td>
+</tr>
+<tr>
+<td>Left eyebrow</td>
+<td>10</td>
+</tr>
+<tr>
+<td>Right eyebrow</td>
+<td>10</td>
+</tr>
+<tr>
+<td>Nose</td>
+<td>25</td>
+</tr>
+<tr>
+<td>Lips</td>
+<td>22</td>
+</tr>
+<tr>
+<td>Left iris</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Right iris</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Face oval</td>
+<td>37</td>
+</tr>
+</tbody>
+</table>
+<p>The extraction runs at the start of every prediction and again on the output for evaluation (NME metric).</p>
+<h3 id="stage-2-gaussian-rbf-deformation">Stage 2: Gaussian RBF Deformation<a class="headerlink" href="#stage-2-gaussian-rbf-deformation" title="Permanent link">&para;</a></h3>
+<p>Each procedure preset defines a set of <code>DeformationHandle</code> objects, each specifying:
+- <strong>Which landmark</strong> to move (index into the 478-point mesh)
+- <strong>How far</strong> to move it (pixel displacement vector, scaled by the intensity slider)
+- <strong>How wide</strong> the influence is (Gaussian RBF radius in pixels)</p>
+<p>The deformation is applied as a smooth, spatially weighted field. Landmarks near the handle move the most; landmarks far away are unaffected. This prevents the jarring discontinuities you get from simple point-to-point warping.</p>
+<p>All displacement magnitudes are scaled by the <code>intensity</code> parameter (0 to 100), so you can preview subtle through aggressive versions of the same procedure.</p>
+<h3 id="stage-3-conditioning-generation">Stage 3: Conditioning Generation<a class="headerlink" href="#stage-3-conditioning-generation" title="Permanent link">&para;</a></h3>
+<p>The deformed landmarks are rendered into conditioning images for ControlNet:</p>
+<ol>
+<li>
+<p><strong>Tessellation wireframe</strong> - The full 2556-edge MediaPipe face mesh drawn on a black canvas. This is the primary conditioning signal. It uses a static anatomical adjacency list (not Delaunay triangulation), so the topology is invariant to landmark displacement.</p>
+</li>
+<li>
+<p><strong>Adaptive Canny edges</strong> - Edge detection with thresholds derived from the image median (low = 0.66 * median, high = 1.33 * median). This adapts to different skin tones without hardcoded thresholds, plus morphological skeletonization to produce 1-pixel edges that ControlNet expects.</p>
+</li>
+<li>
+<p><strong>Surgical mask</strong> - A feathered mask indicating where the procedure affects the face. Built from the convex hull of procedure-specific landmarks, dilated, Gaussian-feathered, then perturbed with Perlin-style boundary noise (2-4px) to prevent visible seam lines.</p>
+</li>
+</ol>
+<h3 id="stage-4-diffusion-generation">Stage 4: Diffusion Generation<a class="headerlink" href="#stage-4-diffusion-generation" title="Permanent link">&para;</a></h3>
+<p>The conditioning images are fed to CrucibleAI's pre-trained ControlNet for MediaPipe Face, which conditions Stable Diffusion 1.5 to generate a face matching the deformed mesh topology. Procedure-specific text prompts emphasize clinical photography qualities (natural appearance, sharp focus, studio lighting).</p>
+<h3 id="stage-5-post-processing">Stage 5: Post-Processing<a class="headerlink" href="#stage-5-post-processing" title="Permanent link">&para;</a></h3>
+<p>Six-step refinement:
+1. <strong>CodeFormer</strong> neural face restoration (fidelity weight 0.7 for quality-fidelity balance)
+2. <strong>Real-ESRGAN</strong> background super-resolution (non-face regions only)
+3. <strong>Histogram matching</strong> in LAB color space for robust skin tone transfer from input to output
+4. <strong>Frequency-aware sharpening</strong> on the L channel only (avoids color fringing)
+5. <strong>Laplacian pyramid blending</strong> (6 levels) - low frequencies blend smoothly for lighting continuity, high frequencies transition sharply for texture/pore preservation
+6. <strong>ArcFace identity verification</strong> - flags if the output drifts too far from the input identity (cosine similarity threshold 0.6)</p>
+<hr />
+<h2 id="demo-outputs">Demo Outputs<a class="headerlink" href="#demo-outputs" title="Permanent link">&para;</a></h2>
+<p>Sample outputs are in the <a href="demos/">demos/</a> directory.</p>
+<p><strong>Pipeline visualization</strong> (<code>pipeline_abstract.png</code>):</p>
+<p>Schematic overview of the five-stage pipeline: Input, 478-point mesh extraction, RBF deformation, ControlNet + SD1.5 synthesis, and predicted result.</p>
+<p><strong>Mesh deformation</strong> (<code>mesh_deformation.png</code>):</p>
+<p>Side-by-side comparison of original and deformed face meshes, showing procedure-specific Gaussian RBF displacement vectors.</p>
+<p>ControlNet-generated photorealistic samples will be added after model training completes.</p>
+<hr />
+<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
+<h3 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/dreamlessx/LandmarkDiff-public.git
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">cd</span><span class="w"> </span>LandmarkDiff-public
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Core (inference only)</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># With training dependencies</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[train]&quot;</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="c1"># With Gradio demo</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[app]&quot;</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="c1"># With evaluation metrics</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[eval]&quot;</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="c1"># Everything</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[train,eval,app,dev]&quot;</span>
+</code></pre></div>
+<h3 id="run-a-single-prediction">Run a single prediction<a class="headerlink" href="#run-a-single-prediction" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>python<span class="w"> </span>scripts/run_inference.py<span class="w"> </span>/path/to/face.jpg<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>--procedure<span class="w"> </span>rhinoplasty<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>--intensity<span class="w"> </span><span class="m">60</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span>--mode<span class="w"> </span>controlnet
+</code></pre></div>
+<p>This will:
+1. Detect the face and extract 478 landmarks
+2. Apply rhinoplasty deformation at 60% intensity
+3. Generate the ControlNet-conditioned prediction
+4. Composite the result back onto the original
+5. Save the output to <code>output/result.png</code></p>
+<h3 id="cpu-only-mode-no-gpu-needed">CPU-only mode (no GPU needed)<a class="headerlink" href="#cpu-only-mode-no-gpu-needed" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python<span class="w"> </span>examples/tps_only.py<span class="w"> </span>/path/to/face.jpg<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span>--procedure<span class="w"> </span>rhinoplasty<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span>--intensity<span class="w"> </span><span class="m">60</span>
+</code></pre></div>
+<p>TPS mode does pure geometric warping. It runs instantly on CPU and produces a geometrically accurate result, but without the photorealistic texture synthesis that the diffusion modes provide.</p>
+<h3 id="batch-processing">Batch processing<a class="headerlink" href="#batch-processing" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>python<span class="w"> </span>examples/batch_inference.py<span class="w"> </span>/path/to/image_dir/<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span>--procedure<span class="w"> </span>blepharoplasty<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span>--intensity<span class="w"> </span><span class="m">50</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span>--output<span class="w"> </span>output/batch/
+</code></pre></div>
+<hr />
+<h2 id="inference-modes">Inference Modes<a class="headerlink" href="#inference-modes" title="Permanent link">&para;</a></h2>
+<p>LandmarkDiff supports four inference modes with different quality-speed-hardware tradeoffs:</p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>GPU Required</th>
+<th>Speed</th>
+<th>Quality</th>
+<th>Identity Preservation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tps</code></td>
+<td>No</td>
+<td>Instant (~0.5s)</td>
+<td>Geometric only</td>
+<td>Perfect (pixel-level)</td>
+</tr>
+<tr>
+<td><code>img2img</code></td>
+<td>Yes (6GB)</td>
+<td>~5s</td>
+<td>Good</td>
+<td>Good</td>
+</tr>
+<tr>
+<td><code>controlnet</code></td>
+<td>Yes (6GB)</td>
+<td>~5s</td>
+<td>Best</td>
+<td>Good</td>
+</tr>
+<tr>
+<td><code>controlnet_ip</code></td>
+<td>Yes (8GB)</td>
+<td>~7s</td>
+<td>Best</td>
+<td>Best</td>
+</tr>
+</tbody>
+</table>
+<p><strong>TPS mode</strong> - Thin-plate spline warping. No diffusion, no neural network inference. Just mathematically warps the pixels according to landmark displacements. Fast and deterministic, but the output looks like a geometric morph rather than a natural photo. Good for previewing the deformation before committing to a full diffusion run.</p>
+<p><strong>img2img mode</strong> - Standard Stable Diffusion img2img with the TPS-warped image as input and a feathered mask restricting generation to the surgical region. Faster than ControlNet but less controllable.</p>
+<p><strong>ControlNet mode</strong> - The primary mode. Uses CrucibleAI's pre-trained ControlNet for MediaPipe Face mesh conditioning. The deformed wireframe directly controls the spatial layout of the generated face, producing the most anatomically accurate results.</p>
+<p><strong>ControlNet + IP-Adapter mode</strong> - Adds IP-Adapter FaceID on top of ControlNet for stronger identity preservation. Uses face embeddings from the input photo to condition generation, reducing the chance of producing a different-looking person. Slightly slower due to the additional encoder pass.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">landmarkdiff.inference</span><span class="w"> </span><span class="kn">import</span> <span class="n">LandmarkDiffPipeline</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">LandmarkDiffPipeline</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;controlnet&quot;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">pipeline</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">result</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="n">image</span><span class="p">,</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="n">procedure</span><span class="o">=</span><span class="s2">&quot;rhinoplasty&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="n">intensity</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>    <span class="n">num_inference_steps</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>    <span class="n">guidance_scale</span><span class="o">=</span><span class="mf">7.5</span><span class="p">,</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>    <span class="n">controlnet_conditioning_scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>    <span class="n">strength</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>    <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>    <span class="n">postprocess</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="p">)</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="c1"># result dict contains:</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="c1"># result[&quot;output&quot;]              - final composited image</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="c1"># result[&quot;output_raw&quot;]          - raw diffusion output (before compositing)</span>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="c1"># result[&quot;output_tps&quot;]          - TPS-only geometric warp</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="c1"># result[&quot;conditioning&quot;]        - wireframe fed to ControlNet</span>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="c1"># result[&quot;mask&quot;]                - surgical mask</span>
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="c1"># result[&quot;landmarks_original&quot;]  - input landmarks</span>
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a><span class="c1"># result[&quot;landmarks_manipulated&quot;] - deformed landmarks</span>
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a><span class="c1"># result[&quot;identity_check&quot;]      - ArcFace similarity score</span>
+</code></pre></div>
+<hr />
+<h2 id="gradio-web-demo">Gradio Web Demo<a class="headerlink" href="#gradio-web-demo" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>python<span class="w"> </span>scripts/app.py
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="c1"># Opens at http://localhost:7860</span>
+</code></pre></div>
+<p>The demo has five tabs:</p>
+<h3 id="tab-1-single-procedure">Tab 1: Single Procedure<a class="headerlink" href="#tab-1-single-procedure" title="Permanent link">&para;</a></h3>
+<p>Upload a photo, pick a procedure, adjust intensity from 0-100%. The interface shows every intermediate step: extracted landmarks, deformed mesh, wireframe conditioning, surgical mask, TPS warp, and the final result in a side-by-side before/after view. Clinical flags (vitiligo, Bell's palsy with side selector, keloid-prone regions, Ehlers-Danlos) are available as checkboxes.</p>
+<h3 id="tab-2-multi-procedure-comparison">Tab 2: Multi-Procedure Comparison<a class="headerlink" href="#tab-2-multi-procedure-comparison" title="Permanent link">&para;</a></h3>
+<p>Set independent intensity sliders for all four procedures and generate them all from the same photo. Useful for showing a patient their options side by side.</p>
+<h3 id="tab-3-intensity-sweep">Tab 3: Intensity Sweep<a class="headerlink" href="#tab-3-intensity-sweep" title="Permanent link">&para;</a></h3>
+<p>Pick a procedure and a number of steps (3 to 10). Generates a gallery progressing from 0% to 100% intensity so you can see exactly how the result changes with the intensity parameter.</p>
+<h3 id="tab-4-face-analysis">Tab 4: Face Analysis<a class="headerlink" href="#tab-4-face-analysis" title="Permanent link">&para;</a></h3>
+<p>Upload a photo and get back the detected Fitzpatrick skin type, face view classification (frontal, three-quarter, or profile), yaw and pitch angles in degrees, per-region landmark counts, confidence scores, and an annotated landmark visualization.</p>
+<h3 id="tab-5-multi-angle-capture">Tab 5: Multi-Angle Capture<a class="headerlink" href="#tab-5-multi-angle-capture" title="Permanent link">&para;</a></h3>
+<p>Guides the user through capturing 5 standardized clinical views: frontal (0 degrees), left three-quarter (45 degrees), right three-quarter (45 degrees), left profile (90 degrees), right profile (90 degrees). Validates each photo against the expected yaw range and generates predictions for all views, producing a combined before/after gallery.</p>
+<hr />
+<h2 id="training">Training<a class="headerlink" href="#training" title="Permanent link">&para;</a></h2>
+<p>Training happens in two phases.</p>
+<h3 id="phase-a-synthetic-data-current">Phase A: Synthetic Data (current)<a class="headerlink" href="#phase-a-synthetic-data-current" title="Permanent link">&para;</a></h3>
+<p>Generate TPS-warped face pairs from FFHQ, then fine-tune ControlNet to reconstruct the original face from the deformed wireframe.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># 1. Download FFHQ samples</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>python<span class="w"> </span>scripts/download_ffhq.py<span class="w"> </span>--num<span class="w"> </span><span class="m">50000</span><span class="w"> </span>--resolution<span class="w"> </span><span class="m">512</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># 2. Generate training pairs (original + TPS-warped + wireframe)</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>python<span class="w"> </span>scripts/generate_synthetic_data.py<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">    </span>--input<span class="w"> </span>data/ffhq_samples/<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">    </span>--output<span class="w"> </span>data/synthetic_pairs/<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">    </span>--num<span class="w"> </span><span class="m">50000</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="c1"># 3. Train ControlNet</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>python<span class="w"> </span>scripts/train_controlnet.py<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">    </span>--data_dir<span class="w"> </span>data/synthetic_pairs/<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">    </span>--output_dir<span class="w"> </span>checkpoints/<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">    </span>--num_train_steps<span class="w"> </span><span class="m">50000</span>
+</code></pre></div>
+<p>Phase A uses diffusion loss only (MSE between predicted and target noise).</p>
+<h3 id="phase-b-clinical-combined-loss-planned">Phase B: Clinical + Combined Loss (planned)<a class="headerlink" href="#phase-b-clinical-combined-loss-planned" title="Permanent link">&para;</a></h3>
+<p>Fine-tune further on clinical before/after pairs with the full four-term loss:</p>
+<table>
+<thead>
+<tr>
+<th>Loss</th>
+<th>Weight</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Diffusion (MSE)</td>
+<td>1.0</td>
+<td>Primary training signal</td>
+</tr>
+<tr>
+<td>Landmark L2</td>
+<td>0.1</td>
+<td>Anatomical accuracy (inside surgical mask only)</td>
+</tr>
+<tr>
+<td>Identity (ArcFace)</td>
+<td>0.05</td>
+<td>Patient identity preservation</td>
+</tr>
+<tr>
+<td>Perceptual (LPIPS)</td>
+<td>0.1</td>
+<td>Texture quality (outside mask, prevents penalizing the TPS warp)</td>
+</tr>
+</tbody>
+</table>
+<p>The landmark loss is normalized by inter-ocular distance (landmarks 33 vs 263) for scale invariance. The identity loss uses procedure-dependent face cropping - rhinoplasty crops to the upper face, blepharoplasty uses the full face, rhytidectomy crops above the jawline, and orthognathic disables identity loss entirely since jaw surgery inherently changes proportions.</p>
+<h3 id="training-configuration">Training Configuration<a class="headerlink" href="#training-configuration" title="Permanent link">&para;</a></h3>
+<p>Default config at <code>configs/training.yaml</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Learning rate</td>
+<td>1e-5</td>
+<td>With cosine scheduler</td>
+</tr>
+<tr>
+<td>Warmup steps</td>
+<td>500</td>
+<td></td>
+</tr>
+<tr>
+<td>Batch size</td>
+<td>4</td>
+<td>Gradient accumulation 4x, effective batch 16</td>
+</tr>
+<tr>
+<td>Mixed precision</td>
+<td>bf16</td>
+<td>NOT fp16 - activation range exceeded</td>
+</tr>
+<tr>
+<td>EMA decay</td>
+<td>0.9999</td>
+<td></td>
+</tr>
+<tr>
+<td>Checkpoint interval</td>
+<td>5000 steps</td>
+<td></td>
+</tr>
+<tr>
+<td>ControlNet scale max</td>
+<td>1.2</td>
+<td>Sum &gt; 1.2 causes saturation</td>
+</tr>
+</tbody>
+</table>
+<p>Important training safeguards:
+- VAE is always frozen (gradient leak corrupts the latent space)
+- GroupNorm instead of BatchNorm (batch size 4 makes BN unstable)
+- TPS warps are precomputed to avoid CPU bottleneck during training
+- Git LFS required for checkpoints</p>
+<h3 id="slurm-hpc">SLURM (HPC)<a class="headerlink" href="#slurm-hpc" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>sbatch<span class="w"> </span>scripts/train_slurm.sh
+</code></pre></div>
+<p>See <a href="docs/GPU_TRAINING_GUIDE.md">docs/GPU_TRAINING_GUIDE.md</a> for detailed HPC setup, Apptainer containers, and multi-node configurations.</p>
+<hr />
+<h2 id="evaluation-and-metrics">Evaluation and Metrics<a class="headerlink" href="#evaluation-and-metrics" title="Permanent link">&para;</a></h2>
+<h3 id="primary-metrics">Primary Metrics<a class="headerlink" href="#primary-metrics" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>What it measures</th>
+<th>Target</th>
+<th>How it's computed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FID</td>
+<td>Realism</td>
+<td>&lt; 50</td>
+<td>Frechet Inception Distance via torch-fidelity (GPU-accelerated)</td>
+</tr>
+<tr>
+<td>LPIPS</td>
+<td>Perceptual similarity</td>
+<td>&lt; 0.15</td>
+<td>Learned Perceptual Image Patch Similarity (AlexNet backbone)</td>
+</tr>
+<tr>
+<td>SSIM</td>
+<td>Structural similarity</td>
+<td>&gt; 0.80</td>
+<td>Structural Similarity Index between input and output</td>
+</tr>
+<tr>
+<td>NME</td>
+<td>Landmark accuracy</td>
+<td>&lt; 0.05</td>
+<td>Normalized Mean Error - L2 distance between predicted and target landmarks, normalized by inter-ocular distance (landmarks 33 vs 263)</td>
+</tr>
+<tr>
+<td>Identity Sim</td>
+<td>Identity preservation</td>
+<td>&gt; 0.85</td>
+<td>ArcFace cosine similarity between input and output face embeddings (InsightFace buffalo_l, 512-dim)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="fitzpatrick-stratification">Fitzpatrick Stratification<a class="headerlink" href="#fitzpatrick-stratification" title="Permanent link">&para;</a></h3>
+<p>Every metric is broken down by Fitzpatrick skin type to ensure equitable performance. Skin type is classified automatically from the input photo using Individual Typology Angle (ITA):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>ITA = arctan((L - 50) / b) * (180 / pi)
+</code></pre></div>
+<p>where L and b come from the LAB color space.</p>
+<table>
+<thead>
+<tr>
+<th>ITA Range</th>
+<th>Fitzpatrick Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&gt; 55</td>
+<td>Type I</td>
+<td>Very light</td>
+</tr>
+<tr>
+<td>41 to 55</td>
+<td>Type II</td>
+<td>Light</td>
+</tr>
+<tr>
+<td>28 to 41</td>
+<td>Type III</td>
+<td>Intermediate</td>
+</tr>
+<tr>
+<td>10 to 28</td>
+<td>Type IV</td>
+<td>Tan</td>
+</tr>
+<tr>
+<td>-30 to 10</td>
+<td>Type V</td>
+<td>Brown</td>
+</tr>
+<tr>
+<td>&lt; -30</td>
+<td>Type VI</td>
+<td>Dark</td>
+</tr>
+</tbody>
+</table>
+<p>This catches cases where the model might work well on lighter skin but degrade on darker skin (or vice versa). Results are reported per-type in evaluation output.</p>
+<h3 id="running-evaluation">Running Evaluation<a class="headerlink" href="#running-evaluation" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>python<span class="w"> </span>scripts/evaluate.py<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">    </span>--pred_dir<span class="w"> </span>output/predictions/<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span>--target_dir<span class="w"> </span>data/targets/<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span>--output<span class="w"> </span>eval_results.json
+</code></pre></div>
+<p>The evaluation harness computes all metrics, stratifies by Fitzpatrick type and by procedure, and writes a JSON report.</p>
+<hr />
+<h2 id="clinical-edge-cases">Clinical Edge Cases<a class="headerlink" href="#clinical-edge-cases" title="Permanent link">&para;</a></h2>
+<p>LandmarkDiff handles four clinical conditions that affect how deformations should be applied or how the mask should behave.</p>
+<h3 id="vitiligo">Vitiligo<a class="headerlink" href="#vitiligo" title="Permanent link">&para;</a></h3>
+<p>Vitiligo causes depigmented patches on the skin that should be preserved, not blended over. LandmarkDiff detects vitiligo patches using LAB luminance thresholding (high L, low saturation), filters by minimum area (200 px squared), and reduces mask intensity over detected patches by a preservation factor of 0.3. This means the surgical region is still modified, but depigmented areas are largely left alone.</p>
+<h3 id="bells-palsy">Bell's Palsy<a class="headerlink" href="#bells-palsy" title="Permanent link">&para;</a></h3>
+<p>Bell's palsy causes unilateral facial paralysis. Deforming the paralyzed side produces unrealistic results because the tissue doesn't respond to surgery the same way. LandmarkDiff takes the affected side (left or right) as input and disables all deformation handles on that side. The bilateral landmark groups (eye, eyebrow, mouth corner, jawline) for the affected side are excluded from manipulation.</p>
+<h3 id="keloid-prone-skin">Keloid-Prone Skin<a class="headerlink" href="#keloid-prone-skin" title="Permanent link">&para;</a></h3>
+<p>Keloid-prone patients develop raised scars at incision sites. LandmarkDiff identifies keloid-prone regions (specified by anatomical zone, e.g., "jawline", "nose"), creates exclusion masks with margins, and reduces mask intensity by a factor of 0.5 with additional Gaussian blur (sigma 10.0) for softer transitions. This prevents sharp compositing boundaries that would suggest incision lines.</p>
+<h3 id="ehlers-danlos-syndrome">Ehlers-Danlos Syndrome<a class="headerlink" href="#ehlers-danlos-syndrome" title="Permanent link">&para;</a></h3>
+<p>Ehlers-Danlos causes tissue hypermobility - the skin stretches more than typical. LandmarkDiff multiplies the Gaussian RBF influence radius by 1.5 for Ehlers-Danlos patients, producing wider, more gradual deformations that reflect how hypermobile tissue actually responds to surgical manipulation.</p>
+<h3 id="using-clinical-flags">Using Clinical Flags<a class="headerlink" href="#using-clinical-flags" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">landmarkdiff.clinical</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClinicalFlags</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="n">flags</span> <span class="o">=</span> <span class="n">ClinicalFlags</span><span class="p">(</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="n">vitiligo</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="n">bells_palsy</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    <span class="n">bells_palsy_side</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>    <span class="n">keloid_prone</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    <span class="n">keloid_regions</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;jawline&quot;</span><span class="p">,</span> <span class="s2">&quot;nose&quot;</span><span class="p">],</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>    <span class="n">ehlers_danlos</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="p">)</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="n">result</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>    <span class="n">image</span><span class="p">,</span>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>    <span class="n">procedure</span><span class="o">=</span><span class="s2">&quot;rhinoplasty&quot;</span><span class="p">,</span>
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>    <span class="n">intensity</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>    <span class="n">clinical_flags</span><span class="o">=</span><span class="n">flags</span><span class="p">,</span>
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a><span class="p">)</span>
+</code></pre></div>
+<p>In the Gradio demo, these are checkboxes and dropdowns in Tab 1.</p>
+<hr />
+<h2 id="post-processing-pipeline">Post-Processing Pipeline<a class="headerlink" href="#post-processing-pipeline" title="Permanent link">&para;</a></h2>
+<p>The raw diffusion output needs refinement before it looks right. The post-processing pipeline runs six steps:</p>
+<h3 id="1-codeformer-face-restoration">1. CodeFormer Face Restoration<a class="headerlink" href="#1-codeformer-face-restoration" title="Permanent link">&para;</a></h3>
+<p>Neural face restoration that fixes small artifacts, enhances detail, and sharpens facial features. Uses a fidelity weight of 0.7 (range 0.0 to 1.0) to balance quality enhancement against faithfulness to the diffusion output. Falls back to GFPGAN if CodeFormer is unavailable.</p>
+<h3 id="2-real-esrgan-background-enhancement">2. Real-ESRGAN Background Enhancement<a class="headerlink" href="#2-real-esrgan-background-enhancement" title="Permanent link">&para;</a></h3>
+<p>Super-resolution applied only to non-face regions (background, hair, clothing). Prevents the background from looking noticeably lower quality than the restored face.</p>
+<h3 id="3-skin-tone-matching">3. Skin Tone Matching<a class="headerlink" href="#3-skin-tone-matching" title="Permanent link">&para;</a></h3>
+<p>CDF histogram matching in LAB color space transfers the input photo's skin tone to the generated output. LAB matching is more robust than RGB for this because it separates luminance from color, preventing brightness shifts.</p>
+<h3 id="4-frequency-aware-sharpening">4. Frequency-Aware Sharpening<a class="headerlink" href="#4-frequency-aware-sharpening" title="Permanent link">&para;</a></h3>
+<p>Unsharp masking applied to the L channel only (luminance) with a default strength of 0.25. Sharpening only luminance avoids the color fringing artifacts you get from sharpening RGB channels directly.</p>
+<h3 id="5-laplacian-pyramid-blending">5. Laplacian Pyramid Blending<a class="headerlink" href="#5-laplacian-pyramid-blending" title="Permanent link">&para;</a></h3>
+<p>The compositing step - blends the generated face into the original photo. Uses a 6-level Laplacian pyramid where low-frequency levels blend smoothly (lighting and color continuity) while high-frequency levels transition sharply (texture and pore detail). This prevents the color halos and "pasted on" look that simple alpha blending produces.</p>
+<h3 id="6-arcface-identity-verification">6. ArcFace Identity Verification<a class="headerlink" href="#6-arcface-identity-verification" title="Permanent link">&para;</a></h3>
+<p>Final sanity check. Extracts ArcFace embeddings from the input and output, computes cosine similarity, and flags if the score drops below 0.6. This catches cases where the diffusion model drifted too far from the patient's appearance.</p>
+<hr />
+<h2 id="project-structure">Project Structure<a class="headerlink" href="#project-structure" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>landmarkdiff/                   # Core library
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>    landmarks.py                #   MediaPipe 478-point face mesh extraction
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>                                #   FaceLandmarks dataclass, extract_landmarks(),
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>                                #   render_landmark_image(), LANDMARK_REGIONS dict
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>    conditioning.py             #   ControlNet conditioning generation
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>                                #   Tessellation wireframe (2556 edges), adaptive
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>                                #   Canny edge detection, generate_conditioning()
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>    manipulation.py             #   Gaussian RBF landmark deformation
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>                                #   DeformationHandle, PROCEDURE_LANDMARKS,
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>                                #   apply_procedure_preset(), clinical modifiers
+<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>    masking.py                  #   Feathered surgical mask generation
+<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>                                #   Convex hull + dilation + Gaussian feather +
+<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>                                #   Perlin boundary noise, clinical adjustments
+<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>    inference.py                #   Full pipeline (4 modes: tps/img2img/controlnet/
+<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a>                                #   controlnet_ip), LandmarkDiffPipeline class,
+<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a>                                #   face view estimation, procedure-specific prompts
+<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a>    losses.py                   #   Combined loss (diffusion + landmark + identity
+<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>                                #   + perceptual), phase A/B control, procedure-
+<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a>                                #   dependent identity cropping
+<a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a>    evaluation.py               #   Metrics (FID, LPIPS, SSIM, NME, Identity Sim),
+<a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a>                                #   Fitzpatrick ITA classification, per-type and
+<a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a>                                #   per-procedure stratification
+<a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a>    clinical.py                 #   Clinical edge cases: ClinicalFlags dataclass,
+<a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a>                                #   vitiligo patch detection, Bell&#39;s palsy side
+<a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a>                                #   exclusion, keloid mask adjustment, Ehlers-Danlos
+<a id="__codelineno-12-26" name="__codelineno-12-26" href="#__codelineno-12-26"></a>    postprocess.py              #   Neural + classical post-processing: CodeFormer,
+<a id="__codelineno-12-27" name="__codelineno-12-27" href="#__codelineno-12-27"></a>                                #   GFPGAN, Real-ESRGAN, LAB histogram matching,
+<a id="__codelineno-12-28" name="__codelineno-12-28" href="#__codelineno-12-28"></a>                                #   Laplacian pyramid blend, ArcFace verification
+<a id="__codelineno-12-29" name="__codelineno-12-29" href="#__codelineno-12-29"></a>    synthetic/
+<a id="__codelineno-12-30" name="__codelineno-12-30" href="#__codelineno-12-30"></a>        pair_generator.py       #   Training pair generation pipeline
+<a id="__codelineno-12-31" name="__codelineno-12-31" href="#__codelineno-12-31"></a>        tps_warp.py             #   Thin-plate spline warping with rigid regions
+<a id="__codelineno-12-32" name="__codelineno-12-32" href="#__codelineno-12-32"></a>                                #   (teeth, sclera), smart control point subsampling
+<a id="__codelineno-12-33" name="__codelineno-12-33" href="#__codelineno-12-33"></a>                                #   (max 80 from 478), batched evaluation
+<a id="__codelineno-12-34" name="__codelineno-12-34" href="#__codelineno-12-34"></a>        augmentation.py         #   Clinical photography augmentations
+<a id="__codelineno-12-35" name="__codelineno-12-35" href="#__codelineno-12-35"></a>
+<a id="__codelineno-12-36" name="__codelineno-12-36" href="#__codelineno-12-36"></a>scripts/                        # CLI tools
+<a id="__codelineno-12-37" name="__codelineno-12-37" href="#__codelineno-12-37"></a>    app.py                      #   Gradio web demo (5 tabs)
+<a id="__codelineno-12-38" name="__codelineno-12-38" href="#__codelineno-12-38"></a>    run_inference.py            #   Single image inference
+<a id="__codelineno-12-39" name="__codelineno-12-39" href="#__codelineno-12-39"></a>    train_controlnet.py         #   ControlNet fine-tuning
+<a id="__codelineno-12-40" name="__codelineno-12-40" href="#__codelineno-12-40"></a>    evaluate.py                 #   Automated evaluation harness
+<a id="__codelineno-12-41" name="__codelineno-12-41" href="#__codelineno-12-41"></a>    demo.py                     #   CLI demo with visualizations
+<a id="__codelineno-12-42" name="__codelineno-12-42" href="#__codelineno-12-42"></a>    download_ffhq.py            #   FFHQ face image downloader
+<a id="__codelineno-12-43" name="__codelineno-12-43" href="#__codelineno-12-43"></a>    generate_synthetic_data.py  #   Synthetic training pair generator
+<a id="__codelineno-12-44" name="__codelineno-12-44" href="#__codelineno-12-44"></a>    train_slurm.sh              #   SLURM job script (single GPU)
+<a id="__codelineno-12-45" name="__codelineno-12-45" href="#__codelineno-12-45"></a>    train_slurm_v2.sh           #   SLURM job script (multi-GPU)
+<a id="__codelineno-12-46" name="__codelineno-12-46" href="#__codelineno-12-46"></a>    gen_synthetic_slurm.sh      #   SLURM job for data generation
+<a id="__codelineno-12-47" name="__codelineno-12-47" href="#__codelineno-12-47"></a>
+<a id="__codelineno-12-48" name="__codelineno-12-48" href="#__codelineno-12-48"></a>examples/                       # Runnable example scripts
+<a id="__codelineno-12-49" name="__codelineno-12-49" href="#__codelineno-12-49"></a>    basic_inference.py          #   Single image with GPU fallback to TPS
+<a id="__codelineno-12-50" name="__codelineno-12-50" href="#__codelineno-12-50"></a>    batch_inference.py          #   Process a directory of images
+<a id="__codelineno-12-51" name="__codelineno-12-51" href="#__codelineno-12-51"></a>    tps_only.py                 #   CPU-only TPS warp (no GPU)
+<a id="__codelineno-12-52" name="__codelineno-12-52" href="#__codelineno-12-52"></a>    compare_procedures.py       #   Side-by-side all procedures grid
+<a id="__codelineno-12-53" name="__codelineno-12-53" href="#__codelineno-12-53"></a>    custom_procedure.py         #   Define a lip augmentation procedure
+<a id="__codelineno-12-54" name="__codelineno-12-54" href="#__codelineno-12-54"></a>    landmark_visualization.py   #   Visualize mesh with displacement arrows
+<a id="__codelineno-12-55" name="__codelineno-12-55" href="#__codelineno-12-55"></a>
+<a id="__codelineno-12-56" name="__codelineno-12-56" href="#__codelineno-12-56"></a>benchmarks/                     # Performance benchmarks
+<a id="__codelineno-12-57" name="__codelineno-12-57" href="#__codelineno-12-57"></a>    benchmark_inference.py      #   Inference speed across hardware
+<a id="__codelineno-12-58" name="__codelineno-12-58" href="#__codelineno-12-58"></a>    benchmark_landmarks.py      #   Landmark extraction throughput
+<a id="__codelineno-12-59" name="__codelineno-12-59" href="#__codelineno-12-59"></a>    benchmark_training.py       #   Training steps/hour
+<a id="__codelineno-12-60" name="__codelineno-12-60" href="#__codelineno-12-60"></a>
+<a id="__codelineno-12-61" name="__codelineno-12-61" href="#__codelineno-12-61"></a>configs/                        # Training configuration
+<a id="__codelineno-12-62" name="__codelineno-12-62" href="#__codelineno-12-62"></a>    training.yaml               #   Default hyperparameters, loss weights, safeguards
+<a id="__codelineno-12-63" name="__codelineno-12-63" href="#__codelineno-12-63"></a>
+<a id="__codelineno-12-64" name="__codelineno-12-64" href="#__codelineno-12-64"></a>paper/                          # MICCAI 2026 manuscript (Springer LNCS)
+<a id="__codelineno-12-65" name="__codelineno-12-65" href="#__codelineno-12-65"></a>docs/                           # Documentation
+<a id="__codelineno-12-66" name="__codelineno-12-66" href="#__codelineno-12-66"></a>    tutorials/                  #   quickstart, custom_procedures, training,
+<a id="__codelineno-12-67" name="__codelineno-12-67" href="#__codelineno-12-67"></a>                                #   evaluation, deployment
+<a id="__codelineno-12-68" name="__codelineno-12-68" href="#__codelineno-12-68"></a>    api/                        #   Per-module API reference (landmarks,
+<a id="__codelineno-12-69" name="__codelineno-12-69" href="#__codelineno-12-69"></a>                                #   manipulation, conditioning, inference,
+<a id="__codelineno-12-70" name="__codelineno-12-70" href="#__codelineno-12-70"></a>                                #   evaluation, clinical)
+<a id="__codelineno-12-71" name="__codelineno-12-71" href="#__codelineno-12-71"></a>    GPU_TRAINING_GUIDE.md       #   HPC setup, Apptainer, SLURM
+<a id="__codelineno-12-72" name="__codelineno-12-72" href="#__codelineno-12-72"></a>
+<a id="__codelineno-12-73" name="__codelineno-12-73" href="#__codelineno-12-73"></a>containers/                     # Apptainer/Singularity container definitions
+<a id="__codelineno-12-74" name="__codelineno-12-74" href="#__codelineno-12-74"></a>tests/                          # Unit tests (9 test modules)
+<a id="__codelineno-12-75" name="__codelineno-12-75" href="#__codelineno-12-75"></a>demos/                          # Curated sample output images
+</code></pre></div>
+<hr />
+<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
+<h3 id="training-configstrainingyaml">Training (configs/training.yaml)<a class="headerlink" href="#training-configstrainingyaml" title="Permanent link">&para;</a></h3>
+<p>The training config controls all hyperparameters, loss weights, and safeguards. Key sections:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nt">model</span><span class="p">:</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">controlnet</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CrucibleAI/ControlNetMediaPipeFace</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">  </span><span class="nt">base_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">runwayml/stable-diffusion-v1-5</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="nt">training</span><span class="p">:</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">  </span><span class="nt">learning_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0e-5</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">  </span><span class="nt">lr_scheduler</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cosine</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="w">  </span><span class="nt">warmup_steps</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">500</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="w">  </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">  </span><span class="nt">gradient_accumulation_steps</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span><span class="w">  </span><span class="c1"># effective batch = 16</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="w">  </span><span class="nt">num_train_steps</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10000</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="w">  </span><span class="nt">mixed_precision</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bf16</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="w">  </span><span class="nt">ema_decay</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.9999</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="nt">loss_weights</span><span class="p">:</span><span class="w">  </span><span class="c1"># Phase B only</span>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a><span class="w">  </span><span class="nt">diffusion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="w">  </span><span class="nt">landmark</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="w">  </span><span class="nt">identity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.05</span>
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="w">  </span><span class="nt">perceptual</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
+</code></pre></div>
+<h3 id="inference-parameters">Inference Parameters<a class="headerlink" href="#inference-parameters" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Default</th>
+<th>Range</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>intensity</code></td>
+<td>60</td>
+<td>0 - 100</td>
+<td>How aggressive the deformation is (percentage)</td>
+</tr>
+<tr>
+<td><code>num_inference_steps</code></td>
+<td>30</td>
+<td>10 - 100</td>
+<td>Diffusion denoising steps (more = higher quality, slower)</td>
+</tr>
+<tr>
+<td><code>guidance_scale</code></td>
+<td>7.5</td>
+<td>1.0 - 20.0</td>
+<td>Classifier-free guidance strength</td>
+</tr>
+<tr>
+<td><code>controlnet_conditioning_scale</code></td>
+<td>1.0</td>
+<td>0.0 - 1.2</td>
+<td>How strongly the wireframe controls generation. Max 1.2 to avoid saturation</td>
+</tr>
+<tr>
+<td><code>strength</code></td>
+<td>0.75</td>
+<td>0.0 - 1.0</td>
+<td>img2img denoising strength</td>
+</tr>
+<tr>
+<td><code>seed</code></td>
+<td>None</td>
+<td>any int</td>
+<td>For reproducible results</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="benchmarks">Benchmarks<a class="headerlink" href="#benchmarks" title="Permanent link">&para;</a></h2>
+<h3 id="inference-speed">Inference Speed<a class="headerlink" href="#inference-speed" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Hardware</th>
+<th>Mode</th>
+<th>Time per image</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A100 80GB</td>
+<td>ControlNet (30 steps)</td>
+<td>~3 sec</td>
+</tr>
+<tr>
+<td>A100 40GB</td>
+<td>ControlNet (30 steps)</td>
+<td>~4 sec</td>
+</tr>
+<tr>
+<td>RTX 4090</td>
+<td>ControlNet (30 steps)</td>
+<td>~5 sec</td>
+</tr>
+<tr>
+<td>RTX 3090</td>
+<td>ControlNet (30 steps)</td>
+<td>~7 sec</td>
+</tr>
+<tr>
+<td>T4 16GB</td>
+<td>ControlNet (30 steps)</td>
+<td>~15 sec</td>
+</tr>
+<tr>
+<td>M3 Pro (MPS)</td>
+<td>ControlNet (30 steps)</td>
+<td>~45 sec</td>
+</tr>
+<tr>
+<td>Any CPU</td>
+<td>TPS only</td>
+<td>~0.5 sec</td>
+</tr>
+</tbody>
+</table>
+<h3 id="training-throughput">Training Throughput<a class="headerlink" href="#training-throughput" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Hardware</th>
+<th>Batch size</th>
+<th>Grad accum</th>
+<th>Effective batch</th>
+<th>Steps/hour</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A100 80GB</td>
+<td>4</td>
+<td>4</td>
+<td>16</td>
+<td>~600</td>
+</tr>
+<tr>
+<td>A100 40GB</td>
+<td>2</td>
+<td>8</td>
+<td>16</td>
+<td>~400</td>
+</tr>
+<tr>
+<td>RTX 4090</td>
+<td>2</td>
+<td>8</td>
+<td>16</td>
+<td>~350</td>
+</tr>
+<tr>
+<td>RTX 3090</td>
+<td>1</td>
+<td>16</td>
+<td>16</td>
+<td>~200</td>
+</tr>
+</tbody>
+</table>
+<h3 id="vram-usage">VRAM Usage<a class="headerlink" href="#vram-usage" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>VRAM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SD 1.5 (FP16)</td>
+<td>~2.5 GB</td>
+</tr>
+<tr>
+<td>ControlNet (FP16)</td>
+<td>~1.5 GB</td>
+</tr>
+<tr>
+<td>VAE (FP32)</td>
+<td>~0.5 GB</td>
+</tr>
+<tr>
+<td>CodeFormer</td>
+<td>~0.4 GB</td>
+</tr>
+<tr>
+<td>ArcFace</td>
+<td>~0.3 GB</td>
+</tr>
+<tr>
+<td><strong>Total inference</strong></td>
+<td><strong>~5.2 GB</strong></td>
+</tr>
+<tr>
+<td><strong>Total training</strong></td>
+<td><strong>~25 GB</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Run benchmarks yourself:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>python<span class="w"> </span>benchmarks/benchmark_inference.py<span class="w"> </span>--device<span class="w"> </span>cuda<span class="w"> </span>--num_images<span class="w"> </span><span class="m">100</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>python<span class="w"> </span>benchmarks/benchmark_landmarks.py<span class="w"> </span>--num_images<span class="w"> </span><span class="m">1000</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>python<span class="w"> </span>benchmarks/benchmark_training.py<span class="w"> </span>--device<span class="w"> </span>cuda<span class="w"> </span>--num_steps<span class="w"> </span><span class="m">100</span>
+</code></pre></div>
+<hr />
+<h2 id="model-zoo">Model Zoo<a class="headerlink" href="#model-zoo" title="Permanent link">&para;</a></h2>
+<p>See <a href="../MODEL_ZOO.md">MODEL_ZOO.md</a> for the full list of required and optional models.</p>
+<p><strong>Base models (auto-downloaded on first run):</strong>
+- <a href="https://huggingface.co/runwayml/stable-diffusion-v1-5">runwayml/stable-diffusion-v1-5</a> - ~4 GB
+- <a href="https://huggingface.co/CrucibleAI/ControlNetMediaPipeFace">CrucibleAI/ControlNetMediaPipeFace</a> - ~1.4 GB
+- MediaPipe Face Mesh - ~5 MB</p>
+<p><strong>Post-processing models (optional, auto-downloaded):</strong>
+- CodeFormer - ~400 MB
+- GFPGAN v1.4 - ~350 MB
+- Real-ESRGAN x4 - ~64 MB
+- ArcFace (InsightFace buffalo_l) - ~250 MB</p>
+<hr />
+<h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Python 3.10+</li>
+<li>PyTorch 2.1+ with CUDA (or MPS on Apple Silicon)</li>
+<li>~6 GB VRAM for inference (SD 1.5 + ControlNet)</li>
+<li>~25 GB VRAM for training (A100 40GB minimum, 80GB recommended)</li>
+<li>MediaPipe 0.10.9+</li>
+<li>diffusers 0.27.0+, transformers 4.38.0+</li>
+</ul>
+<p>Full dependency list in <a href="pyproject.toml">pyproject.toml</a>.</p>
+<hr />
+<h2 id="docker">Docker<a class="headerlink" href="#docker" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># CPU-only demo (TPS mode, no GPU required)</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>docker<span class="w"> </span>build<span class="w"> </span>-t<span class="w"> </span>landmarkdiff:cpu<span class="w"> </span>-f<span class="w"> </span>Dockerfile.cpu<span class="w"> </span>.
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>docker<span class="w"> </span>run<span class="w"> </span>-p<span class="w"> </span><span class="m">7860</span>:7860<span class="w"> </span>landmarkdiff:cpu
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="c1"># GPU-accelerated demo (ControlNet inference)</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>docker<span class="w"> </span>build<span class="w"> </span>-t<span class="w"> </span>landmarkdiff:gpu<span class="w"> </span>-f<span class="w"> </span>Dockerfile.gpu<span class="w"> </span>.
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>docker<span class="w"> </span>run<span class="w"> </span>--gpus<span class="w"> </span>all<span class="w"> </span>-p<span class="w"> </span><span class="m">7860</span>:7860<span class="w"> </span>landmarkdiff:gpu
+</code></pre></div>
+<p>Or with Docker Compose:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>app<span class="w">       </span><span class="c1"># CPU demo on :7860</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>gpu<span class="w">       </span><span class="c1"># GPU demo on :7861</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>docker<span class="w"> </span>compose<span class="w"> </span>--profile<span class="w"> </span>training<span class="w"> </span>run<span class="w"> </span>train<span class="w">  </span><span class="c1"># training (GPU)</span>
+</code></pre></div>
+<p>GPU passthrough requires <a href="https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html">NVIDIA Container Toolkit</a>. See <a href="docker-gpu/">Docker GPU Setup</a> for prerequisites, VRAM requirements by GPU tier, and troubleshooting.</p>
+<p>For HPC environments using Apptainer/Singularity, see <a href="containers/">containers/</a>.</p>
+<hr />
+<h2 id="make-targets">Make Targets<a class="headerlink" href="#make-targets" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>make<span class="w"> </span><span class="nb">help</span><span class="w">            </span><span class="c1"># show all commands</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>make<span class="w"> </span>install<span class="w">         </span><span class="c1"># install (inference only)</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>make<span class="w"> </span>install-dev<span class="w">     </span><span class="c1"># install with dev tools</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>make<span class="w"> </span>install-train<span class="w">   </span><span class="c1"># install with training deps</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>make<span class="w"> </span>install-app<span class="w">     </span><span class="c1"># install with Gradio</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>make<span class="w"> </span>install-all<span class="w">     </span><span class="c1"># install everything</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>make<span class="w"> </span><span class="nb">test</span><span class="w">            </span><span class="c1"># run full test suite</span>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>make<span class="w"> </span>test-fast<span class="w">       </span><span class="c1"># run tests excluding slow ones</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>make<span class="w"> </span>lint<span class="w">            </span><span class="c1"># run ruff linter</span>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>make<span class="w"> </span>format<span class="w">          </span><span class="c1"># auto-format code</span>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>make<span class="w"> </span>type-check<span class="w">      </span><span class="c1"># run mypy</span>
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>make<span class="w"> </span>check<span class="w">           </span><span class="c1"># lint + format + type-check</span>
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a>make<span class="w"> </span>demo<span class="w">            </span><span class="c1"># launch Gradio demo</span>
+<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>make<span class="w"> </span>inference<span class="w">       </span><span class="c1"># run single inference</span>
+<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a>make<span class="w"> </span>train<span class="w">           </span><span class="c1"># train ControlNet</span>
+<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a>make<span class="w"> </span>evaluate<span class="w">        </span><span class="c1"># run evaluation</span>
+<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>make<span class="w"> </span>docker<span class="w">          </span><span class="c1"># build Docker image</span>
+<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a>make<span class="w"> </span>paper<span class="w">           </span><span class="c1"># build MICCAI paper PDF</span>
+<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a>make<span class="w"> </span>clean<span class="w">           </span><span class="c1"># remove build artifacts</span>
+</code></pre></div>
+<hr />
+<h2 id="roadmap">Roadmap<a class="headerlink" href="#roadmap" title="Permanent link">&para;</a></h2>
+<h3 id="current-v01-spring-2026">Current (v0.1 - Spring 2026)<a class="headerlink" href="#current-v01-spring-2026" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[x] Core pipeline: landmark extraction, RBF deformation, ControlNet conditioning, mask compositing</li>
+<li>[x] 4 procedure presets (rhinoplasty, blepharoplasty, rhytidectomy, orthognathic)</li>
+<li>[x] Synthetic training pair generation via TPS warps</li>
+<li>[x] Clinical edge case handling (vitiligo, Bell's palsy, keloid, Ehlers-Danlos)</li>
+<li>[x] Neural post-processing (CodeFormer, Real-ESRGAN, ArcFace identity verification)</li>
+<li>[x] Gradio demo with multi-angle capture</li>
+<li>[x] Fitzpatrick-stratified evaluation protocol</li>
+<li>[x] Docker and Apptainer container support</li>
+<li>[ ] ControlNet fine-tuning on 50K+ synthetic pairs (in progress)</li>
+<li>[ ] Populate results tables in paper</li>
+</ul>
+<h3 id="next-v02-summer-2026">Next (v0.2 - Summer 2026)<a class="headerlink" href="#next-v02-summer-2026" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] FLUX.1-dev backbone upgrade (higher quality generation at 1024x1024)</li>
+<li>[ ] IP-Adapter FaceID for stronger identity preservation</li>
+<li>[ ] Additional procedure presets (mentoplasty, brow lift, otoplasty)</li>
+<li>[ ] Clinical validation with board-certified plastic surgeons</li>
+<li>[ ] Hugging Face Spaces interactive demo</li>
+<li>[ ] arXiv preprint (target: April 2026)</li>
+</ul>
+<h3 id="future-v10">Future (v1.0)<a class="headerlink" href="#future-v10" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] FLAME 3D morphable model integration for depth-aware deformation</li>
+<li>[ ] Multi-view consistency loss across frontal/profile predictions</li>
+<li>[ ] Physics-informed tissue simulation (FEM for soft tissue response)</li>
+<li>[ ] React Native mobile capture app with standardized clinical photo acquisition</li>
+<li>[ ] Cloud deployment with Triton inference server</li>
+</ul>
+<h3 id="publication-targets">Publication Targets<a class="headerlink" href="#publication-targets" title="Permanent link">&para;</a></h3>
+<ul>
+<li>MICCAI 2026 workshop paper (July 2026 submission)</li>
+<li>RSNA 2026 abstract (May 2026)</li>
+<li>Full conference paper (CVPR/NeurIPS 2027)</li>
+</ul>
+<hr />
+<h2 id="citation">Citation<a class="headerlink" href="#citation" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="nc">@inproceedings</span><span class="p">{</span><span class="nl">landmarkdiff2026</span><span class="p">,</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">  </span><span class="na">title</span><span class="p">=</span><span class="s">{LandmarkDiff: Anatomically-Conditioned Latent Diffusion for</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="s">         Photorealistic Facial Surgery Outcome Prediction}</span><span class="p">,</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">  </span><span class="na">booktitle</span><span class="p">=</span><span class="s">{Medical Image Computing and Computer Assisted Intervention</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="s">             -- MICCAI}</span><span class="p">,</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">  </span><span class="na">year</span><span class="p">=</span><span class="s">{2026}</span><span class="p">,</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="w">  </span><span class="na">publisher</span><span class="p">=</span><span class="s">{Springer}</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="p">}</span>
+</code></pre></div>
+<p>Machine-readable citation metadata is also available in <a href="CITATION.cff">CITATION.cff</a>.</p>
+<hr />
+<h2 id="contributors">Contributors<a class="headerlink" href="#contributors" title="Permanent link">&para;</a></h2>
+<p>We track all contributions and contributors will be acknowledged in the MICCAI 2026 paper. Significant contributions earn co-authorship.</p>
+<table>
+<thead>
+<tr>
+<th>Contribution Level</th>
+<th>Recognition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bug fix or typo</td>
+<td>Acknowledged in README</td>
+</tr>
+<tr>
+<td>New procedure preset</td>
+<td>Acknowledged in paper and README</td>
+</tr>
+<tr>
+<td>Feature module (new loss, metric, clinical handler)</td>
+<td>Co-author on paper</td>
+</tr>
+<tr>
+<td>Clinical validation data</td>
+<td>Co-author on paper</td>
+</tr>
+<tr>
+<td>Sustained multi-feature contributions</td>
+<td>Co-author on paper</td>
+</tr>
+</tbody>
+</table>
+<h3 id="current-contributors">Current Contributors<a class="headerlink" href="#current-contributors" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>GitHub Handle</th>
+<th>Contribution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/dreamlessx">@dreamlessx</a></td>
+<td>Core architecture, training pipeline, paper</td>
+</tr>
+</tbody>
+</table>
+<p>To join this list, open a PR or contribute to an issue. See <a href="../CONTRIBUTING.md">CONTRIBUTING.md</a> for guidelines.</p>
+<hr />
+<h2 id="contributing">Contributing<a class="headerlink" href="#contributing" title="Permanent link">&para;</a></h2>
+<p>Contributions welcome. See <a href="../CONTRIBUTING.md">CONTRIBUTING.md</a> for the full guide, including development setup, coding style, testing requirements, and how to add new procedures.</p>
+<p>For bug reports and feature requests, use the <a href="https://github.com/dreamlessx/LandmarkDiff-public/issues/new/choose">issue templates</a>.</p>
+<p>For major changes, please open an issue first to discuss the proposed approach.</p>
+<hr />
+<h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
+<p>MIT License. See <a href="LICENSE">LICENSE</a> for details.</p>
+<hr />
+<h2 id="acknowledgments">Acknowledgments<a class="headerlink" href="#acknowledgments" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://huggingface.co/CrucibleAI/ControlNetMediaPipeFace">CrucibleAI</a> for the MediaPipe Face ControlNet</li>
+<li><a href="https://google.github.io/mediapipe/">MediaPipe</a> for the 478-point face mesh</li>
+<li><a href="https://github.com/CompVis/stable-diffusion">Stable Diffusion</a> and <a href="https://github.com/lllyasviel/ControlNet">ControlNet</a> for the diffusion backbone</li>
+<li><a href="https://github.com/sczhou/CodeFormer">CodeFormer</a> and <a href="https://github.com/xinntao/Real-ESRGAN">Real-ESRGAN</a> for face restoration</li>
+<li><a href="https://github.com/deepinsight/insightface">InsightFace</a> for ArcFace identity verification</li>
+<li><a href="https://github.com/NVlabs/ffhq-dataset">FFHQ</a> for training data</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>:maxdepth: 2
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>:caption: Getting Started
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>getting-started
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>install
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>tutorials/quickstart
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>faq
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>:maxdepth: 2
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>:caption: Procedures
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>procedures/rhinoplasty
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>procedures/blepharoplasty
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>procedures/rhytidectomy
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>procedures/orthognathic
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>procedures/brow_lift
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>procedures/mentoplasty
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>:maxdepth: 2
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>:caption: Tutorials
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>tutorials/custom_procedures
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>tutorials/training
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>tutorials/evaluation
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a>tutorials/deployment
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a>docker-gpu
+<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a>GPU_TRAINING_GUIDE
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>:maxdepth: 2
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>:caption: API Reference
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>api/landmarks
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>api/manipulation
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>api/conditioning
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>api/inference
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>api/evaluation
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>api/clinical
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>:maxdepth: 1
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>:caption: Project
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>benchmarks
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>changelog
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/dreamlessx/LandmarkDiff-public" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://huggingface.co/spaces/dreamlessx/LandmarkDiff" target="_blank" rel="noopener" title="Live Demo on Hugging Face" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M128 320H24.5c-24.9 0-40.2-27.1-27.4-48.5L50 183.3c8.7-14.5 24.3-23.3 41.2-23.3h95C262.3 31.1 375.8 24.6 451.7 35.7c12.8 1.9 22.8 11.9 24.6 24.6 11.1 75.9 4.6 189.4-124.3 265.5v95c0 16.9-8.8 32.5-23.3 41.2l-88.2 52.9c-21.3 12.8-48.5-2.6-48.5-27.4V384c0-35.3-28.7-64-64-64h-.1zm272-160a48 48 0 1 0-96 0 48 48 0 1 0 96 0"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.instant", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "content.code.copy", "search.suggest", "search.highlight"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
