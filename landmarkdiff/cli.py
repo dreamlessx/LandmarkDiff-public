@@ -62,6 +62,13 @@ def cmd_infer(args: argparse.Namespace) -> None:
         cv2.imwrite(str(wm_path), watermarked)
         print(f"Watermarked: {wm_path}")
 
+    if args.gif:
+        from landmarkdiff.export import export_before_after_gif
+
+        gif_path = out_path.with_suffix(".gif")
+        export_before_after_gif(image, result["output"], gif_path)
+        print(f"GIF saved: {gif_path}")
+
 
 def cmd_ensemble(args: argparse.Namespace) -> None:
     """Run ensemble inference."""
@@ -188,6 +195,11 @@ def main(argv: list[str] | None = None) -> None:
     p_infer.add_argument("--displacement-model", default=None)
     p_infer.add_argument("--seed", type=int, default=42)
     p_infer.add_argument("--watermark", action="store_true")
+    p_infer.add_argument(
+        "--gif",
+        action="store_true",
+        help="Export before/after animated GIF alongside the output image",
+    )
     p_infer.add_argument(
         "--deterministic",
         action="store_true",
