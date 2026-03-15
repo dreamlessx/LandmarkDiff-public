@@ -361,3 +361,108 @@ class _StageTimer:
     def __exit__(self, *args: Any) -> None:
         elapsed = (time.perf_counter() - self._start) * 1000
         self._profile.times_ms.append(elapsed)
+
+
+# ---------------------------------------------------------------------------
+# Progress reporting
+# ---------------------------------------------------------------------------
+
+# Standard pipeline stages with human-readable descriptions and
+# approximate percentage of total runtime.
+PIPELINE_STAGES: list[tuple[str, str, int]] = [
+    ("loading", "Loading model weights", 5),
+    ("landmark_extraction", "Extracting facial landmarks", 10),
+    ("manipulation", "Applying surgical deformation", 15),
+    ("conditioning", "Generating conditioning image", 20),
+    ("masking", "Computing surgical mask", 25),
+    ("tps_warp", "Warping image (TPS)", 35),
+    ("inference", "Running diffusion model", 70),
+    ("postprocessing", "Post-processing output", 90),
+    ("compositing", "Blending result", 95),
+    ("complete", "Done", 100),
+]
+
+_STAGE_INDEX = {name: i for i, (name, _, _) in enumerate(PIPELINE_STAGES)}
+
+
+class ProgressReporter:
+    """Callback-based progress reporter for the LandmarkDiff pipeline.
+
+    Provides stage-by-stage progress updates with human-readable
+    descriptions and percentage estimates.  Accepts a callback function
+    that receives (stage_name, description, percent) on each update.
+
+    Usage:
+        def on_progress(stage, desc, pct):
+            print(f"[{pct}%] {desc}")
+
+        reporter = ProgressReporter(callback=on_progress)
+        reporter.update("landmark_extraction")
+        reporter.update("manipulation")
+        # ...
+        reporter.update("complete")
+
+    For Gradio integration:
+        reporter = ProgressReporter(callback=gr.Progress())
+    """
+
+    def __init__(
+        self,
+        callback: Any | None = None,
+    ) -> None:
+        self._callback = callback
+        self._current_stage: str = ""
+        self._start_time: float = 0.0
+        self._stage_times: dict[str, float] = {}
+
+    def update(self, stage: str, description: str | None = None) -> None:
+        """Report progress for a named stage.
+
+        Args:
+            stage: Stage identifier (e.g. "landmark_extraction").
+                   Unknown stages are accepted with 0% progress.
+            description: Override the default stage description.
+        """
+        now = time.perf_counter()
+        if self._start_time == 0:
+            self._start_time = now
+
+        # Record timing for previous stage
+        if self._current_stage:
+            elapsed = (now - self._stage_start) * 1000
+            self._stage_times[self._current_stage] = elapsed
+
+        self._current_stage = stage
+        self._stage_start = now
+
+        # Look up stage info
+        idx = _STAGE_INDEX.get(stage)
+        if idx is not None:
+            _, default_desc, pct = PIPELINE_STAGES[idx]
+        else:
+            default_desc = stage.replace("_", " ").title()
+            pct = 0
+
+        desc = description or default_desc
+
+        if self._callback is not None:
+            try:
+                self._callback(stage, desc, pct)
+            except TypeError:
+                # Gradio Progress() takes (fraction, desc) instead
+                import contextlib
+
+                with contextlib.suppress(Exception):
+                    self._callback(pct / 100.0, desc=desc)
+
+    @property
+    def elapsed_ms(self) -> float:
+        """Total elapsed time since first update."""
+        if self._start_time == 0:
+            return 0.0
+        return (time.perf_counter() - self._start_time) * 1000
+
+    @property
+    def stage_times(self) -> dict[str, float]:
+        """Per-stage timing in milliseconds."""
+        return dict(self._stage_times)
