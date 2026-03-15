@@ -5,6 +5,7 @@
 # LandmarkDiff
 
 [![CI](https://github.com/dreamlessx/LandmarkDiff-public/actions/workflows/ci.yml/badge.svg)](https://github.com/dreamlessx/LandmarkDiff-public/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/dreamlessx/LandmarkDiff-public/graph/badge.svg)](https://codecov.io/gh/dreamlessx/LandmarkDiff-public)
 [![PyPI version](https://img.shields.io/pypi/v/landmarkdiff.svg)](https://pypi.org/project/landmarkdiff/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10 | 3.11 | 3.12](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12-blue.svg)](https://www.python.org/downloads/)
@@ -40,6 +41,8 @@ The 2D pipeline ships now and works well. The end goal is full 3D: you hold up y
 LandmarkDiff extracts MediaPipe's 478-point face mesh from the input photo, applies procedure-specific Gaussian RBF deformations calibrated from anthropometric surgical data, renders the deformed mesh as a tessellation wireframe, and feeds that wireframe into a ControlNet-conditioned Stable Diffusion 1.5 backbone to synthesize the predicted face. The output is composited back onto the original image using Laplacian pyramid blending with feathered surgical masks, then refined through neural face restoration and identity verification.
 
 > **Paper:** "LandmarkDiff: Anatomically-Conditioned Latent Diffusion for Photorealistic Facial Surgery Outcome Prediction," targeting MICCAI 2026.
+
+![LandmarkDiff pipeline](demos/demo_pipeline_0.png)
 
 ### Try the Live Demo
 
@@ -324,19 +327,15 @@ Six-step refinement:
 
 ## Demo Outputs
 
-Sample outputs are in the [demos/](demos/) directory.
+### Pipeline Visualization
 
-**Pipeline visualizations** (Input -> Mesh -> Deformed Mesh -> Surgical Mask -> Result):
+Each prediction follows five stages: input photo, original face mesh, manipulated mesh with procedure-specific deformations, surgical mask defining the affected region, and the final TPS-warped result.
 
-<p align="center">
-  <img src="demos/demo_pipeline_0.png" alt="Pipeline example: rhinoplasty prediction showing each stage from input photo to final result" width="100%">
-</p>
+![Pipeline demo -- rhinoplasty on diverse faces](demos/demo_pipeline_0.png)
 
-<p align="center">
-  <img src="demos/demo_pipeline_1.png" alt="Pipeline example: blepharoplasty prediction showing each stage from input photo to final result" width="100%">
-</p>
+![Pipeline demo -- rhinoplasty result](demos/demo_pipeline_1.png)
 
-ControlNet-generated photorealistic samples will be added after model training completes.
+Sample outputs are in the [demos/](demos/) directory. ControlNet-generated photorealistic samples will be added after model training completes.
 
 ---
 
