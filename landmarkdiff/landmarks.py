@@ -170,20 +170,29 @@ class FaceLandmarks:
 
     @property
     def pixel_coords(self) -> np.ndarray:
-        """Convert normalized landmarks to pixel coordinates (478, 2)."""
+        """Convert normalized landmarks to pixel coordinates (478, 2).
+
+        Coordinates are clamped to valid image bounds so that extreme
+        head poses do not produce out-of-range indices.
+        """
         coords = self.landmarks[:, :2].copy()
         coords[:, 0] *= self.image_width
         coords[:, 1] *= self.image_height
+        coords[:, 0] = np.clip(coords[:, 0], 0, self.image_width - 1)
+        coords[:, 1] = np.clip(coords[:, 1], 0, self.image_height - 1)
         return coords
 
     def pixel_coords_at(self, width: int, height: int) -> np.ndarray:
         """Convert normalized landmarks to pixel coordinates at a given size.
 
         Use this when the image has been resized after landmark extraction.
+        Coordinates are clamped to [0, width-1] x [0, height-1].
         """
         coords = self.landmarks[:, :2].copy()
         coords[:, 0] *= width
         coords[:, 1] *= height
+        coords[:, 0] = np.clip(coords[:, 0], 0, width - 1)
+        coords[:, 1] = np.clip(coords[:, 1], 0, height - 1)
         return coords
 
     def rescale(self, width: int, height: int) -> FaceLandmarks:
