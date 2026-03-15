@@ -162,6 +162,15 @@ LANDMARK_REGIONS: dict[str, list[int]] = {
     "iris_right": [473, 474, 475, 476, 477],
 }
 
+# Lip contour landmarks for teeth region estimation
+_UPPER_LIP_INNER = [78, 191, 80, 81, 82, 13, 312, 311, 310, 415, 308]
+_LOWER_LIP_INNER = [78, 95, 88, 178, 87, 14, 317, 402, 318, 324, 308]
+
+# Eye contour landmarks for glasses bridge detection
+_EYE_BRIDGE = [6, 168, 197, 195, 5, 4]
+_EYE_OUTER_LEFT = [33, 246, 161, 160, 159, 158, 157, 173, 155, 154, 153]
+_EYE_OUTER_RIGHT = [362, 398, 384, 385, 386, 387, 388, 466, 390, 373, 374]
+
 
 @dataclass(frozen=True)
 class FaceLandmarks:
@@ -348,6 +357,122 @@ class FaceLandmarks:
             int(min(self.image_width - 1, x_max + pad_x)),
             int(min(self.image_height - 1, y_max + pad_y)),
         )
+
+
+def get_teeth_mask(
+    face: FaceLandmarks,
+    image_shape: tuple[int, int],
+) -> np.ndarray:
+    """Generate a binary mask for the teeth/mouth interior region.
+
+    Uses inner lip contour landmarks to define the mouth opening where
+    teeth are visible. This mask can be used to apply rigid translation
+    instead of smooth TPS warping in the teeth region.
+
+    Args:
+        face: Extracted face landmarks.
+        image_shape: (height, width) of the target image.
+
+    Returns:
+        Float32 mask [0-1] where 1 = teeth region.
+    """
+    h, w = image_shape
+    coords = face.pixel_coords_at(w, h)
+
+    upper = coords[_UPPER_LIP_INNER].astype(np.int32)
+    lower = coords[_LOWER_LIP_INNER].astype(np.int32)
+
+    # Combine into a closed polygon (upper lip forward, lower lip backward)
+    mouth_contour = np.concatenate([upper, lower[::-1]], axis=0)
+
+    mask = np.zeros((h, w), dtype=np.float32)
+    cv2.fillPoly(mask, [mouth_contour], 1.0)
+    return mask
+
+
+def detect_glasses_region(
+    face: FaceLandmarks,
+    image: np.ndarray,
+    threshold: float = 30.0,
+) -> bool:
+    """Detect whether the subject is wearing glasses.
+
+    Uses edge density in the eye bridge region (between the eyes) to
+    detect glasses frames. Glasses produce strong horizontal edges
+    that skin alone does not.
+
+    Args:
+        face: Extracted face landmarks.
+        image: BGR image.
+        threshold: Edge density threshold for glasses detection.
+
+    Returns:
+        True if glasses are likely present.
+    """
+    h, w = image.shape[:2]
+    coords = face.pixel_coords_at(w, h)
+
+    # Sample the bridge region between the eyes
+    bridge_pts = coords[_EYE_BRIDGE].astype(np.int32)
+    x_min = max(0, int(bridge_pts[:, 0].min()) - 5)
+    x_max = min(w, int(bridge_pts[:, 0].max()) + 5)
+    y_min = max(0, int(bridge_pts[:, 1].min()) - 10)
+    y_max = min(h, int(bridge_pts[:, 1].max()) + 10)
+
+    if x_max <= x_min or y_max <= y_min:
+        return False
+
+    roi = image[y_min:y_max, x_min:x_max]
+    if roi.size == 0:
+        return False
+
+    gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY) if roi.ndim == 3 else roi
+    edges = cv2.Canny(gray, 50, 150)
+    edge_density = float(edges.mean())
+
+    return edge_density > threshold
+
+
+def get_accessory_mask(
+    face: FaceLandmarks,
+    image: np.ndarray,
+    include_glasses: bool = True,
+    include_teeth: bool = True,
+) -> np.ndarray:
+    """Generate a combined mask for accessories and rigid structures.
+
+    Identifies regions that should receive special handling during
+    deformation (rigid translation for teeth, exclusion for glasses).
+
+    Args:
+        face: Extracted face landmarks.
+        image: BGR image.
+        include_glasses: Check for glasses.
+        include_teeth: Include teeth region.
+
+    Returns:
+        Float32 mask [0-1] where 1 = accessory/rigid region.
+    """
+    h, w = image.shape[:2]
+    mask = np.zeros((h, w), dtype=np.float32)
+
+    if include_teeth:
+        teeth = get_teeth_mask(face, (h, w))
+        mask = np.maximum(mask, teeth)
+
+    if include_glasses and detect_glasses_region(face, image):
+        coords = face.pixel_coords_at(w, h)
+        # Mark eye frame regions
+        for eye_indices in [_EYE_OUTER_LEFT, _EYE_OUTER_RIGHT]:
+            pts = coords[eye_indices].astype(np.int32)
+            hull = cv2.convexHull(pts)
+            cv2.fillConvexPoly(mask, hull, 1.0)
+        # Bridge
+        bridge_pts = coords[_EYE_BRIDGE].astype(np.int32)
+        for i in range(len(bridge_pts) - 1):
+            cv2.line(mask, tuple(bridge_pts[i]), tuple(bridge_pts[i + 1]), 1.0, 5)
+
+    return mask
 
 
 def extract_landmarks(
