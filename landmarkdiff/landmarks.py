@@ -248,6 +248,71 @@ class FaceLandmarks:
         return float(np.degrees(np.arctan2(dy, dx)))
 
     @property
+    def face_yaw(self) -> float:
+        """Estimate horizontal face rotation (yaw) in degrees.
+
+        Uses the asymmetry between left and right eye corner distances
+        to the nose tip (landmark 1) to estimate yaw angle. Positive
+        values mean the face is turned to the subject's left (viewer's
+        right); negative means turned to the subject's right.
+
+        Returns:
+            Estimated yaw in degrees. 0 = frontal, +/-90 = full profile.
+        """
+        nose_tip = self.landmarks[1, :2]
+        left_eye = self.landmarks[33, :2]
+        right_eye = self.landmarks[263, :2]
+
+        # Distances in pixel space
+        d_left = float(
+            np.sqrt(
+                ((left_eye[0] - nose_tip[0]) * self.image_width) ** 2
+                + ((left_eye[1] - nose_tip[1]) * self.image_height) ** 2
+            )
+        )
+        d_right = float(
+            np.sqrt(
+                ((right_eye[0] - nose_tip[0]) * self.image_width) ** 2
+                + ((right_eye[1] - nose_tip[1]) * self.image_height) ** 2
+            )
+        )
+
+        # Asymmetry ratio: 1.0 = frontal, >>1 or <<1 = profile
+        if d_left + d_right < 1e-6:
+            return 0.0
+        ratio = (d_right - d_left) / (d_right + d_left)
+        # Map ratio [-1, 1] to approximate degrees [-90, 90]
+        return float(np.clip(ratio * 90.0, -90.0, 90.0))
+
+    @property
+    def face_view(self) -> str:
+        """Classify face view as frontal, three-quarter, or profile.
+
+        Returns:
+            One of "frontal", "three_quarter_left", "three_quarter_right",
+            "profile_left", or "profile_right".
+        """
+        yaw = self.face_yaw
+        abs_yaw = abs(yaw)
+        if abs_yaw < 15.0:
+            return "frontal"
+        if abs_yaw < 45.0:
+            return "three_quarter_left" if yaw > 0 else "three_quarter_right"
+        return "profile_left" if yaw > 0 else "profile_right"
+
+    @property
+    def visible_side(self) -> str:
+        """Return which side of the face is more visible.
+
+        Returns:
+            "both" for frontal, "left" or "right" for profile/three-quarter.
+        """
+        view = self.face_view
+        if view == "frontal":
+            return "both"
+        return "left" if "left" in view else "right"
+
+    @property
     def face_bbox(self) -> tuple[int, int, int, int]:
         """Axis-aligned bounding box with 20% padding, rotation-aware.
 
