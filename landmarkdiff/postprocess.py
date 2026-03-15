@@ -183,6 +183,12 @@ def restore_face_gfpgan(
     except ImportError:
         return image
 
+    # GFPGAN requires 3-channel BGR input
+    if image.ndim == 2:
+        image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+    elif image.ndim == 3 and image.shape[2] == 1:
+        image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+
     try:
         global _GFPGAN_HELPER
         # Singleton: avoid reloading ~300MB GFPGAN model on every call
@@ -236,6 +242,12 @@ def restore_face_codeformer(
         from torchvision.transforms.functional import normalize as tv_normalize
     except ImportError:
         return image
+
+    # CodeFormer requires 3-channel BGR input
+    if image.ndim == 2:
+        image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+    elif image.ndim == 3 and image.shape[2] == 1:
+        image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
     try:
         global _CODEFORMER_MODEL
