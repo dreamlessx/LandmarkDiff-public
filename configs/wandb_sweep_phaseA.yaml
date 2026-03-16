@@ -1,4 +1,4 @@
-# WandB Hyperparameter Sweep — Phase A (ControlNet Conditioning)
+# WandB Hyperparameter Sweep -- Phase A (ControlNet Conditioning)
 #
 # Bayesian optimization to find optimal Phase A training configuration.
 # Key parameters: learning rate, batch size, EMA decay.

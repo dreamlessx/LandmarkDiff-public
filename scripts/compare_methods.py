@@ -167,7 +167,7 @@ def make_method_comparison(
     title = np.zeros((title_h, grid.shape[1], 3), dtype=np.uint8)
     cv2.putText(
         title,
-        f"{procedure.capitalize()} @ {intensity}% — Method Comparison",
+        f"{procedure.capitalize()} @ {intensity}% -- Method Comparison",
         (10, 22),
         cv2.FONT_HERSHEY_SIMPLEX,
         0.6,
@@ -215,7 +215,7 @@ def make_intensity_comparison(
     title = np.zeros((title_h, grid.shape[1], 3), dtype=np.uint8)
     cv2.putText(
         title,
-        f"{procedure.capitalize()} — Intensity Sweep",
+        f"{procedure.capitalize()} -- Intensity Sweep",
         (10, 22),
         cv2.FONT_HERSHEY_SIMPLEX,
         0.6,

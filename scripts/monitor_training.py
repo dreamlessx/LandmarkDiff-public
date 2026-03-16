@@ -147,7 +147,7 @@ def plot_training(data: dict, output_path: str) -> None:
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
     except ImportError:
-        print("matplotlib not available — skipping plot")
+        print("matplotlib not available -- skipping plot")
         return
 
     if not data["steps"]:
@@ -391,20 +391,20 @@ def detect_convergence(data: dict) -> str:
         older_avg = np.mean(older)
         change_pct = (recent_avg - older_avg) / max(abs(older_avg), 1e-8) * 100
         if change_pct < -2:
-            lines.append(f"Loss: DECREASING ({change_pct:.1f}% change) — training is progressing")
+            lines.append(f"Loss: DECREASING ({change_pct:.1f}% change) -- training is progressing")
         elif change_pct > 5:
-            lines.append(f"Loss: INCREASING ({change_pct:+.1f}% change) — possible divergence!")
+            lines.append(f"Loss: INCREASING ({change_pct:+.1f}% change) -- possible divergence!")
         else:
-            lines.append(f"Loss: PLATEAU ({change_pct:+.1f}% change) — may be converging")
+            lines.append(f"Loss: PLATEAU ({change_pct:+.1f}% change) -- may be converging")
 
     # Gradient norms
     if data["grad_norms"]:
         max_gn = max(data["grad_norms"][-50:])
         if max_gn > 100:
-            lines.append(f"WARNING: High gradient norms (max={max_gn:.1f}) — possible instability")
+            lines.append(f"WARNING: High gradient norms (max={max_gn:.1f}) -- possible instability")
         elif max_gn < 0.01:
             lines.append(
-                f"WARNING: Very small gradient norms (max={max_gn:.4f}) — possible vanishing gradients"
+                f"WARNING: Very small gradient norms (max={max_gn:.4f}) -- possible vanishing gradients"
             )
 
     # ETA

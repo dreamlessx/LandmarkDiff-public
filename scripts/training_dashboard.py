@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Self-contained HTML training dashboard — works without WandB.
+"""Self-contained HTML training dashboard -- works without WandB.
 
 Reads SLURM training logs and generates an interactive HTML page with:
 1. Loss curve (with smoothing slider)

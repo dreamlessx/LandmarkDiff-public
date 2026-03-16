@@ -93,7 +93,7 @@ def main():
     print(f"Bumping version: {current} -> {new}")
 
     if args.dry_run:
-        print("\nDry run — no files modified:")
+        print("\nDry run -- no files modified:")
         for filepath, _pattern in VERSION_FILES:
             full_path = ROOT / filepath
             if full_path.exists():

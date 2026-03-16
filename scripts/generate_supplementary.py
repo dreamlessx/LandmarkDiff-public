@@ -139,7 +139,7 @@ def generate_sd_strength_comparison(paper_dir: Path, output_dir: Path) -> None:
 
     # Create comparison table
     lines = [
-        "SD1.5 Img2Img Baseline — Strength Comparison",
+        "SD1.5 Img2Img Baseline -- Strength Comparison",
         "=" * 70,
         "",
         f"{'Strength':<12s} {'SSIM↑':>8s} {'LPIPS↓':>8s} {'NME↓':>8s} {'ArcFace↑':>10s}",
@@ -312,7 +312,7 @@ def generate_index(output_dir: Path) -> None:
     """Generate an index of all supplementary materials."""
     files = sorted(output_dir.glob("*"))
     lines = [
-        "LandmarkDiff — Supplementary Materials Index",
+        "LandmarkDiff -- Supplementary Materials Index",
         "=" * 60,
         "",
     ]

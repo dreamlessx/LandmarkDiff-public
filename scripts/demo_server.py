@@ -254,7 +254,7 @@ def create_demo(checkpoint_path: str | Path):
         )
 
     with gr.Blocks(
-        title="LandmarkDiff — Facial Surgery Outcome Prediction",
+        title="LandmarkDiff -- Facial Surgery Outcome Prediction",
         theme=gr.themes.Soft(),
     ) as demo:
         gr.Markdown(

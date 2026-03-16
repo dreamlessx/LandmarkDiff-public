@@ -1,4 +1,4 @@
-# WandB Hyperparameter Sweep — Phase B (Identity-Aware Fine-Tuning)
+# WandB Hyperparameter Sweep -- Phase B (Identity-Aware Fine-Tuning)
 #
 # Bayesian optimization for identity and perceptual loss weights.
 # Requires a Phase A checkpoint to initialize from.

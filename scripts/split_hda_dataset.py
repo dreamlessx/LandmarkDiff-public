@@ -71,7 +71,7 @@ def stratified_split(
         n_train = n - n_val - n_test
 
         if n_train < 1:
-            # Too few samples — put at least 1 in each
+            # Too few samples -- put at least 1 in each
             n_train = max(1, n - 2)
             n_val = min(n_val, n - n_train - 1)
             n_test = n - n_train - n_val

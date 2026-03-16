@@ -485,7 +485,7 @@ def verify_identity_arcface(
         return {
             "similarity": -1.0,
             "passed": True,
-            "message": "InsightFace not installed — identity check skipped",
+            "message": "InsightFace not installed -- identity check skipped",
         }
 
     try:
@@ -505,7 +505,7 @@ def verify_identity_arcface(
             return {
                 "similarity": -1.0,
                 "passed": True,
-                "message": "Could not detect face in one/both images — check skipped",
+                "message": "Could not detect face in one/both images -- check skipped",
             }
 
         orig_emb = orig_faces[0].embedding
@@ -548,7 +548,7 @@ def histogram_match_skin(
 ) -> np.ndarray:
     """Match skin color histogram of source to reference within masked region.
 
-    More robust than simple mean/std matching — preserves the full
+    More robust than simple mean/std matching -- preserves the full
     distribution of skin tones including highlights and shadows.
 
     Args:

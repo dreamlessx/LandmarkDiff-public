@@ -227,7 +227,7 @@ def generate_comparison_grid(
                     # TPS baseline
                     output = generate_tps_output(img, proc, intensity)
                 else:
-                    # ControlNet — use TPS as placeholder until model is trained
+                    # ControlNet -- use TPS as placeholder until model is trained
                     # When a real checkpoint is available, this would use
                     # LandmarkDiffPipeline(mode="controlnet", controlnet_checkpoint=ckpt_path)
                     output = generate_tps_output(img, proc, intensity)

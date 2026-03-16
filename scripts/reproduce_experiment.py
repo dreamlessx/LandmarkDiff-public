@@ -100,7 +100,7 @@ def verify_data_integrity(config: ExperimentConfig) -> list[str]:
         except Exception as e:
             issues.append(f"Manifest verification failed: {e}")
     else:
-        issues.append("No data manifest found — cannot verify data integrity")
+        issues.append("No data manifest found -- cannot verify data integrity")
 
     return issues
 
@@ -248,7 +248,7 @@ def main():
     if total_issues == 0:
         print("RESULT: Experiment is reproducible")
     else:
-        print(f"RESULT: {total_issues} issue(s) found — review above warnings")
+        print(f"RESULT: {total_issues} issue(s) found -- review above warnings")
     print("=" * 60)
 
     sys.exit(0 if total_issues == 0 else 1)

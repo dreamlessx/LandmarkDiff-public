@@ -224,7 +224,7 @@ def make_best_worst_grid(
             header = np.zeros((30, grid.shape[1], 3), dtype=np.uint8)
             cv2.putText(
                 header,
-                f"{proc.capitalize()} — Top {k} Best / Top {k} Worst by SSIM",
+                f"{proc.capitalize()} -- Top {k} Best / Top {k} Worst by SSIM",
                 (10, 22),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.6,

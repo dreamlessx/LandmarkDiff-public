@@ -28,7 +28,7 @@ import torch.nn.functional as F
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 
-# DDP support — activated automatically by torchrun
+# DDP support -- activated automatically by torchrun
 _DDP_ENABLED = "RANK" in os.environ
 _RANK = int(os.environ.get("RANK", 0))
 _LOCAL_RANK = int(os.environ.get("LOCAL_RANK", 0))
@@ -415,7 +415,7 @@ def train(
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed + _RANK)
 
-    # Determine dtype — BF16 on CUDA, FP32 on MPS/CPU
+    # Determine dtype -- BF16 on CUDA, FP32 on MPS/CPU
     if device.type == "cuda" and torch.cuda.is_bf16_supported():
         weight_dtype = torch.bfloat16
     else:
@@ -503,7 +503,7 @@ def train(
         weight_decay=1e-2,
     )
 
-    # Cosine schedule with linear warmup — period based on optimizer steps
+    # Cosine schedule with linear warmup -- period based on optimizer steps
     total_optimizer_steps = num_train_steps // gradient_accumulation_steps
     warmup_steps = min(1000, total_optimizer_steps // 10)
 
@@ -563,7 +563,7 @@ def train(
             f" | Per-GPU batch: {train_batch_size}" if _DDP_ENABLED else "",
         )
 
-    # ─── Text embeddings (constant — "a photo of a person's face") ───
+    # ─── Text embeddings (constant -- "a photo of a person's face") ───
     text_input = tokenizer(
         "a photo of a person's face",
         padding="max_length",
@@ -826,7 +826,7 @@ def train(
                 noisy_latents.float() - (1 - alpha_bar).sqrt() * noise_pred.float()
             ) / alpha_bar.sqrt()
 
-            # Decode to image space — NO torch.no_grad() here!
+            # Decode to image space -- NO torch.no_grad() here!
             # VAE params are frozen (requires_grad=False) so they won't be
             # updated, but gradients DO flow through the VAE decoder back to
             # x0_pred → noise_pred → ControlNet. This is critical for the
@@ -911,7 +911,7 @@ def train(
                 optimizer.zero_grad()
                 _skip_step = True
             elif action == "alert" and _signal_handler is not None:
-                # Severe instability — trigger emergency checkpoint
+                # Severe instability -- trigger emergency checkpoint
                 logger.warning(
                     "Gradient alert at step %d: saving emergency checkpoint", global_step
                 )

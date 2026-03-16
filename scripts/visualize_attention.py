@@ -516,7 +516,7 @@ def run_attention_analysis(
         test_dir / f"{prefix}_target.png"
 
         if input_img is None:
-            print("  Skipping — can't read input")
+            print("  Skipping -- can't read input")
             continue
 
         input_img = cv2.resize(input_img, (512, 512))
@@ -531,7 +531,7 @@ def run_attention_analysis(
 
             lm = extract_landmarks(input_img)
             if lm is None:
-                print("  Skipping — no landmarks detected")
+                print("  Skipping -- no landmarks detected")
                 continue
             cond_img = render_landmark_image(lm, 512, 512)
 

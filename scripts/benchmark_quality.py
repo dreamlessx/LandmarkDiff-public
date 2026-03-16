@@ -436,7 +436,7 @@ def main():
 
     # 4. Phase B (if checkpoint provided)
     if args.phaseB_checkpoint and not args.tps_only:
-        print("\n=== Phase B (Full Loss — Ours) ===")
+        print("\n=== Phase B (Full Loss -- Ours) ===")
         from landmarkdiff.inference import LandmarkDiffPipeline
 
         pipe_b = LandmarkDiffPipeline(
@@ -511,9 +511,9 @@ def main():
                     print(f"  {comp} [{metric}]: p={test['p_ttest']:.4f}{star}")
 
     print(f"\nResults saved to {output_dir}/")
-    print("  benchmark.json — full results")
-    print("  table1_comparison.tex — main comparison table")
-    print("  table_per_procedure.tex — per-procedure breakdown")
+    print("  benchmark.json -- full results")
+    print("  table1_comparison.tex -- main comparison table")
+    print("  table_per_procedure.tex -- per-procedure breakdown")
 
 
 if __name__ == "__main__":

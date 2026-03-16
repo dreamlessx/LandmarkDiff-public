@@ -104,7 +104,7 @@ class SlurmSignalHandler:
             signal.signal(signal.SIGUSR1, self._original_sigusr1)
 
     def _handle_signal(self, signum: int, frame) -> None:
-        """Handle termination signal — save checkpoint and flag exit."""
+        """Handle termination signal -- save checkpoint and flag exit."""
         sig_name = signal.Signals(signum).name
         self.signal_received = sig_name
         self.should_exit = True
@@ -127,7 +127,7 @@ class SlurmSignalHandler:
         logger.warning("=" * 60)
 
     def check_and_exit(self) -> None:
-        """Call in training loop — exits if signal was received.
+        """Call in training loop -- exits if signal was received.
 
         Use `should_exit` for a non-exiting check instead.
         """
@@ -183,7 +183,7 @@ class OOMHandler:
         )
 
     def handle_oom(self, error: RuntimeError) -> bool:
-        """Handle an OOM error — returns True if recovery is possible.
+        """Handle an OOM error -- returns True if recovery is possible.
 
         Returns False if the error is not OOM or retries are exhausted.
         """
@@ -278,7 +278,7 @@ def validate_checkpoint(checkpoint_path: str | Path) -> CheckpointValidation:
     size_bytes = state_file.stat().st_size
     result.size_mb = size_bytes / (1024 * 1024)
     if size_bytes < 1024:  # Less than 1KB
-        result.errors.append(f"File too small ({size_bytes} bytes) — likely corrupted")
+        result.errors.append(f"File too small ({size_bytes} bytes) -- likely corrupted")
         return result
 
     # Try to load
@@ -417,9 +417,9 @@ class GradientWatchdog:
     ) -> str:
         """Check gradient health. Returns action: 'ok', 'skip', 'alert'.
 
-        'ok' — training is healthy
-        'skip' — skip this optimizer step (NaN/Inf gradients)
-        'alert' — serious issue (consecutive NaN, loss spike)
+        'ok' -- training is healthy
+        'skip' -- skip this optimizer step (NaN/Inf gradients)
+        'alert' -- serious issue (consecutive NaN, loss spike)
         """
         # Check for NaN/Inf loss
         if not _is_finite(loss_value):

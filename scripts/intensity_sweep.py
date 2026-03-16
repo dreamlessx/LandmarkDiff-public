@@ -455,13 +455,13 @@ def run_intensity_sweep(
                 np.max(np.linalg.norm(displacements, axis=1)),
             )
         else:
-            # Face detection failed on target — fall back to preset
+            # Face detection failed on target -- fall back to preset
             logger.warning(
                 "Displacement extraction failed (face detection on target). Falling back to preset."
             )
             displacements = _get_preset_displacements(face_source, procedure)
     else:
-        # No target image — use the hand-tuned preset manipulation
+        # No target image -- use the hand-tuned preset manipulation
         logger.info("No target image available; using preset displacements")
         displacements = _get_preset_displacements(face_source, procedure)
 
@@ -499,7 +499,7 @@ def run_intensity_sweep(
 
         # Run ControlNet inference
         if intensity == 0.0:
-            # At intensity 0, the conditioning is identical to the source —
+            # At intensity 0, the conditioning is identical to the source --
             # the output should closely resemble the input.  We still run
             # inference to show the pipeline baseline.
             pass
@@ -522,7 +522,7 @@ def run_intensity_sweep(
         composited = mask_composite(raw_output, img_512, mask)
 
         # Optional histogram matching for consistent skin tones across
-        # the sweep — each intensity should differ in shape, not color
+        # the sweep -- each intensity should differ in shape, not color
         composited = histogram_match_skin(composited, img_512, mask)
 
         output_images.append(composited)
@@ -539,7 +539,7 @@ def run_intensity_sweep(
             cv2.imwrite(str(output_dir / cond_fname), cond_img)
 
     # ---- Assemble into a grid figure ----
-    title = f"{procedure.capitalize()} — Intensity Sweep"
+    title = f"{procedure.capitalize()} -- Intensity Sweep"
     grid = create_grid(
         images=output_images,
         conditioning_images=conditioning_images,
@@ -735,7 +735,7 @@ def main() -> None:
     sweep_tasks: list[tuple[Path, Path | None, str]] = []
 
     if args.image:
-        # Single image mode — process one (image, procedure) pair
+        # Single image mode -- process one (image, procedure) pair
         img_path = Path(args.image)
         if not img_path.exists():
             logger.error("Image not found: %s", img_path)
@@ -746,7 +746,7 @@ def main() -> None:
         sweep_tasks.append((img_path, target, procedure))
 
     else:
-        # Test directory mode — find one image per procedure
+        # Test directory mode -- find one image per procedure
         test_dir = Path(args.test_dir)
         if not test_dir.is_dir():
             # Try relative to ROOT
@@ -760,7 +760,7 @@ def main() -> None:
             pair = find_test_image_for_procedure(test_dir, proc)
             if pair is None:
                 logger.warning(
-                    "No test image found for procedure '%s' in %s — skipping",
+                    "No test image found for procedure '%s' in %s -- skipping",
                     proc,
                     test_dir,
                 )
@@ -825,7 +825,7 @@ def main() -> None:
         logger.info("Paper figure updated: %s", paper_fig)
 
     elif len(all_grids) == 1:
-        # Single procedure — copy to paper figure too
+        # Single procedure -- copy to paper figure too
         paper_fig = ROOT / "paper" / "fig_intensity_sweep.png"
         cv2.imwrite(str(paper_fig), all_grids[0])
         logger.info("Paper figure updated: %s", paper_fig)

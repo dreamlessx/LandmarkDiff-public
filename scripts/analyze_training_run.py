@@ -246,7 +246,7 @@ def detect_convergence_issues(metrics: TrainingMetrics) -> list[dict]:
             {
                 "type": "insufficient_data",
                 "severity": "info",
-                "message": f"Only {len(losses)} loss values — too few for reliable analysis",
+                "message": f"Only {len(losses)} loss values -- too few for reliable analysis",
             }
         )
         return issues
@@ -314,7 +314,7 @@ def detect_convergence_issues(metrics: TrainingMetrics) -> list[dict]:
                 {
                     "type": "vanishing_gradients",
                     "severity": "critical",
-                    "message": "Gradients near zero — model may not be learning.",
+                    "message": "Gradients near zero -- model may not be learning.",
                     "recommendation": "Check loss function, increase learning rate, or check frozen parameters.",
                 }
             )
@@ -384,7 +384,7 @@ def check_phase_transition(metrics: TrainingMetrics, min_steps: int = 20000) -> 
             result["reasons"].append(
                 f"Loss still improving ({improvement * 100:.2f}% in final 10%)"
             )
-            result["recommendations"].append("Continue Phase A — model is still learning")
+            result["recommendations"].append("Continue Phase A -- model is still learning")
 
     # Check validation metrics if available
     if metrics.val_ssim:
@@ -397,7 +397,7 @@ def check_phase_transition(metrics: TrainingMetrics, min_steps: int = 20000) -> 
         recent_std = np.std(losses[-200:])
         result["reasons"].append(f"Recent loss std: {recent_std:.6f}")
         if recent_std > 0.1:
-            result["recommendations"].append("Loss still unstable — not ready for Phase B")
+            result["recommendations"].append("Loss still unstable -- not ready for Phase B")
 
     # Decision
     issues = detect_convergence_issues(metrics)

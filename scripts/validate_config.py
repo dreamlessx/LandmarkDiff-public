@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Training config schema validator — catches typos and invalid values.
+"""Training config schema validator -- catches typos and invalid values.
 
 Validates YAML training configs against the ExperimentConfig schema,
 checking for unknown keys, type mismatches, out-of-range values, and
 cross-field consistency (e.g., Phase B requires Phase A checkpoint).
 
-The existing config loader silently ignores unknown keys — this validator
+The existing config loader silently ignores unknown keys -- this validator
 catches those as potential typos before GPU hours are wasted.
 
 Usage:
@@ -216,7 +216,7 @@ def validate_config(
     for key in raw:
         if key not in TOP_LEVEL_KEYS:
             result.warnings.append(
-                f"Unknown top-level key: '{key}' — possible typo? "
+                f"Unknown top-level key: '{key}' -- possible typo? "
                 f"Valid keys: {sorted(TOP_LEVEL_KEYS)}"
             )
 
@@ -238,9 +238,9 @@ def validate_config(
                 suggestion = _closest_match(key, valid_fields)
                 msg = f"Unknown key '{section_name}.{key}'"
                 if suggestion:
-                    msg += f" — did you mean '{suggestion}'?"
+                    msg += f" -- did you mean '{suggestion}'?"
                 else:
-                    msg += f" — valid keys: {sorted(valid_fields)}"
+                    msg += f" -- valid keys: {sorted(valid_fields)}"
                 result.warnings.append(msg)
 
     # 5. Type checking
@@ -292,7 +292,7 @@ def validate_config(
         if phase == "B":
             if "resume_phaseA" not in training and "resume_from_checkpoint" not in training:
                 result.warnings.append(
-                    "Phase B config has no 'resume_phaseA' or 'resume_from_checkpoint' — "
+                    "Phase B config has no 'resume_phaseA' or 'resume_from_checkpoint' -- "
                     "will start from scratch (likely not intended)"
                 )
             if training.get("batch_size", 4) > 4:
@@ -313,7 +313,7 @@ def validate_config(
         max_steps = training.get("max_train_steps", 50000)
         if save_every > max_steps:
             result.warnings.append(
-                f"save_every_n_steps ({save_every}) > max_train_steps ({max_steps}) — "
+                f"save_every_n_steps ({save_every}) > max_train_steps ({max_steps}) -- "
                 "no intermediate checkpoints will be saved"
             )
 
@@ -334,7 +334,7 @@ def validate_config(
     exp_name = raw.get("experiment_name", "")
     if exp_name and not exp_name.replace("_", "").replace("-", "").replace(".", "").isalnum():
         result.warnings.append(
-            f"experiment_name='{exp_name}' contains special characters — "
+            f"experiment_name='{exp_name}' contains special characters -- "
             "may cause issues in file paths and SLURM job names"
         )
 

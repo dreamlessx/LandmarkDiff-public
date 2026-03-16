@@ -201,7 +201,7 @@ def compute_nme(pred_img: np.ndarray, target_img: np.ndarray) -> float | None:
     pred_coords = pred_face.pixel_coords
     target_coords = target_face.pixel_coords
 
-    # IOD (inter-ocular distance) for normalization — in pixel space
+    # IOD (inter-ocular distance) for normalization -- in pixel space
     left_eye = target_coords[33]  # left eye inner corner
     right_eye = target_coords[263]  # right eye inner corner
     iod = np.linalg.norm(left_eye - right_eye)

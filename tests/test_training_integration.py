@@ -110,7 +110,7 @@ class TestCurriculumIntegration:
         # Blepharoplasty (indices 0-29) should appear more often than orthognathic (60-99)
         bleph_count = sum(1 for i in indices if i < 30)
         sum(1 for i in indices if i >= 60)
-        # Not a strict test — but on average blepharoplasty should dominate
+        # Not a strict test -- but on average blepharoplasty should dominate
         # With 30 easy vs 40 hard, even with weighting blepharoplasty should appear more
         assert bleph_count > 0  # at minimum, some should appear
 

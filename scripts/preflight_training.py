@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pre-training validation — verifies everything is ready for Phase A/B training.
+"""Pre-training validation -- verifies everything is ready for Phase A/B training.
 
 Checks:
   1. Dataset exists and has enough pairs
@@ -104,7 +104,7 @@ def check_metadata(config: dict) -> PreflightCheck:
     meta_path = PROJECT_ROOT / train_dir / "metadata.json"
 
     if not meta_path.exists():
-        check.warn("No metadata.json — curriculum learning disabled")
+        check.warn("No metadata.json -- curriculum learning disabled")
         check.detail("Run: python scripts/reconstruct_metadata.py")
         return check
 
@@ -251,7 +251,7 @@ def check_gpu() -> PreflightCheck:
         import torch
 
         if not torch.cuda.is_available():
-            check.warn("No GPU detected — training will be very slow")
+            check.warn("No GPU detected -- training will be very slow")
             return check
 
         n_gpu = torch.cuda.device_count()
@@ -259,7 +259,7 @@ def check_gpu() -> PreflightCheck:
         gpu_mem = torch.cuda.get_device_properties(0).total_mem / 1e9
 
         if gpu_mem < 16:
-            check.warn(f"{n_gpu}x {gpu_name} ({gpu_mem:.0f}GB) — may need smaller batch size")
+            check.warn(f"{n_gpu}x {gpu_name} ({gpu_mem:.0f}GB) -- may need smaller batch size")
         else:
             check.pass_(f"{n_gpu}x {gpu_name} ({gpu_mem:.0f}GB)")
 
@@ -344,7 +344,7 @@ def check_phase_b(config: dict) -> PreflightCheck:
 
     phase = config.get("training", {}).get("phase", "A")
     if phase != "B":
-        check.pass_("Not Phase B — skipping")
+        check.pass_("Not Phase B -- skipping")
         return check
 
     # Look for Phase A checkpoints

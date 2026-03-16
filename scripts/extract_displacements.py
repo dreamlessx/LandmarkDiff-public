@@ -151,7 +151,7 @@ def extract_from_directory(
     """Extract displacements from all pairs in a directory.
 
     Uses _before.png (pre-surgery face) and _target.png (post-surgery face).
-    NOTE: _input.png is the MESH rendering, not a face photo — skip it.
+    NOTE: _input.png is the MESH rendering, not a face photo -- skip it.
     """
     pairs_dir = Path(pairs_dir)
     results = []

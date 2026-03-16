@@ -66,7 +66,7 @@ import cv2
 import numpy as np
 
 # ---------------------------------------------------------------------------
-# Project root setup — standard pattern across all LandmarkDiff scripts
+# Project root setup -- standard pattern across all LandmarkDiff scripts
 # ---------------------------------------------------------------------------
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -145,7 +145,7 @@ def load_controlnet_pipeline(checkpoint_path: Path, device: str = "cuda") -> Any
         "runwayml/stable-diffusion-v1-5",
         controlnet=controlnet,
         torch_dtype=torch.float16,
-        safety_checker=None,  # Clinical use — no NSFW filter needed
+        safety_checker=None,  # Clinical use -- no NSFW filter needed
     )
 
     # UniPC is ~2x faster than default PNDM at comparable quality
@@ -157,7 +157,7 @@ def load_controlnet_pipeline(checkpoint_path: Path, device: str = "cuda") -> Any
         pipe.enable_xformers_memory_efficient_attention()
         print("Enabled xformers memory-efficient attention")
     except Exception:
-        # xformers not installed — not critical, just slower
+        # xformers not installed -- not critical, just slower
         pass
 
     print(f"Pipeline loaded on {device}")
@@ -213,7 +213,7 @@ def run_single_seed(
         # Latent capture callback
         # ------------------------------------------------------------------
         # The callback fires after each denoising step. We only care about
-        # the FINAL step's latents — those are the fully-denoised latent
+        # the FINAL step's latents -- those are the fully-denoised latent
         # representation that the VAE will decode into an image.
         #
         # callback_kwargs["latents"] is the (1, 4, 64, 64) latent tensor.
@@ -714,7 +714,7 @@ def load_test_pairs(data_dir: Path) -> list[dict]:
                 pairs.append(pair)
         return pairs
 
-    # Flat directory of images — each is a standalone input
+    # Flat directory of images -- each is a standalone input
     for img_path in sorted(data_dir.iterdir()):
         if img_path.suffix.lower() in extensions and img_path.is_file():
             pairs.append({"input_path": img_path})
@@ -853,7 +853,7 @@ def process_test_pair(
     else:
         reference = input_bgr
 
-    # Ensemble metrics — convert BGR→RGB for LPIPS (AlexNet expects RGB)
+    # Ensemble metrics -- convert BGR→RGB for LPIPS (AlexNet expects RGB)
     ensemble_rgb = cv2.cvtColor(ensemble_composited, cv2.COLOR_BGR2RGB)
     reference_rgb = cv2.cvtColor(reference, cv2.COLOR_BGR2RGB)
     ensemble_metrics = compute_metrics_for_image(ensemble_rgb, reference_rgb)
@@ -1081,7 +1081,7 @@ def print_slurm_command(args: argparse.Namespace) -> None:
 def main():
     parser = argparse.ArgumentParser(
         description=(
-            "Ensemble inference for LandmarkDiff — generates N predictions "
+            "Ensemble inference for LandmarkDiff -- generates N predictions "
             "with different seeds and combines them for improved output quality."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,

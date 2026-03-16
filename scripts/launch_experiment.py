@@ -190,7 +190,7 @@ def main():
         print("\n--- SLURM Script ---")
         print(script)
         print("--- End Script ---")
-        print("\nDry run — not submitted. Use --submit to submit.")
+        print("\nDry run -- not submitted. Use --submit to submit.")
         return
 
     if args.submit:

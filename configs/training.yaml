@@ -5,7 +5,7 @@ model:
   controlnet: "CrucibleAI/ControlNetMediaPipeFace"
   base_model: "runwayml/stable-diffusion-v1-5"
 
-# Training — Phase A (synthetic TPS data)
+# Training -- Phase A (synthetic TPS data)
 training:
   phase: "A"                      # A = diffusion only, B = all losses
   learning_rate: 1.0e-5
@@ -14,7 +14,7 @@ training:
   train_batch_size: 4
   gradient_accumulation_steps: 4  # effective batch = 16
   num_train_steps: 10000          # Phase A validation run
-  mixed_precision: "bf16"         # NEVER fp16 — FLUX/SD activations exceed fp16 range
+  mixed_precision: "bf16"         # NEVER fp16 -- FLUX/SD activations exceed fp16 range
   ema_decay: 0.9999               # from first run, not retrofitted
   seed: 42
 

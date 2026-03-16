@@ -69,7 +69,7 @@ class TestProcedureCurriculum:
         from landmarkdiff.curriculum import ProcedureCurriculum
 
         c = ProcedureCurriculum(total_steps=1000)
-        # Blepharoplasty is easiest — should have higher weight than orthognathic
+        # Blepharoplasty is easiest -- should have higher weight than orthognathic
         w_easy = c.get_weight(0, "blepharoplasty")
         w_hard = c.get_weight(0, "orthognathic")
         assert w_easy > w_hard
@@ -78,7 +78,7 @@ class TestProcedureCurriculum:
         from landmarkdiff.curriculum import ProcedureCurriculum
 
         c = ProcedureCurriculum(total_steps=1000)
-        # Orthognathic is hardest — should have lower weight early
+        # Orthognathic is hardest -- should have lower weight early
         w = c.get_weight(0, "orthognathic")
         assert w < 0.5
 

@@ -105,11 +105,11 @@ def draw_landmark_errors(
 # ──────────────────────────────────────────────────────────────────────────────
 
 FAILURE_CATEGORIES = {
-    "identity_collapse": "ArcFace similarity < 0.2 — model generates a different person",
-    "geometric_error": "NME > 0.1 — landmarks significantly misaligned",
-    "texture_artifact": "LPIPS > 0.6 — severe perceptual quality degradation",
-    "structural_mismatch": "SSIM < 0.3 — overall structural correspondence lost",
-    "color_shift": "LAB color distance > 30 — skin tone mismatch after compositing",
+    "identity_collapse": "ArcFace similarity < 0.2 -- model generates a different person",
+    "geometric_error": "NME > 0.1 -- landmarks significantly misaligned",
+    "texture_artifact": "LPIPS > 0.6 -- severe perceptual quality degradation",
+    "structural_mismatch": "SSIM < 0.3 -- overall structural correspondence lost",
+    "color_shift": "LAB color distance > 30 -- skin tone mismatch after compositing",
 }
 
 

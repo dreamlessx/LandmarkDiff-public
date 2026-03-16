@@ -38,7 +38,7 @@ class CIRunner:
         sym = "PASS" if passed else "FAIL"
         msg = f"  [{sym}] {name}"
         if detail:
-            msg += f" — {detail}"
+            msg += f" -- {detail}"
         print(msg)
         return passed
 
@@ -64,7 +64,7 @@ class CIRunner:
             print("STATUS: FAILED")
             for r in self.results:
                 if not r["passed"]:
-                    print(f"  FAIL: {r['name']} — {r['detail']}")
+                    print(f"  FAIL: {r['name']} -- {r['detail']}")
         print("=" * 60)
         return 0 if failed == 0 else 1
 

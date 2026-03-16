@@ -7,7 +7,7 @@ spatial priors vs. generic face generation.
 
 The key insight: if the model truly learns procedure-specific deformations,
 then applying rhinoplasty conditioning to a blepharoplasty target should
-produce poor metrics — the model should "know" to modify different regions.
+produce poor metrics -- the model should "know" to modify different regions.
 
 Usage:
     python scripts/cross_procedure_eval.py \

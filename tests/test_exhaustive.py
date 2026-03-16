@@ -1,4 +1,4 @@
-"""Exhaustive test suite for LandmarkDiff — DIRAC verification.
+"""Exhaustive test suite for LandmarkDiff -- DIRAC verification.
 
 Covers every function, every edge case, every branch across all modules.
 Target: 1000+ individual test cases via parameterization.
@@ -2019,7 +2019,7 @@ class TestJpegCompression:
 
     def test_modifies_image(self, sample_image_small, rng):
         result = jpeg_compression(sample_image_small, rng)
-        # JPEG is lossy — should differ
+        # JPEG is lossy -- should differ
         assert not np.array_equal(result, sample_image_small)
 
 
@@ -2429,7 +2429,7 @@ class TestMotionBlurEdgeCases:
 
 
 class TestMaskingSeedIssue:
-    """Test masking noise behavior — uses unseeded default_rng()."""
+    """Test masking noise behavior -- uses unseeded default_rng()."""
 
     def test_different_noise_across_calls(self, face):
         """Masks use np.random.default_rng() (unseeded) so noise differs each call."""

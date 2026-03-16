@@ -966,7 +966,7 @@ class TestTrainingResilience:
 
         # Create minimal model state dicts
         model = torch.nn.Linear(10, 10)
-        # EMA needs save_pretrained (diffusers method) — use a mock
+        # EMA needs save_pretrained (diffusers method) -- use a mock
         ema = MagicMock()
         ema.state_dict.return_value = {"layer.weight": torch.randn(10, 10)}
         opt = torch.optim.SGD(model.parameters(), lr=0.01)
@@ -1145,7 +1145,7 @@ class TestConfigValidator:
         config_path.write_text("")
 
         result = validate_config(config_path)
-        # Empty YAML parses as None — caught as error
+        # Empty YAML parses as None -- caught as error
         assert not result.valid or len(result.warnings) > 0
 
     def test_validate_all_configs(self, tmp_path):

@@ -78,7 +78,7 @@ def consistency_loss(
     The student should produce the same denoised output as the teacher
     regardless of the number of steps.
     """
-    # Huber loss — more robust than L2 for diffusion outputs
+    # Huber loss -- more robust than L2 for diffusion outputs
     return weight * F.huber_loss(student_output, teacher_output, delta=0.5)
 
 

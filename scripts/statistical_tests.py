@@ -13,7 +13,7 @@ Tests performed (when paired per-sample data is available):
 Fallback tests (when only summary statistics are available):
   - Welch's two-sample t-test (unequal variances)
   - Mann-Whitney U approximation via summary stats (z-test on ranks)
-  - NOTE: these are weaker — reported as a limitation
+  - NOTE: these are weaker -- reported as a limitation
 
 Metrics tested: SSIM, LPIPS, NME, ArcFace identity similarity
 Comparisons: LandmarkDiff vs TPS, LandmarkDiff vs SD1.5, LandmarkDiff vs Copy
@@ -48,7 +48,7 @@ from pathlib import Path
 import numpy as np
 
 # ---------------------------------------------------------------------------
-# Project root setup — ensures landmarkdiff package is importable
+# Project root setup -- ensures landmarkdiff package is importable
 # ---------------------------------------------------------------------------
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -140,8 +140,8 @@ def load_eval_results(path: Path) -> dict:
     """Load LandmarkDiff evaluation results.
 
     Supports two formats:
-      (a) phaseA_eval_results.json — has 'per_sample' list and 'summary' dict
-      (b) eval_results_aggregated.json — summary-only (per-procedure mean/std)
+      (a) phaseA_eval_results.json -- has 'per_sample' list and 'summary' dict
+      (b) eval_results_aggregated.json -- summary-only (per-procedure mean/std)
 
     Returns dict with keys:
       'per_sample': list[dict] or None
@@ -444,7 +444,7 @@ def run_paired_test(
 ) -> TestResult:
     """Run paired statistical tests (t-test, Wilcoxon, bootstrap CI).
 
-    This is the gold standard — used when we have per-sample data for both
+    This is the gold standard -- used when we have per-sample data for both
     methods on the same test samples.
     """
     result = TestResult(
@@ -685,7 +685,7 @@ def run_all_comparisons(
                     ld_n = metric_summary.get("n", 0)
 
             if ld_mean is None:
-                # No LandmarkDiff data for this procedure+metric — skip
+                # No LandmarkDiff data for this procedure+metric -- skip
                 continue
 
             # -------------------------------------------------------
@@ -1090,7 +1090,7 @@ def print_summary(results: list[TestResult]) -> None:
     print(f"\n{'=' * 100}")
     print(f"SUMMARY: {n_sig}/{n_total} tests significant at alpha={results[0].alpha}")
     print(f"  Paired tests:   {n_total - n_unpaired}")
-    print(f"  Unpaired tests: {n_unpaired} (weaker — no per-sample pairing)")
+    print(f"  Unpaired tests: {n_unpaired} (weaker -- no per-sample pairing)")
 
     if n_unpaired > 0:
         print(

@@ -168,7 +168,7 @@ class TestGaussianRBFDeformExtended:
 
 
 # ---------------------------------------------------------------------------
-# apply_procedure_preset — intensity scaling
+# apply_procedure_preset -- intensity scaling
 # ---------------------------------------------------------------------------
 
 
@@ -206,7 +206,7 @@ class TestIntensityScaling:
 
 
 # ---------------------------------------------------------------------------
-# apply_procedure_preset — metadata preservation
+# apply_procedure_preset -- metadata preservation
 # ---------------------------------------------------------------------------
 
 
@@ -231,7 +231,7 @@ class TestMetadataPreservation:
 
 
 # ---------------------------------------------------------------------------
-# apply_procedure_preset — image_size scaling
+# apply_procedure_preset -- image_size scaling
 # ---------------------------------------------------------------------------
 
 
@@ -317,7 +317,7 @@ class TestGetProcedureHandles:
 
 
 # ---------------------------------------------------------------------------
-# apply_procedure_preset — clinical flags
+# apply_procedure_preset -- clinical flags
 # ---------------------------------------------------------------------------
 
 
@@ -358,7 +358,7 @@ class TestClinicalFlags:
 
 
 # ---------------------------------------------------------------------------
-# apply_procedure_preset — immutability
+# apply_procedure_preset -- immutability
 # ---------------------------------------------------------------------------
 
 

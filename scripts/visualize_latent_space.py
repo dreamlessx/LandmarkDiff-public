@@ -71,7 +71,7 @@ def extract_latent(pipe, conditioning_pil, seed=42, num_steps=20, return_step="f
         dtype=pipe.controlnet.dtype,
     )
 
-    # Run a few steps (not full inference — we want intermediate latent)
+    # Run a few steps (not full inference -- we want intermediate latent)
     target_step = min(5, num_steps)  # Early step captures more structural info
     with torch.no_grad():
         for i, t in enumerate(scheduler.timesteps):

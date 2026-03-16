@@ -2,7 +2,7 @@
 
 Shows the diffusion process at multiple timesteps, from pure noise to
 the final generated image. This is a common and informative figure for
-diffusion model papers — it demonstrates:
+diffusion model papers -- it demonstrates:
   1. How structure emerges from noise
   2. That the model converges to anatomically plausible faces
   3. The ControlNet's influence at different noise levels
@@ -269,7 +269,7 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     pipe = load_pipeline(args.checkpoint, device)
 
-    # Load test pairs — one per procedure for diversity
+    # Load test pairs -- one per procedure for diversity
     test_dir = Path(args.test_dir)
     input_files = sorted(test_dir.glob("*_input.png"))
 
