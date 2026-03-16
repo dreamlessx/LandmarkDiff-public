@@ -236,11 +236,58 @@ def build_app():
     """Build the Gradio interface."""
     import gradio as gr
 
+    custom_css = """
+    #theme-toggle-row {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 4px;
+    }
+    #theme-toggle-btn {
+    position: fixed !important;
+    top: 12px !important;
+    right: 16px !important;
+    width: auto !important;
+    min-width: unset !important;
+    padding: 6px 16px !important;
+    font-size: 0.8rem !important;
+    z-index: 9999 !important;
+    }
+    .side-by-side img {
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+        transition: border-color 0.2s;
+    }
+    @media (prefers-color-scheme: dark) {
+        .side-by-side img {
+            border-color: #444;
+        }
+    }
+    """
+
     with gr.Blocks(
         title="LandmarkDiff - Surgical Outcome Prediction",
         theme=gr.themes.Soft(),
-        css=".side-by-side img { max-height: 300px; }",
+        css=custom_css,
     ) as app:
+
+        # Toggle button on top right
+        theme_toggle = gr.Button("🌙 Dark / ☀️ Light", elem_id="theme-toggle-btn")
+        theme_toggle.click(
+        fn=None,
+        inputs=[],
+        outputs=[],
+        js="""
+        () => {
+            const url = new URL(window.location.href);
+            const current = url.searchParams.get('__theme');
+            url.searchParams.set('__theme', (!current || current === 'light') ? 'dark' : 'light');
+            window.location.href = url.toString();
+        }
+        """
+    )
+
         gr.Markdown(
             "# LandmarkDiff\n"
             "**Anatomically-conditioned facial surgery outcome prediction**\n\n"
@@ -248,6 +295,7 @@ def build_app():
             "Supports frontal, 3/4, and profile views. "
             "Clinical edge cases (vitiligo, Bell's palsy, keloid) can be toggled below."
         )
+
 
         # ---- Tab 1: Single Procedure ----
         with gr.Tab("Single Procedure"):
