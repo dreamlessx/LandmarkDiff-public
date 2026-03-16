@@ -269,40 +269,19 @@ You can define custom procedures by specifying which landmarks to move, how far,
 LandmarkDiff is a five-stage pipeline. Each stage is independently testable and swappable.
 
 ```mermaid
-graph LR
-    classDef current fill:#2563eb,stroke:#1e40af,color:#fff,stroke-width:2px
-    classDef postproc fill:#1d4ed8,stroke:#1e3a8a,color:#fff,stroke-width:2px
-    classDef planned fill:#f59e0b,stroke:#d97706,color:#fff,stroke-width:2px,stroke-dasharray:6 3
+graph TD
+    classDef stage fill:#2563eb,stroke:#1e40af,color:#fff,stroke-width:2px
+    classDef post fill:#1d4ed8,stroke:#1e3a8a,color:#fff,stroke-width:2px
     classDef io fill:#0f172a,stroke:#334155,color:#fff,stroke-width:2px
 
-    A["Input Photo<br/>(512x512)"]:::io
-    B["MediaPipe<br/>Face Mesh<br/><i>478 landmarks</i>"]:::current
-    C["Gaussian RBF<br/>Deformation<br/><i>procedure-specific</i>"]:::current
-    D["Conditioning<br/>Generation<br/><i>wireframe + edges</i>"]:::current
-    E["ControlNet +<br/>Stable Diff 1.5<br/><i>CrucibleAI model</i>"]:::current
-    G["Output<br/>Prediction"]:::io
-
-    A --> B --> C --> D --> E
-
-    subgraph postprocess ["Post-Processing"]
-        F1["CodeFormer<br/>Restoration"]:::postproc
-        F2["Real-ESRGAN<br/>Upscaling"]:::postproc
-        F3["LAB Histogram<br/>Matching"]:::postproc
-        F4["Laplacian<br/>Blending"]:::postproc
-        F5["ArcFace<br/>Identity Check"]:::postproc
-    end
-
-    E --> F1 --> F2 --> F3 --> F4 --> F5 --> G
-
-    subgraph future ["Planned: 3D Extension"]
-        H1["Phone Video<br/>Capture"]:::planned
-        H2["FLAME 3D<br/>Reconstruction"]:::planned
-        H3["3D Surgical<br/>Deformation"]:::planned
-        H4["Multi-Angle<br/>Rendering"]:::planned
-        H5["Interactive<br/>3D Viewer"]:::planned
-    end
-
-    H1 -.-> H2 -.-> H3 -.-> H4 -.-> H5
+    A["📷 Input Photo (512x512)"]:::io
+    A --> B["MediaPipe Face Mesh — 478 landmarks"]:::stage
+    B --> C["Gaussian RBF Deformation — procedure-specific displacements"]:::stage
+    C --> D["Conditioning Generation — wireframe + Canny edges + mask"]:::stage
+    D --> E["ControlNet + Stable Diffusion 1.5 — CrucibleAI model"]:::stage
+    E --> F["Post-Processing — CodeFormer · Real-ESRGAN · LAB matching · Laplacian blending"]:::post
+    F --> G["ArcFace Identity Verification"]:::post
+    G --> H["🎯 Output Prediction"]:::io
 ```
 
 ### Stage 1: Landmark Extraction
