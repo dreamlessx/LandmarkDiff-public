@@ -4,7 +4,6 @@ proportions, septum analysis, and age scaling (all at 0% coverage)."""
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from landmarkdiff.landmarks import FaceLandmarks
 

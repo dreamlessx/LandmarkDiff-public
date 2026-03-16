@@ -54,35 +54,43 @@ class TestFairnessReport:
         return report
 
     def test_is_fair_when_equal(self):
-        report = self._make_report({
-            "I": (0.9, 0.1),
-            "II": (0.9, 0.1),
-            "III": (0.9, 0.1),
-        })
+        report = self._make_report(
+            {
+                "I": (0.9, 0.1),
+                "II": (0.9, 0.1),
+                "III": (0.9, 0.1),
+            }
+        )
         assert report.is_fair is True
         assert report.quality_gap == pytest.approx(0.0)
 
     def test_is_unfair_when_large_gap(self):
-        report = self._make_report({
-            "I": (0.95, 0.05),
-            "VI": (0.3, 0.7),
-        })
+        report = self._make_report(
+            {
+                "I": (0.95, 0.05),
+                "VI": (0.3, 0.7),
+            }
+        )
         assert report.quality_gap > 0.15
         assert report.is_fair is False
 
     def test_worst_group(self):
-        report = self._make_report({
-            "I": (0.95, 0.05),
-            "III": (0.7, 0.3),
-            "V": (0.5, 0.5),
-        })
+        report = self._make_report(
+            {
+                "I": (0.95, 0.05),
+                "III": (0.7, 0.3),
+                "V": (0.5, 0.5),
+            }
+        )
         assert report.worst_group == "V"
 
     def test_best_quality(self):
-        report = self._make_report({
-            "I": (0.95, 0.05),
-            "III": (0.5, 0.5),
-        })
+        report = self._make_report(
+            {
+                "I": (0.95, 0.05),
+                "III": (0.5, 0.5),
+            }
+        )
         assert report.best_quality > report.worst_quality
 
     def test_empty_report(self):
@@ -95,20 +103,24 @@ class TestFairnessReport:
         assert report.worst_group == "N/A"
 
     def test_summary(self):
-        report = self._make_report({
-            "I": (0.9, 0.1),
-            "III": (0.7, 0.3),
-        })
+        report = self._make_report(
+            {
+                "I": (0.9, 0.1),
+                "III": (0.7, 0.3),
+            }
+        )
         s = report.summary()
         assert "Fairness Report" in s
         assert "Type I" in s
         assert "Type III" in s
 
     def test_summary_with_warning(self):
-        report = self._make_report({
-            "I": (0.95, 0.05),
-            "VI": (0.2, 0.8),
-        })
+        report = self._make_report(
+            {
+                "I": (0.95, 0.05),
+                "VI": (0.2, 0.8),
+            }
+        )
         s = report.summary()
         assert "WARNING" in s
 
@@ -116,7 +128,9 @@ class TestFairnessReport:
         from landmarkdiff.fairness import FairnessReport, GroupMetrics
 
         report = FairnessReport()
-        report.groups["I"] = GroupMetrics(fitzpatrick_type="I", count=10, mean_ssim=0.9, mean_lpips=0.1, mean_identity_score=0.8)
+        report.groups["I"] = GroupMetrics(
+            fitzpatrick_type="I", count=10, mean_ssim=0.9, mean_lpips=0.1, mean_identity_score=0.8
+        )
         report.groups["II"] = GroupMetrics(fitzpatrick_type="II", count=0)
         # Zero-count group should not affect calculations
         assert report.best_quality > 0
@@ -187,30 +201,42 @@ class TestCheckFairnessRegression:
 
     def test_no_regression(self):
         from landmarkdiff.fairness import (
-            GroupMetrics,
             FairnessReport,
+            GroupMetrics,
             check_fairness_regression,
         )
 
         baseline = FairnessReport()
-        baseline.groups["I"] = GroupMetrics(fitzpatrick_type="I", count=10, mean_ssim=0.8, mean_lpips=0.2, mean_identity_score=0.7)
+        baseline.groups["I"] = GroupMetrics(
+            fitzpatrick_type="I", count=10, mean_ssim=0.8, mean_lpips=0.2, mean_identity_score=0.7
+        )
         current = FairnessReport()
-        current.groups["I"] = GroupMetrics(fitzpatrick_type="I", count=10, mean_ssim=0.82, mean_lpips=0.18, mean_identity_score=0.72)
+        current.groups["I"] = GroupMetrics(
+            fitzpatrick_type="I",
+            count=10,
+            mean_ssim=0.82,
+            mean_lpips=0.18,
+            mean_identity_score=0.72,
+        )
 
         warnings = check_fairness_regression(current, baseline)
         assert len(warnings) == 0
 
     def test_regression_detected(self):
         from landmarkdiff.fairness import (
-            GroupMetrics,
             FairnessReport,
+            GroupMetrics,
             check_fairness_regression,
         )
 
         baseline = FairnessReport()
-        baseline.groups["I"] = GroupMetrics(fitzpatrick_type="I", count=10, mean_ssim=0.9, mean_lpips=0.1, mean_identity_score=0.9)
+        baseline.groups["I"] = GroupMetrics(
+            fitzpatrick_type="I", count=10, mean_ssim=0.9, mean_lpips=0.1, mean_identity_score=0.9
+        )
         current = FairnessReport()
-        current.groups["I"] = GroupMetrics(fitzpatrick_type="I", count=10, mean_ssim=0.3, mean_lpips=0.7, mean_identity_score=0.3)
+        current.groups["I"] = GroupMetrics(
+            fitzpatrick_type="I", count=10, mean_ssim=0.3, mean_lpips=0.7, mean_identity_score=0.3
+        )
 
         warnings = check_fairness_regression(current, baseline)
         assert len(warnings) > 0
@@ -219,8 +245,8 @@ class TestCheckFairnessRegression:
 
     def test_regression_with_zero_count_group(self):
         from landmarkdiff.fairness import (
-            GroupMetrics,
             FairnessReport,
+            GroupMetrics,
             check_fairness_regression,
         )
 

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from landmarkdiff.landmarks import FaceLandmarks
 from landmarkdiff.manipulation import apply_procedure_preset
@@ -48,12 +47,19 @@ class TestMultiReversePrediction:
     """Tests for MultiReversePrediction dataclass."""
 
     def test_procedures(self):
-        from landmarkdiff.reverse import ReversePrediction, MultiReversePrediction
+        from landmarkdiff.reverse import MultiReversePrediction, ReversePrediction
 
         mrp = MultiReversePrediction(
             predictions=[
-                ReversePrediction(procedure="rhinoplasty", intensity=50.0, confidence=0.8, displacement_error=1.0),
-                ReversePrediction(procedure="blepharoplasty", intensity=30.0, confidence=0.6, displacement_error=2.0),
+                ReversePrediction(
+                    procedure="rhinoplasty", intensity=50.0, confidence=0.8, displacement_error=1.0
+                ),
+                ReversePrediction(
+                    procedure="blepharoplasty",
+                    intensity=30.0,
+                    confidence=0.6,
+                    displacement_error=2.0,
+                ),
             ],
             residual_error=0.5,
         )
@@ -61,11 +67,13 @@ class TestMultiReversePrediction:
         assert mrp.intensities == {"rhinoplasty": 50.0, "blepharoplasty": 30.0}
 
     def test_summary(self):
-        from landmarkdiff.reverse import ReversePrediction, MultiReversePrediction
+        from landmarkdiff.reverse import MultiReversePrediction, ReversePrediction
 
         mrp = MultiReversePrediction(
             predictions=[
-                ReversePrediction(procedure="rhinoplasty", intensity=50.0, confidence=0.8, displacement_error=1.0),
+                ReversePrediction(
+                    procedure="rhinoplasty", intensity=50.0, confidence=0.8, displacement_error=1.0
+                ),
             ],
             residual_error=0.5,
         )
@@ -97,7 +105,8 @@ class TestReversePredict:
         face_after = apply_procedure_preset(face_before, "rhinoplasty", intensity=50.0)
 
         result = reverse_predict(
-            face_before, face_after,
+            face_before,
+            face_after,
             procedures=["rhinoplasty", "blepharoplasty"],
             intensity_steps=5,
         )
@@ -122,7 +131,8 @@ class TestReversePredictMulti:
         face_after = apply_procedure_preset(face_before, "rhinoplasty", intensity=50.0)
 
         result = reverse_predict_multi(
-            face_before, face_after,
+            face_before,
+            face_after,
             max_procedures=2,
             min_confidence=0.0,  # low threshold to ensure at least one match
             intensity_steps=5,
@@ -137,7 +147,8 @@ class TestReversePredictMulti:
         face_after = apply_procedure_preset(face_before, "rhinoplasty", intensity=50.0)
 
         result = reverse_predict_multi(
-            face_before, face_after,
+            face_before,
+            face_after,
             max_procedures=1,
             intensity_steps=5,
         )

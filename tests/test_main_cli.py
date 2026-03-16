@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -47,9 +45,11 @@ class TestMainNoCommand:
     def test_version_flag(self):
         from landmarkdiff.__main__ import main
 
-        with pytest.raises(SystemExit) as exc_info:
-            with patch("sys.argv", ["landmarkdiff", "--version"]):
-                main()
+        with (
+            pytest.raises(SystemExit) as exc_info,
+            patch("sys.argv", ["landmarkdiff", "--version"]),
+        ):
+            main()
         assert exc_info.value.code == 0
 
 
@@ -59,9 +59,11 @@ class TestMainLandmarks:
     def test_landmarks_missing_image(self):
         from landmarkdiff.__main__ import main
 
-        with pytest.raises(SystemExit):
-            with patch("sys.argv", ["landmarkdiff", "landmarks", "/nonexistent.png"]):
-                main()
+        with (
+            pytest.raises(SystemExit),
+            patch("sys.argv", ["landmarkdiff", "landmarks", "/nonexistent.png"]),
+        ):
+            main()
 
 
 class TestMainInfer:
@@ -70,25 +72,36 @@ class TestMainInfer:
     def test_infer_missing_image(self):
         from landmarkdiff.__main__ import main
 
-        with pytest.raises(SystemExit):
-            with patch("sys.argv", ["landmarkdiff", "infer", "/nonexistent.png"]):
-                main()
+        with (
+            pytest.raises(SystemExit),
+            patch("sys.argv", ["landmarkdiff", "infer", "/nonexistent.png"]),
+        ):
+            main()
 
     def test_infer_bad_intensity(self, tmp_path):
         from landmarkdiff.__main__ import main
 
         img = tmp_path / "test.png"
-        # Create a tiny valid-ish PNG
         import cv2
+
         cv2.imwrite(str(img), np.zeros((64, 64, 3), dtype=np.uint8))
 
-        with pytest.raises(SystemExit):
-            with patch("sys.argv", [
-                "landmarkdiff", "infer", str(img),
-                "--intensity", "150",  # out of range
-                "--mode", "tps",
-            ]):
-                main()
+        with (
+            pytest.raises(SystemExit),
+            patch(
+                "sys.argv",
+                [
+                    "landmarkdiff",
+                    "infer",
+                    str(img),
+                    "--intensity",
+                    "150",
+                    "--mode",
+                    "tps",
+                ],
+            ),
+        ):
+            main()
 
 
 class TestMainDemo:
@@ -97,11 +110,12 @@ class TestMainDemo:
     def test_demo_import_error(self):
         from landmarkdiff.__main__ import main
 
-        # Mock the import to fail (gradio not installed)
-        with patch("sys.argv", ["landmarkdiff", "demo"]):
-            with patch.dict("sys.modules", {"scripts": None, "scripts.app": None}):
-                with pytest.raises(SystemExit):
-                    main()
+        with (
+            patch("sys.argv", ["landmarkdiff", "demo"]),
+            patch.dict("sys.modules", {"scripts": None, "scripts.app": None}),
+            pytest.raises(SystemExit),
+        ):
+            main()
 
 
 class TestError:

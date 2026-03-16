@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from landmarkdiff.landmarks import FaceLandmarks
 
@@ -52,7 +51,7 @@ class TestPlanningResult:
     """Tests for PlanningResult dataclass."""
 
     def test_summary(self):
-        from landmarkdiff.planning import Measurement, AngleMeasurement, PlanningResult
+        from landmarkdiff.planning import AngleMeasurement, Measurement, PlanningResult
 
         result = PlanningResult(
             measurements=[
