@@ -4,7 +4,7 @@ L_total = L_diffusion + w_landmark * L_landmark
         + w_identity * L_identity + w_perceptual * L_perceptual
 
 Phase A (synthetic TPS data): L_diffusion ONLY. No perceptual loss against
-rubbery TPS warps — it would penalize realism.
+rubbery TPS warps; it would penalize realism.
 
 Phase B (FEM/clinical data): All 4 terms enabled.
 """
@@ -186,7 +186,7 @@ class IdentityLoss:
         pred_valid_emb = pred_emb[valid_idx_t].float()
         target_valid_emb = target_emb[valid_idx_t].float()
 
-        # L2 normalize (safe — zero vectors excluded above)
+        # L2 normalize (safe, zero vectors excluded above)
         pred_valid_emb = F.normalize(pred_valid_emb, dim=1)
         target_valid_emb = F.normalize(target_valid_emb, dim=1)
 

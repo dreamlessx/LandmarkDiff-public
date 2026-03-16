@@ -238,7 +238,7 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     pipe = load_pipeline(args.checkpoint, device)
 
-    # Load test pairs — one per procedure
+    # Load test pairs: one per procedure
     test_dir = Path(args.test_dir)
     input_files = sorted(test_dir.glob("*_input.png"))
 

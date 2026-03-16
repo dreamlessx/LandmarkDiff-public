@@ -171,7 +171,7 @@ def main():
                 print(f"  {proc}/{prefix}: {row.shape}")
 
     if not rows:
-        print("No rows generated — check paths")
+        print("No rows generated; check paths")
         return
 
     # Make all rows the same width (pad shorter ones)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Training dry-run validator — catches config/code bugs before SLURM GPU time.
+"""Training dry-run validator: catches config/code bugs before SLURM GPU time.
 
 Creates a tiny synthetic dataset and runs a mini training loop on CPU to verify
 the entire pipeline works end-to-end:

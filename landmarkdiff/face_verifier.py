@@ -372,7 +372,7 @@ def analyze_distortions(image: np.ndarray) -> DistortionReport:
     geometric = detect_geometric_distortion(image)
     lighting = detect_lighting_issues(image)
 
-    # Overall quality: weighted combination (inverted — 100 = perfect)
+    # Overall quality: weighted combination (inverted, 100 = perfect)
     weighted = (
         0.25 * blur
         + 0.15 * noise
@@ -518,7 +518,7 @@ def restore_face(
     result = image.copy()
     stages = []
 
-    # Step 0: Fix color cast first (classical — fast, doesn't affect identity)
+    # Step 0: Fix color cast first (classical, fast, doesn't affect identity)
     if distortion.color_cast_score > 0.25:
         result = _fix_color_cast(result)
         stages.append("color_correction")
@@ -733,7 +733,7 @@ def verify_identity(
     emb_rest = get_face_embedding(restored)
 
     if emb_orig is None or emb_rest is None:
-        return -1.0, True  # Can't verify — assume OK
+        return -1.0, True  # Can't verify; assume OK
 
     sim = float(
         np.dot(emb_orig, emb_rest) / (np.linalg.norm(emb_orig) * np.linalg.norm(emb_rest) + 1e-8)
@@ -777,7 +777,7 @@ def verify_and_restore(
 
     # Step 2: Decide if restoration needed
     if report.quality_score >= quality_threshold and report.severity in ("none", "mild"):
-        # Image is good enough — no restoration needed
+        # Image is good enough. No restoration needed
         return RestorationResult(
             restored=image.copy(),
             original=image.copy(),
@@ -845,10 +845,10 @@ def verify_batch(
     """Process a directory of face images: analyze, restore, verify, sort.
 
     Outputs:
-    - {output_dir}/passed/     — good images (no fix needed)
-    - {output_dir}/restored/   — fixed images
-    - {output_dir}/rejected/   — too distorted to use (if save_rejected=True)
-    - {output_dir}/report.txt  — batch verification report
+    - {output_dir}/passed/    : good images (no fix needed)
+    - {output_dir}/restored/  : fixed images
+    - {output_dir}/rejected/  : too distorted to use (if save_rejected=True)
+    - {output_dir}/report.txt : batch verification report
 
     Args:
         image_dir: Directory of face images to process.

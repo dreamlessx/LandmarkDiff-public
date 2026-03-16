@@ -2,17 +2,17 @@
 
 Merges all data sources into a single flat directory with correct naming
 for the ControlNet training script:
-  {idx}_input.png      — input image (original face)
-  {idx}_target.png     — target image (what model should generate)
-  {idx}_conditioning.png — conditioning signal (MediaPipe tessellation mesh)
-  {idx}_mask.png       — surgical mask (optional, float32)
+  {idx}_input.png     : input image (original face)
+  {idx}_target.png    : target image (what model should generate)
+  {idx}_conditioning.png: conditioning signal (MediaPipe tessellation mesh)
+  {idx}_mask.png      : surgical mask (optional, float32)
 
 Sources:
 1. Synthetic pairs wave 1 (data/synthetic_surgery_pairs/{procedure}/)
 2. Synthetic pairs wave 2 (data/synthetic_surgery_pairs_v2/{procedure}/)
-3. Synthetic pairs wave 3 (data/synthetic_surgery_pairs_v3/) — realistic displacement model
+3. Synthetic pairs wave 3 (data/synthetic_surgery_pairs_v3/): realistic displacement model
 4. Real surgery pairs (data/real_surgery_pairs/pairs/)
-5. HDA Plastic Surgery Database (data/hda_processed/) — Rathgeb et al. CVPRW 2020
+5. HDA Plastic Surgery Database (data/hda_processed/): Rathgeb et al. CVPRW 2020
 
 The conditioning image must be the tessellation mesh rendering, NOT the input photo.
 """
@@ -65,7 +65,7 @@ def _copy_synthetic_pair(syn_dir: Path, output_dir: Path, start_idx: int) -> int
         if cond_src is not None:
             shutil.copy2(cond_src, output_dir / f"{out_prefix}_conditioning.png")
         else:
-            # _input.png is the original mesh — use it as conditioning
+            # _input.png is the original mesh: use it as conditioning
             shutil.copy2(inp_file, output_dir / f"{out_prefix}_conditioning.png")
 
         # Also copy _input.png (original mesh) for reference
@@ -209,7 +209,7 @@ def _copy_hda_pairs(
         idx += 1
         n_real += 1
 
-        # Augment real pairs — they're scarce and high-value
+        # Augment real pairs: they're scarce and high-value
         if augment:
             cond_img = cv2.imread(str(cond_file)) if cond_file.exists() else None
             for aug_i in range(augment_factor):
@@ -316,7 +316,7 @@ def build_dataset(
             # Conditioning: for both synthetic and real pairs, _input.png IS the
             # correct mesh (original mesh for synthetic, after mesh for real).
             # Use _conditioning.png if explicitly provided, otherwise _input.png.
-            # NOTE: _before_mesh.png is the PRE-surgery mesh for real pairs —
+            # NOTE: _before_mesh.png is the PRE-surgery mesh for real pairs;
             # do NOT use it as conditioning (it doesn't match the target face).
             cond_file = real_pairs_dir / f"{prefix}_conditioning.png"
             if cond_file.exists():
@@ -356,7 +356,7 @@ def build_dataset(
                     out_prefix = f"{idx:06d}"
                     cv2.imwrite(str(output_dir / f"{out_prefix}_target.png"), aug_tgt)
 
-                    # Apply same augmentation to mesh — no MediaPipe needed
+                    # Apply same augmentation to mesh: no MediaPipe needed
                     if cond_img is not None:
                         aug_cond = _augment_image(cond_img, aug_i)
                         if aug_cond is not None:

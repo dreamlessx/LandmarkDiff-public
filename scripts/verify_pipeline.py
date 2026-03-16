@@ -33,7 +33,7 @@ class PipelineVerifier:
         self.results.append({"name": name, "passed": condition, "detail": detail})
         if self.verbose:
             sym = "+" if condition else "X"
-            print(f"  [{sym}] {name}" + (f" — {detail}" if detail else ""))
+            print(f"  [{sym}] {name}" + (f": {detail}" if detail else ""))
         return condition
 
     def run(self, image: np.ndarray) -> dict:
@@ -66,7 +66,7 @@ class PipelineVerifier:
             print("Pipeline integrity: SOME CHECKS FAILED")
             for r in self.results:
                 if not r["passed"]:
-                    print(f"  FAIL: {r['name']} — {r['detail']}")
+                    print(f"  FAIL: {r['name']}: {r['detail']}")
         print("=" * 60)
 
         return {"total": total, "passed": passed, "failed": failed, "results": self.results}

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Experiment lineage tracker — traces config → training → eval → paper.
+"""Experiment lineage tracker: traces config → training → eval → paper.
 
 Provides a unified record of the full experiment lifecycle, tracking
 which config produced which checkpoint, which evaluation used which
@@ -281,7 +281,7 @@ class LineageDB:
         for h, cfg in self.configs.items():
             lines.append(
                 f"  [{h}] {cfg.get('experiment_name', '?')} "
-                f"(Phase {cfg.get('phase', '?')}) — {cfg.get('path', '?')}"
+                f"(Phase {cfg.get('phase', '?')}): {cfg.get('path', '?')}"
             )
 
         # Training runs

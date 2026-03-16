@@ -133,7 +133,7 @@ def check_gpu() -> tuple[bool, dict]:
     # Minimum 16GB VRAM for Phase A, 24GB recommended for Phase B
     ok = total >= 16.0
     if total < 24.0:
-        info["warning"] = "Less than 24GB VRAM — Phase B may be tight"
+        info["warning"] = "Less than 24GB VRAM; Phase B may be tight"
 
     return ok, info
 

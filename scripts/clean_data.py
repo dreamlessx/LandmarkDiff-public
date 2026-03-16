@@ -54,7 +54,7 @@ def validate_face_image(image: np.ndarray) -> dict:
 
     Rejects:
     - No face detected
-    - Multiple faces (ambiguous — which is the patient?)
+    - Multiple faces (ambiguous, which is the patient?)
     - Face too small (<100px inter-ocular distance)
     - Face occluded (missing key landmarks)
     - Non-face images that slipped through collection
@@ -208,7 +208,7 @@ def deduplicate_faces(
                 if j != best_idx:
                     duplicates.append(valid_paths[j])
 
-    # Add paths where embeddings failed (keep them — can't dedup)
+    # Add paths where embeddings failed (keep them; can't dedup)
     no_emb_paths = set(image_paths) - set(valid_paths)
     unique.extend(no_emb_paths)
 
@@ -335,7 +335,7 @@ def clean_directory(
             continue
 
         if not result.restoration_stages:
-            # Passed clean — no restoration needed
+            # Passed clean. No restoration needed
             stats["passed_clean"] += 1
             stats["avg_quality_after"].append(result.post_quality_score)
             out_file = clean_dir / img_file.name

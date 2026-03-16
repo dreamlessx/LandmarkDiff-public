@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Quick checkpoint quality scorer — ranks checkpoints by val performance.
+"""Quick checkpoint quality scorer: ranks checkpoints by val performance.
 
 Evaluates each checkpoint on a small validation subset using TPS-based
 metrics (SSIM, LPIPS, NME). No GPU required for TPS evaluation.

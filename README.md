@@ -275,11 +275,11 @@ graph TD
     classDef io fill:#0f172a,stroke:#334155,color:#fff,stroke-width:2px
 
     A["📷 Input Photo (512x512)"]:::io
-    A --> B["MediaPipe Face Mesh — 478 landmarks"]:::stage
-    B --> C["Gaussian RBF Deformation — procedure-specific displacements"]:::stage
-    C --> D["Conditioning Generation — wireframe + Canny edges + mask"]:::stage
-    D --> E["ControlNet + Stable Diffusion 1.5 — CrucibleAI model"]:::stage
-    E --> F["Post-Processing — CodeFormer · Real-ESRGAN · LAB matching · Laplacian blending"]:::post
+    A --> B["MediaPipe Face Mesh: 478 landmarks"]:::stage
+    B --> C["Gaussian RBF Deformation: procedure-specific displacements"]:::stage
+    C --> D["Conditioning Generation: wireframe + Canny edges + mask"]:::stage
+    D --> E["ControlNet + Stable Diffusion 1.5: CrucibleAI model"]:::stage
+    E --> F["Post-Processing: CodeFormer · Real-ESRGAN · LAB matching · Laplacian blending"]:::post
     F --> G["ArcFace Identity Verification"]:::post
     G --> H["🎯 Output Prediction"]:::io
 ```

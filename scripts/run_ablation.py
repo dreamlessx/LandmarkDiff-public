@@ -81,7 +81,7 @@ cd "${{LANDMARKDIFF_ROOT:-$(dirname $(dirname $(realpath $0)))}}"
 source "${{CONDA_PREFIX:-$HOME/miniconda3}}"/etc/profile.d/conda.sh
 conda activate ${{LANDMARKDIFF_ENV:-landmarkdiff}}
 
-echo "Ablation: {name} — {cfg["description"]}"
+echo "Ablation: {name}: {cfg["description"]}"
 echo "Start: $(date)"
 
 python scripts/train_controlnet.py \\

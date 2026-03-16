@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Displacement analysis for paper tables — generates reports from training data.
+"""Displacement analysis for paper tables: generates reports from training data.
 
 Provides streamlined functions to:
 1. Generate displacement_report.json from before/after image pairs

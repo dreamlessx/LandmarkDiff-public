@@ -244,7 +244,7 @@ def verify_splits(output_dir: Path = SPLITS_DIR) -> None:
     elif broken > 0:
         print(f"\nWARNING: {broken} broken symlinks!")
     else:
-        print("\nAll checks passed — no leakage, all symlinks valid.")
+        print("\nAll checks passed. No leakage, all symlinks valid.")
 
 
 if __name__ == "__main__":

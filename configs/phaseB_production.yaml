@@ -1,4 +1,4 @@
-# Phase B Production Config — Fine-tuning with full 4-term loss
+# Phase B Production Config: Fine-tuning with full 4-term loss
 # Initializes from Phase A checkpoint
 #
 # Usage:

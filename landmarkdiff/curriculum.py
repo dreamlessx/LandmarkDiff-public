@@ -122,7 +122,7 @@ class ProcedureCurriculum:
     def get_weight(self, step: int, procedure: str) -> float:
         """Get sampling weight for a procedure at the given step.
 
-        Returns a value in [0.1, 1.0] — never fully excludes any procedure.
+        Returns a value in [0.1, 1.0]: never fully excludes any procedure.
         """
         difficulty = self.get_difficulty(step)
         proc_diff = self.proc_difficulty.get(procedure, 0.5)

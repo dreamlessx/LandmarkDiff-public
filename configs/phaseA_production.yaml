@@ -1,4 +1,4 @@
-# Phase A Production Config — Full training on 27K+ synthetic pairs
+# Phase A Production Config: Full training on 27K+ synthetic pairs
 # Target: 50K optimizer steps with 4-GPU DDP
 #
 # Usage:

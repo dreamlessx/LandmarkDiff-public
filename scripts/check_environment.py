@@ -30,7 +30,7 @@ class EnvironmentChecker:
     def check(self, name: str, passed: bool, detail: str = "") -> bool:
         self.results.append({"name": name, "passed": passed, "detail": detail})
         sym = "+" if passed else "X"
-        print(f"  [{sym}] {name}" + (f" — {detail}" if detail else ""))
+        print(f"  [{sym}] {name}" + (f": {detail}" if detail else ""))
         return passed
 
     def run(self, full: bool = False) -> dict:

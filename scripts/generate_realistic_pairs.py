@@ -234,7 +234,7 @@ def generate_pairs(
         max_attempts = pairs_per_procedure * 3  # Allow 3x retry budget
 
         while generated < pairs_per_procedure and attempts < max_attempts:
-            # Pick random source image — reload from disk (memory-efficient)
+            # Pick random source image: reload from disk (memory-efficient)
             idx = rng.integers(len(face_index))
             img_path, face = face_index[idx]
             img = cv2.imread(str(img_path))

@@ -262,7 +262,7 @@ def print_report(as_json: bool = False) -> None:
         return
 
     print("=" * 70)
-    print(f"  LandmarkDiff Project Status — {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"  LandmarkDiff Project Status: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     print("=" * 70)
 
     # Datasets

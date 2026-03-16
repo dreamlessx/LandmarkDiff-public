@@ -8,7 +8,7 @@ Usage:
     # Launch Phase A with production config (preflight + submit)
     python scripts/launch_training.py --config configs/phaseA_production.yaml
 
-    # Dry run — check everything but don't submit
+    # Dry run: check everything but don't submit
     python scripts/launch_training.py --config configs/phaseA_production.yaml --dry-run
 
     # Multi-GPU Phase A
@@ -84,10 +84,10 @@ def run_preflight(config_path: str) -> tuple[bool, list[str]]:
     for check in checks:
         if not check.passed:
             all_passed = False
-            messages.append(f"FAIL: {check.name} — {check.message}")
+            messages.append(f"FAIL: {check.name}: {check.message}")
         elif check.warning:
             warnings += 1
-            messages.append(f"WARN: {check.name} — {check.message}")
+            messages.append(f"WARN: {check.name}: {check.message}")
         else:
             messages.append(f"PASS: {check.name}")
 

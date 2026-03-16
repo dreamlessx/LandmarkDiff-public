@@ -255,7 +255,7 @@ def load_faces(input_dir: str, num_faces: int, seed: int = 42) -> list[np.ndarra
     if not all_files:
         raise FileNotFoundError(f"No images found in {input_dir}")
 
-    # Shuffle and pick candidates — we may need more than num_faces if some fail detection
+    # Shuffle and pick candidates: we may need more than num_faces if some fail detection
     rng.shuffle(all_files)
     faces = []
     for f in all_files:

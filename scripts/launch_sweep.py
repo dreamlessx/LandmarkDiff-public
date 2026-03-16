@@ -136,7 +136,7 @@ def main():
     print(f"\nMaster script: {master_path}")
 
     if args.dry_run:
-        print("\nDry run — scripts generated but not submitted.")
+        print("\nDry run; scripts generated but not submitted.")
         print(f"To submit: bash {master_path}")
         return
 

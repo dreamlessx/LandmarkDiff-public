@@ -206,7 +206,7 @@ def main():
         else:
             print(f"Submit failed: {result.stderr}")
     elif args.dry_run:
-        print("\nDry run — not submitting. Review configs:")
+        print("\nDry run; not submitting. Review configs:")
         for c in configs[:3]:
             print(
                 f"  Trial {c['trial_id']}: lr={c['learning_rate']}, "

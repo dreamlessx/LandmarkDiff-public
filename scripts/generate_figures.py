@@ -1,10 +1,10 @@
 """Generate publication-quality figures for the LandmarkDiff paper.
 
 Produces:
-1. Architecture diagram (Fig. 1) — pipeline overview
-2. Qualitative results grid (Fig. 2) — procedure comparison
-3. Conditioning signal visualization — mesh/canny/mask examples
-4. Deformation visualization — before/after landmark overlays
+1. Architecture diagram (Fig. 1): pipeline overview
+2. Qualitative results grid (Fig. 2): procedure comparison
+3. Conditioning signal visualization: mesh/canny/mask examples
+4. Deformation visualization: before/after landmark overlays
 
 All figures saved as 300 DPI PNGs suitable for LNCS at 12.2 cm width.
 """

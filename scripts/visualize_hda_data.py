@@ -198,7 +198,7 @@ def generate_figure(hda_dir: Path, output_path: Path) -> None:
     # Suptitle
     total = metadata.get("total_pairs", 0)
     fig.suptitle(
-        f"HDA Plastic Surgery Database — {total} Processed Pairs\n(Rathgeb et al., CVPRW 2020)",
+        f"HDA Plastic Surgery Database: {total} Processed Pairs\n(Rathgeb et al., CVPRW 2020)",
         fontsize=13,
         fontweight="bold",
         y=0.98,

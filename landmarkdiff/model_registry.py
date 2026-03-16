@@ -158,7 +158,7 @@ class ModelRegistry:
         """List all registered models.
 
         Args:
-            sort_by: Sort key — "step", "name", or a metric name.
+            sort_by: Sort key: "step", "name", or a metric name.
 
         Returns:
             Sorted list of ModelEntry objects.
@@ -340,7 +340,7 @@ class ModelRegistry:
         total_size = sum(m.size_mb for m in models)
         lines = [
             f"Model Registry: {len(models)} checkpoints ({total_size:.0f} MB)",
-            f"  Steps: {models[0].step} — {models[-1].step}",
+            f"  Steps: {models[0].step} to {models[-1].step}",
         ]
 
         # Show metrics ranges
@@ -351,7 +351,7 @@ class ModelRegistry:
         for metric in sorted(all_metrics):
             values = [m.metrics[metric] for m in models if metric in m.metrics]
             if values:
-                lines.append(f"  {metric}: {min(values):.4f} — {max(values):.4f}")
+                lines.append(f"  {metric}: {min(values):.4f} to {max(values):.4f}")
 
         return "\n".join(lines)
 

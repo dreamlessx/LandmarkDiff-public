@@ -287,7 +287,7 @@ def create_full_report(
 
     # Title
     total_width = header_row.shape[1]
-    title = create_header_panel("Surgical Outcome Predictions — Overview", total_width, 50)
+    title = create_header_panel("Surgical Outcome Predictions: Overview", total_width, 50)
 
     overview = np.vstack([title, header_row] + rows)
 
@@ -356,7 +356,7 @@ def run_demo(
     view = estimate_face_view(face)
     print(f"  View: {view.get('view', '?')} (yaw: {view.get('yaw_deg', 0):.1f}deg)")
     if abs(view.get("yaw_deg", 0)) > 30:
-        print("  WARNING: Non-frontal face — results may be less accurate")
+        print("  WARNING: Non-frontal face; results may be less accurate")
 
     # Fitzpatrick classification
     try:

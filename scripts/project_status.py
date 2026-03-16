@@ -150,7 +150,7 @@ def format_dashboard(
 
     lines = [
         "=" * 60,
-        f"  LandmarkDiff v{version} — Project Status",
+        f"  LandmarkDiff v{version}: Project Status",
         "=" * 60,
         "",
         "--- Codebase ---",

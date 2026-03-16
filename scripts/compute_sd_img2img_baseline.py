@@ -1,7 +1,7 @@
 """Compute SD1.5 Img2Img baseline on HDA test set for paper Table 1.
 
 Uses Stable Diffusion 1.5 image-to-image pipeline with TPS-warped input
-and mask compositing — NO ControlNet conditioning. This isolates the
+and mask compositing; NO ControlNet conditioning. This isolates the
 contribution of ControlNet in LandmarkDiff.
 
 The pipeline:

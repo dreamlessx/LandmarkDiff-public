@@ -1,4 +1,4 @@
-# LandmarkDiff MICCAI 2026 Paper — Build System
+# LandmarkDiff MICCAI 2026 Paper --- Build System
 # Requires: pdflatex, bibtex (from texlive)
 
 MAIN = main

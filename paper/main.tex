@@ -1,6 +1,6 @@
 % LandmarkDiff: Anatomically-Conditioned Latent Diffusion for
 % Photorealistic Facial Surgery Outcome Prediction
-% MICCAI 2026 Submission — Springer LNCS Format
+% MICCAI 2026 Submission --- Springer LNCS Format
 
 \documentclass[runningheads]{llncs}
 
@@ -62,13 +62,13 @@ the surgery would alter anatomy.
 The research community has made progress on computational surgical
 prediction, but almost exclusively through 3D pipelines requiring
 cone-beam CT or structured-light scans~\cite{ma2021fcnet,fang2022acmtnet,lee2025camos}.  A CBCT scanner costs \$100K--\$250K,
-exposes patients to radiation, and sits in a hospital radiology suite—not
+exposes patients to radiation, and sits in a hospital radiology suite---not
 the outpatient cosmetic clinic where the vast majority of the world's 15+
 million annual facial procedures~\cite{isaps2023} are actually performed.
 These patients have photographs, not CT volumes.
 
 What is missing, then, is a method that can take a single clinical
-photograph—a 2D image from a phone camera—and produce a photorealistic
+photograph---a 2D image from a phone camera---and produce a photorealistic
 prediction of the surgical outcome while respecting the specific
 biomechanics of the planned procedure.  This means \emph{not} arbitrary
 warps, but anatomically grounded deformations (\eg, bilateral alar
@@ -211,9 +211,9 @@ Mesh~\cite{lugaresi2019mediapipe}, including 468 face surface points and
 \times W \times 3}$, the detector produces normalized coordinates
 $\mathbf{L} = \{(x_i, y_i, z_i)\}_{i=1}^{N}$ with $x_i, y_i \in [0,1]$
 representing fractional image position and $z_i$ encoding relative depth.
-Landmarks are organized into anatomically meaningful regions—jawline (36
+Landmarks are organized into anatomically meaningful regions---jawline (36
 points), orbital contours (16 per eye), nasal dorsum and alar base (25
-points), lip vermilion (22 points)—enabling procedure-specific manipulation.
+points), lip vermilion (22 points)---enabling procedure-specific manipulation.
 
 \subsection{Procedure-Specific Gaussian RBF Deformation}
 \label{sec:deformation}
@@ -245,11 +245,11 @@ distortions.
 Displacement vectors $\boldsymbol{\delta}_j$ are calibrated per procedure
 from anthropometric studies~\cite{singh2010plastic}.  For example,
 rhinoplasty applies three anatomically distinct sub-deformations:
-(a)~bilateral alar narrowing—symmetric inward pull on nostril landmarks
+(a)~bilateral alar narrowing---symmetric inward pull on nostril landmarks
 (indices 240, 236, 460, 456 with $\delta_x = \pm 2.5\alpha$, $r = 0.6r_0$);
-(b)~tip refinement—upward displacement on tip landmarks (indices 1, 2,
+(b)~tip refinement---upward displacement on tip landmarks (indices 1, 2,
 94 with $\delta_y = -2.0\alpha$, $r = 0.5r_0$); and (c)~dorsum
-narrowing—bilateral squeeze on bridge landmarks ($\delta_x = \pm
+narrowing---bilateral squeeze on bridge landmarks ($\delta_x = \pm
 1.5\alpha$, $r = 0.5r_0$).  All displacements are bilaterally symmetric
 to maintain facial symmetry, consistent with standard surgical technique.
 

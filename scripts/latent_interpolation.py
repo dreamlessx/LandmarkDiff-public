@@ -2,7 +2,7 @@
 
 Generates smooth transitions between two different surgical outcomes by
 interpolating in the diffusion latent space. Demonstrates the model's
-disentangled representation — geometry from conditioning, texture from latent.
+disentangled representation: geometry from conditioning, texture from latent.
 
 Usage:
     python scripts/latent_interpolation.py \
@@ -43,7 +43,7 @@ def slerp(v0: torch.Tensor, v1: torch.Tensor, t: float) -> torch.Tensor:
     omega = torch.acos(dot)
 
     if omega.abs() < 1e-6:
-        # Nearly parallel — fall back to linear
+        # Nearly parallel; fall back to linear
         result = (1 - t) * v0_flat + t * v1_flat
     else:
         sin_omega = torch.sin(omega)

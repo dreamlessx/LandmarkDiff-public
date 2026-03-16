@@ -5,11 +5,11 @@ Exposes the full pipeline via a REST API for integration with clinical
 software, web applications, and evaluation tools.
 
 Endpoints:
-  POST /predict       — Full pipeline: upload image, get predicted outcome
-  POST /analyze       — Analyze face: landmarks, Fitzpatrick type, face view
-  POST /batch         — Batch processing for multiple images
-  GET  /health        — Health check
-  GET  /procedures    — List available procedures
+  POST /predict      : Full pipeline: upload image, get predicted outcome
+  POST /analyze      : Analyze face: landmarks, Fitzpatrick type, face view
+  POST /batch        : Batch processing for multiple images
+  GET  /health       : Health check
+  GET  /procedures   : List available procedures
 
 Usage:
     # Start server

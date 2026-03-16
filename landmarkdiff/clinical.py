@@ -126,7 +126,7 @@ def get_bells_palsy_side_indices(
     """Get landmark indices for the affected side in Bell's palsy.
 
     In Bell's palsy, one side of the face is paralyzed. We should NOT
-    apply bilateral symmetric deformations — only deform the healthy side.
+    apply bilateral symmetric deformations: only deform the healthy side.
 
     Returns:
         Dict mapping region names to landmark indices on the affected side.

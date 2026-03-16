@@ -100,7 +100,7 @@ def estimate_displacement_intensity(
     diff = np.abs(gray_in - gray_cond)
     mean_diff = np.mean(diff) / 255.0
 
-    # Map to [0, 1] — typical range is 0.01 to 0.15
+    # Map to [0, 1]: typical range is 0.01 to 0.15
     intensity = min(1.0, mean_diff / 0.15)
     return float(intensity)
 

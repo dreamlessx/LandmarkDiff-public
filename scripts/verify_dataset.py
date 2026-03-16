@@ -207,7 +207,7 @@ def verify_dataset(
         or stats["cond_target_identical"] > n_sampled * 0.01
     )
     if critical:
-        print("VERDICT: ISSUES FOUND — review before training")
+        print("VERDICT: ISSUES FOUND; review before training")
     else:
         print("VERDICT: Dataset looks good for training")
     print(f"{'=' * 50}")
