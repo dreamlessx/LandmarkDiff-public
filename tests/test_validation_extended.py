@@ -1,4 +1,4 @@
-"""Extended tests for validation module -- procedure map and selection logic."""
+"""Extended tests for validation module: procedure map and selection logic."""
 
 from __future__ import annotations
 
@@ -10,6 +10,17 @@ import pytest
 torch = pytest.importorskip("torch")
 
 from landmarkdiff.validation import ValidationCallback  # noqa: E402
+
+
+class _BareDataset:
+    """Minimal dataset stub with only __len__, no procedure metadata."""
+
+    def __init__(self, length: int):
+        self._length = length
+
+    def __len__(self) -> int:
+        return self._length
+
 
 # ---------------------------------------------------------------------------
 # _build_procedure_map
@@ -64,8 +75,7 @@ class TestBuildProcedureMap:
 
     def test_empty_dataset(self, tmp_path):
         """Dataset with no procedure metadata."""
-        ds = MagicMock(spec=[])
-        ds.__len__ = MagicMock(return_value=3)
+        ds = _BareDataset(3)
 
         cb = ValidationCallback(val_dataset=ds, output_dir=tmp_path / "val")
         proc_map = cb._procedure_indices
@@ -96,8 +106,7 @@ class TestSelectPerProcedureIndices:
 
     def test_empty_map_fallback(self, tmp_path):
         """Falls back to sequential indices when no procedure map."""
-        ds = MagicMock(spec=[])
-        ds.__len__ = MagicMock(return_value=10)
+        ds = _BareDataset(10)
 
         cb = ValidationCallback(val_dataset=ds, output_dir=tmp_path / "val", num_samples=4)
         # Ensure empty procedure indices
@@ -110,8 +119,7 @@ class TestSelectPerProcedureIndices:
 
     def test_per_procedure_selection(self, tmp_path):
         """Selects samples_per_procedure from each procedure."""
-        ds = MagicMock(spec=[])
-        ds.__len__ = MagicMock(return_value=10)
+        ds = _BareDataset(10)
 
         cb = ValidationCallback(
             val_dataset=ds,
@@ -133,8 +141,7 @@ class TestSelectPerProcedureIndices:
 
     def test_fewer_samples_than_requested(self, tmp_path):
         """Procedure with fewer samples than samples_per_procedure."""
-        ds = MagicMock(spec=[])
-        ds.__len__ = MagicMock(return_value=5)
+        ds = _BareDataset(5)
 
         cb = ValidationCallback(
             val_dataset=ds,
@@ -160,8 +167,7 @@ class TestPlotHistory:
     """Tests for plot_history."""
 
     def test_plot_with_data(self, tmp_path):
-        ds = MagicMock(spec=[])
-        ds.__len__ = MagicMock(return_value=4)
+        ds = _BareDataset(4)
 
         cb = ValidationCallback(val_dataset=ds, output_dir=tmp_path / "val")
         cb.history = [
@@ -175,8 +181,7 @@ class TestPlotHistory:
         assert Path(out_path).exists()
 
     def test_plot_default_path(self, tmp_path):
-        ds = MagicMock(spec=[])
-        ds.__len__ = MagicMock(return_value=4)
+        ds = _BareDataset(4)
 
         cb = ValidationCallback(val_dataset=ds, output_dir=tmp_path / "val")
         cb.history = [
@@ -187,8 +192,7 @@ class TestPlotHistory:
         assert (tmp_path / "val" / "validation_curves.png").exists()
 
     def test_plot_empty_is_noop(self, tmp_path):
-        ds = MagicMock(spec=[])
-        ds.__len__ = MagicMock(return_value=4)
+        ds = _BareDataset(4)
 
         cb = ValidationCallback(val_dataset=ds, output_dir=tmp_path / "val")
         cb.history = []
@@ -204,8 +208,7 @@ class TestValidationCallbackProperties:
     """Tests for ValidationCallback init properties."""
 
     def test_samples_per_procedure(self, tmp_path):
-        ds = MagicMock(spec=[])
-        ds.__len__ = MagicMock(return_value=10)
+        ds = _BareDataset(10)
 
         cb = ValidationCallback(
             val_dataset=ds,
@@ -215,8 +218,7 @@ class TestValidationCallbackProperties:
         assert cb.samples_per_procedure == 5
 
     def test_default_values(self, tmp_path):
-        ds = MagicMock(spec=[])
-        ds.__len__ = MagicMock(return_value=10)
+        ds = _BareDataset(10)
 
         cb = ValidationCallback(val_dataset=ds, output_dir=tmp_path / "val")
         assert cb.num_inference_steps == 25
