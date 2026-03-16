@@ -94,24 +94,160 @@ class TestFacialSymmetry:
         assert isinstance(score, float)
 
 
+class TestNasalRatiosToDict:
+    """Tests for NasalRatios.to_dict."""
+
+    def test_returns_dict_with_all_fields(self):
+        from landmarkdiff.morphometry import NasalRatios
+
+        nr = NasalRatios(
+            alar_intercanthal=1.0,
+            alar_face_width=0.2,
+            nose_length_face_height=0.3,
+            tip_midline_deviation=0.01,
+            nostril_vertical_asymmetry=0.005,
+        )
+        d = nr.to_dict()
+        assert len(d) == 5
+        assert d["alar_intercanthal"] == 1.0
+        assert d["tip_midline_deviation"] == 0.01
+
+    def test_default_to_dict(self):
+        from landmarkdiff.morphometry import NasalRatios
+
+        d = NasalRatios().to_dict()
+        assert all(v == 0.0 for v in d.values())
+
+
+class TestNasalRatiosImprovementDetailed:
+    """Detailed tests for NasalRatios.improvement_score."""
+
+    def test_deviation_improved(self):
+        from landmarkdiff.morphometry import NasalRatios
+
+        ref = NasalRatios(tip_midline_deviation=0.1, nostril_vertical_asymmetry=0.08)
+        pred = NasalRatios(tip_midline_deviation=0.02, nostril_vertical_asymmetry=0.01)
+        scores = pred.improvement_score(ref)
+        assert scores["tip_midline_deviation"] is True
+        assert scores["nostril_vertical_asymmetry"] is True
+
+    def test_deviation_worsened(self):
+        from landmarkdiff.morphometry import NasalRatios
+
+        ref = NasalRatios(tip_midline_deviation=0.01, nostril_vertical_asymmetry=0.005)
+        pred = NasalRatios(tip_midline_deviation=0.15, nostril_vertical_asymmetry=0.1)
+        scores = pred.improvement_score(ref)
+        assert scores["tip_midline_deviation"] is False
+        assert scores["nostril_vertical_asymmetry"] is False
+
+
+class TestMorphometryFromImage:
+    """Tests for compute_from_image methods (mocked mediapipe path)."""
+
+    def test_nasal_morphometry_no_mediapipe(self):
+        from unittest.mock import patch
+
+        from landmarkdiff.morphometry import NasalMorphometry
+
+        morph = NasalMorphometry()
+        img = np.full((256, 256, 3), 128, dtype=np.uint8)
+        with patch.dict("sys.modules", {"mediapipe": None}):
+            result = morph.compute_from_image(img)
+        assert result is None
+
+    def test_facial_symmetry_no_mediapipe(self):
+        from unittest.mock import patch
+
+        from landmarkdiff.morphometry import FacialSymmetry
+
+        sym = FacialSymmetry()
+        img = np.full((256, 256, 3), 128, dtype=np.uint8)
+        with patch.dict("sys.modules", {"mediapipe": None}):
+            result = sym.compute_from_image(img)
+        assert result is None
+
+
 class TestCompareMorphometry:
-    """Tests for compare_morphometry function.
+    """Tests for compare_morphometry function using mocks."""
 
-    Note: compare_morphometry requires mediapipe.solutions which may not be
-    available in all environments, so we test with a mock if needed.
-    """
+    def test_both_none_ratios(self):
+        from unittest.mock import patch
 
-    def test_basic_comparison_requires_images(self):
-        """compare_morphometry takes BGR images (not raw landmarks).
-        Skip if mediapipe.solutions not available."""
-        pytest.importorskip("mediapipe.solutions")
-        from landmarkdiff.morphometry import compare_morphometry
+        from landmarkdiff.morphometry import (
+            FacialSymmetry,
+            NasalMorphometry,
+            compare_morphometry,
+        )
 
-        img1 = np.full((512, 512, 3), 128, dtype=np.uint8)
-        img2 = np.full((512, 512, 3), 140, dtype=np.uint8)
-        # May fail if no face detected, but function should not crash
-        try:
-            result = compare_morphometry(img1, img2)
-            assert isinstance(result, dict)
-        except Exception:
-            pass  # acceptable if no face detected in synthetic images
+        img = np.full((256, 256, 3), 128, dtype=np.uint8)
+        with (
+            patch.object(NasalMorphometry, "compute_from_image", return_value=None),
+            patch.object(FacialSymmetry, "compute_from_image", return_value=None),
+        ):
+            result = compare_morphometry(img, img)
+        assert result["procedure"] == "rhinoplasty"
+        assert result["input_ratios"] is None
+        assert result["pred_ratios"] is None
+        assert result["improvements"] is None
+        assert result["symmetry_improved"] is None
+
+    def test_with_valid_ratios_and_symmetry(self):
+        from unittest.mock import patch
+
+        from landmarkdiff.morphometry import (
+            FacialSymmetry,
+            NasalMorphometry,
+            NasalRatios,
+            compare_morphometry,
+        )
+
+        input_ratios = NasalRatios(
+            alar_intercanthal=1.5, tip_midline_deviation=0.1, nostril_vertical_asymmetry=0.05
+        )
+        pred_ratios = NasalRatios(
+            alar_intercanthal=1.1, tip_midline_deviation=0.02, nostril_vertical_asymmetry=0.01
+        )
+        img = np.full((256, 256, 3), 128, dtype=np.uint8)
+        with (
+            patch.object(
+                NasalMorphometry, "compute_from_image", side_effect=[input_ratios, pred_ratios]
+            ),
+            patch.object(FacialSymmetry, "compute_from_image", side_effect=[0.15, 0.08]),
+        ):
+            result = compare_morphometry(img, img)
+        assert result["improvements"] is not None
+        assert result["symmetry_improved"] is True
+
+    def test_symmetry_worsened(self):
+        from unittest.mock import patch
+
+        from landmarkdiff.morphometry import (
+            FacialSymmetry,
+            NasalMorphometry,
+            compare_morphometry,
+        )
+
+        img = np.full((256, 256, 3), 128, dtype=np.uint8)
+        with (
+            patch.object(NasalMorphometry, "compute_from_image", return_value=None),
+            patch.object(FacialSymmetry, "compute_from_image", side_effect=[0.05, 0.10]),
+        ):
+            result = compare_morphometry(img, img)
+        assert result["symmetry_improved"] is False
+
+    def test_custom_procedure(self):
+        from unittest.mock import patch
+
+        from landmarkdiff.morphometry import (
+            FacialSymmetry,
+            NasalMorphometry,
+            compare_morphometry,
+        )
+
+        img = np.full((64, 64, 3), 128, dtype=np.uint8)
+        with (
+            patch.object(NasalMorphometry, "compute_from_image", return_value=None),
+            patch.object(FacialSymmetry, "compute_from_image", return_value=None),
+        ):
+            result = compare_morphometry(img, img, procedure="blepharoplasty")
+        assert result["procedure"] == "blepharoplasty"

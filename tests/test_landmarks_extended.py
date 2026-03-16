@@ -376,3 +376,220 @@ class TestLoadImage:
         cv2.imwrite(str(path), img)
         loaded = load_image(str(path))
         assert loaded.shape == (64, 64, 3)
+
+
+# ---------------------------------------------------------------------------
+# FaceLandmarks: face_yaw
+# ---------------------------------------------------------------------------
+
+
+def _make_frontal_face() -> FaceLandmarks:
+    """Create a face with symmetric eye/nose positions (frontal)."""
+    lm = np.zeros((478, 3), dtype=np.float32)
+    lm[:, 0] = 0.5
+    lm[:, 1] = 0.5
+    # Symmetric eyes
+    lm[33] = [0.35, 0.4, 0.0]  # left eye outer
+    lm[263] = [0.65, 0.4, 0.0]  # right eye outer
+    lm[1] = [0.5, 0.55, 0.0]  # nose tip centered
+    lm[152] = [0.5, 0.85, 0.0]  # chin
+    lm[10] = [0.5, 0.15, 0.0]  # forehead
+    return FaceLandmarks(landmarks=lm, confidence=0.95, image_width=512, image_height=512)
+
+
+def _make_profile_face() -> FaceLandmarks:
+    """Create a face turned to the left (viewer's right)."""
+    lm = np.zeros((478, 3), dtype=np.float32)
+    lm[:, 0] = 0.5
+    lm[:, 1] = 0.5
+    # Left eye close to nose, right eye far (face turned left)
+    lm[33] = [0.48, 0.4, 0.0]  # left eye (near nose)
+    lm[263] = [0.7, 0.4, 0.0]  # right eye (far from nose)
+    lm[1] = [0.45, 0.55, 0.0]  # nose tip shifted left
+    lm[152] = [0.5, 0.85, 0.0]
+    lm[10] = [0.5, 0.15, 0.0]
+    return FaceLandmarks(landmarks=lm, confidence=0.95, image_width=512, image_height=512)
+
+
+class TestFaceYaw:
+    def test_frontal_face_near_zero(self):
+        face = _make_frontal_face()
+        yaw = face.face_yaw
+        assert isinstance(yaw, float)
+        assert abs(yaw) < 15.0
+
+    def test_profile_face_nonzero(self):
+        face = _make_profile_face()
+        yaw = face.face_yaw
+        assert abs(yaw) > 5.0
+
+    def test_returns_float(self):
+        face = _make_face()
+        assert isinstance(face.face_yaw, float)
+
+
+# ---------------------------------------------------------------------------
+# FaceLandmarks: face_view
+# ---------------------------------------------------------------------------
+
+
+class TestFaceView:
+    def test_frontal(self):
+        face = _make_frontal_face()
+        assert face.face_view == "frontal"
+
+    def test_profile_not_frontal(self):
+        face = _make_profile_face()
+        assert face.face_view != "frontal"
+
+    def test_valid_values(self):
+        face = _make_face()
+        assert face.face_view in {
+            "frontal",
+            "three_quarter_left",
+            "three_quarter_right",
+            "profile_left",
+            "profile_right",
+        }
+
+
+# ---------------------------------------------------------------------------
+# FaceLandmarks: visible_side
+# ---------------------------------------------------------------------------
+
+
+class TestVisibleSide:
+    def test_frontal_both(self):
+        face = _make_frontal_face()
+        assert face.visible_side == "both"
+
+    def test_profile_not_both(self):
+        face = _make_profile_face()
+        side = face.visible_side
+        assert side in {"left", "right"}
+
+    def test_returns_string(self):
+        face = _make_face()
+        assert isinstance(face.visible_side, str)
+
+
+# ---------------------------------------------------------------------------
+# get_teeth_mask
+# ---------------------------------------------------------------------------
+
+
+class TestGetTeethMask:
+    def test_returns_correct_shape(self):
+        from landmarkdiff.landmarks import get_teeth_mask
+
+        face = _make_face()
+        mask = get_teeth_mask(face, (256, 256))
+        assert mask.shape == (256, 256)
+        assert mask.dtype == np.float32
+
+    def test_mask_has_some_ones(self):
+        from landmarkdiff.landmarks import get_teeth_mask
+
+        face = _make_face()
+        mask = get_teeth_mask(face, (512, 512))
+        assert mask.max() > 0, "Mask should have some non-zero region"
+
+    def test_mask_bounded(self):
+        from landmarkdiff.landmarks import get_teeth_mask
+
+        face = _make_face()
+        mask = get_teeth_mask(face, (256, 256))
+        assert mask.min() >= 0.0
+        assert mask.max() <= 1.0
+
+
+# ---------------------------------------------------------------------------
+# detect_glasses_region
+# ---------------------------------------------------------------------------
+
+
+class TestDetectGlassesRegion:
+    def test_plain_image_no_glasses(self):
+        from landmarkdiff.landmarks import detect_glasses_region
+
+        face = _make_face()
+        img = np.full((512, 512, 3), 128, dtype=np.uint8)
+        result = detect_glasses_region(face, img)
+        assert isinstance(result, bool)
+
+    def test_edgy_image_may_detect_glasses(self):
+        from landmarkdiff.landmarks import detect_glasses_region
+
+        face = _make_face()
+        rng = np.random.default_rng(0)
+        img = rng.integers(0, 256, (512, 512, 3), dtype=np.uint8)
+        result = detect_glasses_region(face, img)
+        assert isinstance(result, bool)
+
+
+# ---------------------------------------------------------------------------
+# get_accessory_mask
+# ---------------------------------------------------------------------------
+
+
+class TestGetAccessoryMask:
+    def test_returns_correct_shape(self):
+        from landmarkdiff.landmarks import get_accessory_mask
+
+        face = _make_face()
+        img = np.full((512, 512, 3), 128, dtype=np.uint8)
+        mask = get_accessory_mask(face, img)
+        assert mask.shape == (512, 512)
+        assert mask.dtype == np.float32
+
+    def test_teeth_only(self):
+        from landmarkdiff.landmarks import get_accessory_mask
+
+        face = _make_face()
+        img = np.full((512, 512, 3), 128, dtype=np.uint8)
+        mask = get_accessory_mask(face, img, include_glasses=False, include_teeth=True)
+        assert mask.max() > 0, "Should have teeth region"
+
+    def test_no_accessories(self):
+        from landmarkdiff.landmarks import get_accessory_mask
+
+        face = _make_face()
+        img = np.full((512, 512, 3), 128, dtype=np.uint8)
+        mask = get_accessory_mask(face, img, include_glasses=False, include_teeth=False)
+        assert mask.max() == 0.0, "No accessories should yield zero mask"
+
+
+# ---------------------------------------------------------------------------
+# select_largest_face
+# ---------------------------------------------------------------------------
+
+
+class TestSelectLargestFace:
+    def test_empty_list_returns_none(self):
+        from landmarkdiff.landmarks import select_largest_face
+
+        assert select_largest_face([]) is None
+
+    def test_single_face_returns_it(self):
+        from landmarkdiff.landmarks import select_largest_face
+
+        face = _make_face()
+        assert select_largest_face([face]) is face
+
+    def test_selects_largest(self):
+        from landmarkdiff.landmarks import select_largest_face
+
+        # Small face: landmarks in narrow range
+        small_lm = np.zeros((478, 3), dtype=np.float32)
+        small_lm[:, 0] = np.linspace(0.4, 0.5, 478)
+        small_lm[:, 1] = np.linspace(0.4, 0.5, 478)
+        small = FaceLandmarks(landmarks=small_lm, confidence=0.9, image_width=512, image_height=512)
+
+        # Large face: landmarks in wide range
+        large_lm = np.zeros((478, 3), dtype=np.float32)
+        large_lm[:, 0] = np.linspace(0.1, 0.9, 478)
+        large_lm[:, 1] = np.linspace(0.1, 0.9, 478)
+        large = FaceLandmarks(landmarks=large_lm, confidence=0.9, image_width=512, image_height=512)
+
+        result = select_largest_face([small, large])
+        assert result is large
