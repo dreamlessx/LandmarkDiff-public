@@ -1,330 +1,321 @@
-"""Export LandmarkDiff ControlNet to ONNX for optimized inference.
-
-Exports the fine-tuned ControlNet model to ONNX format with optional
-INT8/FP16 quantization. Includes benchmark comparison between PyTorch
-and ONNX inference latency.
-
-Usage:
-    python scripts/export_onnx.py --checkpoint checkpoints/phaseA/latest
-    python scripts/export_onnx.py --checkpoint path/to/model --quantize fp16
-    python scripts/export_onnx.py --checkpoint path/to/model --benchmark
-"""
-
 from __future__ import annotations
 
 import argparse
-import sys
+import json
 import time
 from pathlib import Path
 
 import numpy as np
+import torch
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from landmarkdiff.synthetic.tps_onnx import TPSWarpONNX
+from landmarkdiff.synthetic.tps_warp import _solve_tps_weights
 
 
-def export_controlnet_onnx(
-    checkpoint_path: str,
-    output_path: str,
-    opset_version: int = 17,
-    quantize: str | None = None,
-) -> Path:
-    """Export ControlNet to ONNX format.
+def make_dummy_inputs(
+    image_size: int,
+    num_points: int,
+    seed: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Create deterministic synthetic inputs for export/validation."""
+    rng = np.random.default_rng(seed)
+    coords = np.linspace(0.0, 1.0, image_size, dtype=np.float32)
+    grid_x, grid_y = np.meshgrid(coords, coords, indexing="xy")
+    base_image = np.stack(
+        [
+            0.6 * grid_x + 0.2 * grid_y,
+            0.2 * grid_x + 0.6 * grid_y,
+            0.5 * (grid_x + grid_y),
+        ],
+        axis=0,
+    )
+    noise = rng.normal(0.0, 0.01, size=base_image.shape).astype(np.float32)
+    image = np.clip(base_image + noise, 0.0, 1.0)[None, ...].astype(np.float32)
+
+    # Use a grid-like control-point layout to avoid numerically unstable random
+    # configurations in the TPS linear system during validation.
+    grid_side = int(np.ceil(np.sqrt(num_points)))
+    margin = max(4.0, image_size / 16.0)
+    xs = np.linspace(margin, image_size - 1 - margin, grid_side, dtype=np.float32)
+    ys = np.linspace(margin, image_size - 1 - margin, grid_side, dtype=np.float32)
+    mesh = np.array([(x, y) for y in ys for x in xs], dtype=np.float32)
+
+    src_points = mesh[:num_points][None, ...].astype(np.float32)
+    delta_scale = max(0.5, image_size / 128.0)
+    delta = rng.normal(0.0, delta_scale, size=(1, num_points, 2)).astype(np.float32)
+    dst_points = np.clip(src_points + delta, 0.0, image_size - 1).astype(np.float32)
+    return image, src_points, dst_points
+
+
+def compute_tps_weights(
+    src_points: np.ndarray,
+    dst_points: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Compute TPS displacement weights for X and Y in NumPy.
 
     Args:
-        checkpoint_path: Path to the ControlNet checkpoint directory or file.
-        output_path: Output ONNX file path.
-        opset_version: ONNX opset version.
-        quantize: Quantization mode ("fp16", "int8", or None).
+        src_points: (B, N, 2).
+        dst_points: (B, N, 2).
 
     Returns:
-        Path to the exported ONNX file.
+        Tuple of (weights_x, weights_y), each with shape (B, N+3).
     """
-    import torch
+    if src_points.shape != dst_points.shape:
+        raise ValueError("src_points and dst_points must have the same shape")
+    if src_points.ndim != 3 or src_points.shape[-1] != 2:
+        raise ValueError("Expected src_points shape (B, N, 2)")
 
-    print(f"Loading ControlNet from {checkpoint_path}...")
+    displacement = dst_points - src_points
+    weights_x = []
+    weights_y = []
 
-    try:
-        from diffusers import ControlNetModel
+    for idx in range(src_points.shape[0]):
+        src = src_points[idx].astype(np.float64)
+        dx = displacement[idx, :, 0].astype(np.float64)
+        dy = displacement[idx, :, 1].astype(np.float64)
 
-        controlnet = ControlNetModel.from_pretrained(
-            checkpoint_path,
-            torch_dtype=torch.float32,
-        )
-    except Exception as e:
-        print(f"Failed to load ControlNet: {e}")
-        print("Creating a minimal ControlNet for export demonstration...")
-        from diffusers import ControlNetModel
+        weights_x.append(_solve_tps_weights(src, dx).astype(np.float32))
+        weights_y.append(_solve_tps_weights(src, dy).astype(np.float32))
 
-        controlnet = ControlNetModel.from_pretrained(
-            "lllyasviel/control_v11p_sd15_openpose",
-            torch_dtype=torch.float32,
-        )
+    return np.stack(weights_x, axis=0), np.stack(weights_y, axis=0)
 
-    controlnet.eval()
-    device = torch.device("cpu")
-    controlnet = controlnet.to(device)
 
-    # Prepare dummy inputs matching ControlNet's forward signature
-    batch_size = 1
-    height = 64  # Latent space height (512/8)
-    width = 64  # Latent space width (512/8)
-    channels = 4  # Latent channels
+def export_tps_onnx(
+    output_path: Path,
+    image_size: int,
+    opset: int,
+    image_np: np.ndarray,
+    control_points_np: np.ndarray,
+    weights_x_np: np.ndarray,
+    weights_y_np: np.ndarray,
+) -> Path:
+    """Export TPS warp module to ONNX."""
+    model = TPSWarpONNX(image_size=image_size).eval()
 
-    dummy_sample = torch.randn(batch_size, channels, height, width, device=device)
-    dummy_timestep = torch.tensor([999], device=device, dtype=torch.long)
-    dummy_encoder_hidden_states = torch.randn(batch_size, 77, 768, device=device)
-    dummy_controlnet_cond = torch.randn(batch_size, 3, 512, 512, device=device)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Trace the model
-    print("Tracing model for ONNX export...")
+    image_t = torch.from_numpy(image_np)
+    control_points_t = torch.from_numpy(control_points_np)
+    weights_x_t = torch.from_numpy(weights_x_np)
+    weights_y_t = torch.from_numpy(weights_y_np)
 
-    output_file = Path(output_path)
-    output_file.parent.mkdir(parents=True, exist_ok=True)
-
-    try:
+    with torch.no_grad():
         torch.onnx.export(
-            controlnet,
-            (dummy_sample, dummy_timestep, dummy_encoder_hidden_states, dummy_controlnet_cond),
-            str(output_file),
-            opset_version=opset_version,
-            input_names=["sample", "timestep", "encoder_hidden_states", "controlnet_cond"],
-            output_names=[f"down_block_{i}" for i in range(13)] + ["mid_block"],
+            model,
+            (image_t, control_points_t, weights_x_t, weights_y_t),
+            str(output_path),
+            dynamo=False,
+            opset_version=opset,
+            input_names=["image", "control_points", "weights_x", "weights_y"],
+            output_names=["warped"],
             dynamic_axes={
-                "sample": {0: "batch_size"},
-                "encoder_hidden_states": {0: "batch_size"},
-                "controlnet_cond": {0: "batch_size"},
+                "image": {0: "batch"},
+                "control_points": {0: "batch"},
+                "weights_x": {0: "batch"},
+                "weights_y": {0: "batch"},
+                "warped": {0: "batch"},
+            },
+            do_constant_folding=True,
+        )
+
+    return output_path
+
+
+def run_pytorch(
+    image_np: np.ndarray,
+    control_points_np: np.ndarray,
+    weights_x_np: np.ndarray,
+    weights_y_np: np.ndarray,
+    image_size: int,
+) -> np.ndarray:
+    """Run TPS module in PyTorch."""
+    model = TPSWarpONNX(image_size=image_size).eval()
+    with torch.no_grad():
+        output = model(
+            torch.from_numpy(image_np),
+            torch.from_numpy(control_points_np),
+            torch.from_numpy(weights_x_np),
+            torch.from_numpy(weights_y_np),
+        )
+    return output.cpu().numpy()
+
+
+def run_onnx(
+    onnx_path: Path,
+    image_np: np.ndarray,
+    control_points_np: np.ndarray,
+    weights_x_np: np.ndarray,
+    weights_y_np: np.ndarray,
+) -> np.ndarray:
+    """Run TPS module in ONNX Runtime."""
+    import onnxruntime as ort
+
+    session = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
+    output = session.run(
+        None,
+        {
+            "image": image_np,
+            "control_points": control_points_np,
+            "weights_x": weights_x_np,
+            "weights_y": weights_y_np,
+        },
+    )[0]
+    return output
+
+
+def compute_max_pixel_diff(torch_output: np.ndarray, onnx_output: np.ndarray) -> float:
+    """Compute max per-pixel absolute diff in 0..255 float space."""
+    torch_scaled = np.clip(torch_output, 0.0, 1.0) * 255.0
+    onnx_scaled = np.clip(onnx_output, 0.0, 1.0) * 255.0
+    return float(np.abs(torch_scaled - onnx_scaled).max())
+
+
+def benchmark_cpu(
+    onnx_path: Path,
+    image_np: np.ndarray,
+    control_points_np: np.ndarray,
+    weights_x_np: np.ndarray,
+    weights_y_np: np.ndarray,
+    image_size: int,
+    iterations: int,
+) -> dict[str, float | str]:
+    """Benchmark ONNX Runtime vs PyTorch latency (CPU)."""
+    import onnxruntime as ort
+
+    model = TPSWarpONNX(image_size=image_size).eval()
+    image_t = torch.from_numpy(image_np)
+    control_points_t = torch.from_numpy(control_points_np)
+    weights_x_t = torch.from_numpy(weights_x_np)
+    weights_y_t = torch.from_numpy(weights_y_np)
+
+    session = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
+
+    with torch.no_grad():
+        for _ in range(3):
+            model(image_t, control_points_t, weights_x_t, weights_y_t)
+    for _ in range(3):
+        session.run(
+            None,
+            {
+                "image": image_np,
+                "control_points": control_points_np,
+                "weights_x": weights_x_np,
+                "weights_y": weights_y_np,
             },
         )
-        print(f"ONNX model exported to: {output_file}")
-    except Exception as e:
-        print(f"ONNX export failed: {e}")
-        print("\nNote: ControlNet ONNX export requires careful handling of")
-        print("attention layers. Consider using optimum-diffusers instead.")
-        print("\nAlternative: pip install optimum[onnxruntime]")
-        print("  from optimum.onnxruntime import ORTStableDiffusionPipeline")
-        return output_file
 
-    # Apply quantization if requested
-    if quantize and output_file.exists():
-        print(f"\nApplying {quantize} quantization...")
-        output_file = _apply_quantization(output_file, quantize)
+    torch_times_ms = []
+    with torch.no_grad():
+        for _ in range(iterations):
+            t0 = time.perf_counter()
+            model(image_t, control_points_t, weights_x_t, weights_y_t)
+            torch_times_ms.append((time.perf_counter() - t0) * 1000.0)
 
-    # Report file size
-    if output_file.exists():
-        size_mb = output_file.stat().st_size / (1024 * 1024)
-        print(f"Model size: {size_mb:.1f} MB")
-
-    return output_file
-
-
-def _apply_quantization(onnx_path: Path, mode: str) -> Path:
-    """Apply quantization to an ONNX model.
-
-    Args:
-        onnx_path: Path to the ONNX model.
-        mode: "fp16" or "int8".
-
-    Returns:
-        Path to the quantized model.
-    """
-    try:
-        import onnx
-        from onnxruntime.quantization import QuantType, quantize_dynamic
-
-        if mode == "fp16":
-            from onnxruntime.transformers import float16
-
-            model = onnx.load(str(onnx_path))
-            model_fp16 = float16.convert_float_to_float16(model)
-            output_path = onnx_path.with_suffix(".fp16.onnx")
-            onnx.save(model_fp16, str(output_path))
-            print(f"FP16 model saved to: {output_path}")
-            return output_path
-
-        elif mode == "int8":
-            output_path = onnx_path.with_suffix(".int8.onnx")
-            quantize_dynamic(
-                str(onnx_path),
-                str(output_path),
-                weight_type=QuantType.QInt8,
-            )
-            print(f"INT8 model saved to: {output_path}")
-            return output_path
-
-        else:
-            print(f"Unknown quantization mode: {mode}")
-            return onnx_path
-
-    except ImportError as e:
-        print(f"Quantization requires additional packages: {e}")
-        print("Install with: pip install onnxruntime onnx")
-        return onnx_path
-
-
-def benchmark_comparison(
-    checkpoint_path: str,
-    onnx_path: str | None = None,
-    num_iterations: int = 10,
-) -> dict:
-    """Benchmark PyTorch vs ONNX inference latency.
-
-    Args:
-        checkpoint_path: Path to PyTorch ControlNet checkpoint.
-        onnx_path: Path to ONNX model (optional).
-        num_iterations: Number of warmup + benchmark iterations.
-
-    Returns:
-        Dictionary with benchmark results.
-    """
-    import torch
-
-    results = {}
-
-    # --- PyTorch benchmark ---
-    print("\nBenchmarking PyTorch inference...")
-    try:
-        from diffusers import ControlNetModel
-
-        controlnet = ControlNetModel.from_pretrained(
-            checkpoint_path,
-            torch_dtype=torch.float32,
+    onnx_times_ms = []
+    for _ in range(iterations):
+        t0 = time.perf_counter()
+        session.run(
+            None,
+            {
+                "image": image_np,
+                "control_points": control_points_np,
+                "weights_x": weights_x_np,
+                "weights_y": weights_y_np,
+            },
         )
-        controlnet.eval()
+        onnx_times_ms.append((time.perf_counter() - t0) * 1000.0)
 
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        controlnet = controlnet.to(device)
-        dtype = torch.float16 if device.type == "cuda" else torch.float32
+    torch_mean = float(np.mean(torch_times_ms))
+    onnx_mean = float(np.mean(onnx_times_ms))
 
-        # Dummy inputs
-        sample = torch.randn(1, 4, 64, 64, device=device, dtype=dtype)
-        timestep = torch.tensor([500], device=device)
-        encoder_states = torch.randn(1, 77, 768, device=device, dtype=dtype)
-        cond = torch.randn(1, 3, 512, 512, device=device, dtype=dtype)
-
-        # Warmup
-        with torch.no_grad():
-            for _ in range(3):
-                controlnet(sample, timestep, encoder_states, cond)
-
-        if device.type == "cuda":
-            torch.cuda.synchronize()
-
-        # Benchmark
-        times = []
-        with torch.no_grad():
-            for _ in range(num_iterations):
-                if device.type == "cuda":
-                    torch.cuda.synchronize()
-                t0 = time.perf_counter()
-                controlnet(sample, timestep, encoder_states, cond)
-                if device.type == "cuda":
-                    torch.cuda.synchronize()
-                times.append(time.perf_counter() - t0)
-
-        results["pytorch"] = {
-            "mean_ms": round(np.mean(times) * 1000, 2),
-            "std_ms": round(np.std(times) * 1000, 2),
-            "device": str(device),
-        }
-        print(
-            f"  PyTorch: {results['pytorch']['mean_ms']:.2f} ± "
-            f"{results['pytorch']['std_ms']:.2f} ms ({device})"
-        )
-
-    except Exception as e:
-        print(f"  PyTorch benchmark failed: {e}")
-        results["pytorch"] = {"error": str(e)}
-
-    # --- ONNX benchmark ---
-    if onnx_path and Path(onnx_path).exists():
-        print("Benchmarking ONNX inference...")
-        try:
-            import onnxruntime as ort
-
-            providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
-            session = ort.InferenceSession(onnx_path, providers=providers)
-
-            sample_np = np.random.randn(1, 4, 64, 64).astype(np.float32)
-            timestep_np = np.array([500], dtype=np.int64)
-            encoder_np = np.random.randn(1, 77, 768).astype(np.float32)
-            cond_np = np.random.randn(1, 3, 512, 512).astype(np.float32)
-
-            inputs = {
-                "sample": sample_np,
-                "timestep": timestep_np,
-                "encoder_hidden_states": encoder_np,
-                "controlnet_cond": cond_np,
-            }
-
-            # Warmup
-            for _ in range(3):
-                session.run(None, inputs)
-
-            # Benchmark
-            times = []
-            for _ in range(num_iterations):
-                t0 = time.perf_counter()
-                session.run(None, inputs)
-                times.append(time.perf_counter() - t0)
-
-            results["onnx"] = {
-                "mean_ms": round(np.mean(times) * 1000, 2),
-                "std_ms": round(np.std(times) * 1000, 2),
-                "provider": session.get_providers()[0],
-            }
-            print(
-                f"  ONNX: {results['onnx']['mean_ms']:.2f} ± "
-                f"{results['onnx']['std_ms']:.2f} ms "
-                f"({results['onnx']['provider']})"
-            )
-
-            if "pytorch" in results and "mean_ms" in results["pytorch"]:
-                speedup = results["pytorch"]["mean_ms"] / results["onnx"]["mean_ms"]
-                print(f"  Speedup: {speedup:.2f}x")
-                results["speedup"] = round(speedup, 2)
-
-        except ImportError:
-            print("  ONNX Runtime not installed. pip install onnxruntime-gpu")
-        except Exception as e:
-            print(f"  ONNX benchmark failed: {e}")
-            results["onnx"] = {"error": str(e)}
-
-    return results
+    return {
+        "provider": session.get_providers()[0],
+        "pytorch_mean_ms": round(torch_mean, 3),
+        "pytorch_std_ms": round(float(np.std(torch_times_ms)), 3),
+        "onnx_mean_ms": round(onnx_mean, 3),
+        "onnx_std_ms": round(float(np.std(onnx_times_ms)), 3),
+        "speedup_x": round(torch_mean / onnx_mean, 3) if onnx_mean > 0 else 0.0,
+    }
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Export LandmarkDiff to ONNX")
-    parser.add_argument("--checkpoint", required=True, help="ControlNet checkpoint path")
-    parser.add_argument("--output", default="exports/controlnet.onnx", help="Output ONNX path")
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Export TPS warp operator to ONNX")
+    parser.add_argument("--output", default="exports/tps_warp.onnx", help="Output ONNX file")
+    parser.add_argument("--image-size", type=int, default=128, help="Square image resolution")
+    parser.add_argument("--num-points", type=int, default=80, help="Control point count")
     parser.add_argument("--opset", type=int, default=17, help="ONNX opset version")
-    parser.add_argument("--quantize", choices=["fp16", "int8"], help="Quantization mode")
-    parser.add_argument("--benchmark", action="store_true", help="Run benchmark comparison")
-    parser.add_argument("--benchmark-iterations", type=int, default=10)
+    parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    parser.add_argument("--validate", action="store_true", help="Validate ONNX vs PyTorch")
+    parser.add_argument(
+        "--max-pixel-diff-threshold",
+        type=float,
+        default=1.0,
+        help="Validation threshold; expected max pixel diff < 1",
+    )
+    parser.add_argument("--benchmark", action="store_true", help="Run CPU benchmark")
+    parser.add_argument("--benchmark-iterations", type=int, default=20, help="Benchmark iterations")
     args = parser.parse_args()
 
-    print("=" * 60)
-    print("LandmarkDiff ONNX Export")
-    print("=" * 60)
+    if args.num_points < 3:
+        raise ValueError("--num-points must be >= 3")
 
-    output_path = export_controlnet_onnx(
-        checkpoint_path=args.checkpoint,
-        output_path=args.output,
-        opset_version=args.opset,
-        quantize=args.quantize,
+    image_np, src_points_np, dst_points_np = make_dummy_inputs(
+        image_size=args.image_size,
+        num_points=args.num_points,
+        seed=args.seed,
+    )
+    weights_x_np, weights_y_np = compute_tps_weights(src_points_np, dst_points_np)
+
+    onnx_path = export_tps_onnx(
+        output_path=Path(args.output),
+        image_size=args.image_size,
+        opset=args.opset,
+        image_np=image_np,
+        control_points_np=src_points_np,
+        weights_x_np=weights_x_np,
+        weights_y_np=weights_y_np,
     )
 
-    if args.benchmark:
-        onnx_file = str(output_path) if output_path.exists() else None
-        results = benchmark_comparison(
-            args.checkpoint,
-            onnx_path=onnx_file,
-            num_iterations=args.benchmark_iterations,
+    summary: dict[str, str | float] = {"onnx_path": str(onnx_path)}
+
+    torch_output = run_pytorch(
+        image_np=image_np,
+        control_points_np=src_points_np,
+        weights_x_np=weights_x_np,
+        weights_y_np=weights_y_np,
+        image_size=args.image_size,
+    )
+    onnx_output = run_onnx(
+        onnx_path=onnx_path,
+        image_np=image_np,
+        control_points_np=src_points_np,
+        weights_x_np=weights_x_np,
+        weights_y_np=weights_y_np,
+    )
+
+    max_pixel_diff = compute_max_pixel_diff(torch_output, onnx_output)
+    summary["max_pixel_diff"] = round(max_pixel_diff, 6)
+
+    if args.validate and max_pixel_diff >= args.max_pixel_diff_threshold:
+        raise RuntimeError(
+            "Validation failed: "
+            f"max pixel diff {max_pixel_diff:.6f} >= threshold {args.max_pixel_diff_threshold:.6f}"
         )
 
-        print("\n--- Benchmark Summary ---")
-        import json
+    if args.benchmark:
+        summary.update(
+            benchmark_cpu(
+                onnx_path=onnx_path,
+                image_np=image_np,
+                control_points_np=src_points_np,
+                weights_x_np=weights_x_np,
+                weights_y_np=weights_y_np,
+                image_size=args.image_size,
+                iterations=args.benchmark_iterations,
+            )
+        )
 
-        print(json.dumps(results, indent=2))
+    print(json.dumps(summary, indent=2))
 
 
 if __name__ == "__main__":
