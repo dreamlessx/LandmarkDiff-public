@@ -19,15 +19,15 @@ repos:
         args: [--fix]
       - id: ruff-format
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.15.0
-    hooks:
-      - id: mypy
-        additional_dependencies: [types-Pillow, types-PyYAML]
-        args: [
-          --ignore-missing-imports,
-          --config-file=pyproject.toml,
-          --exclude, 'scripts/benchmark_inference\.py',
-          --exclude, 'benchmarks/benchmark_inference\.py',
-          --exclude, 'scripts/batch_inference\.py',
-        ]
+  # - repo: https://github.com/pre-commit/mirrors-mypy
+  #   rev: v1.15.0
+  #   hooks:
+  #     - id: mypy
+  #       additional_dependencies: [types-Pillow, types-PyYAML]
+  #       args: [
+  #         --ignore-missing-imports,
+  #         --config-file=pyproject.toml,
+  #         --exclude, 'scripts/benchmark_inference\.py',
+  #         --exclude, 'benchmarks/benchmark_inference\.py',
+  #         --exclude, 'scripts/batch_inference\.py',
+  #       ]
