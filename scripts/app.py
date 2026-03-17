@@ -281,7 +281,8 @@ def build_app():
             () => {
                 const url = new URL(window.location.href);
                 const current = url.searchParams.get('__theme');
-                url.searchParams.set('__theme', (!current || current === 'light') ? 'dark' : 'light');
+                const next = (!current || current === 'light') ? 'dark' : 'light');
+                url.searchParams.set('__theme', next);
                 window.location.href = url.toString();
             }
             """,
