@@ -101,7 +101,7 @@ def summarize_json_results():
                         for k, v in sorted(m.items()):
                             if isinstance(v, dict) and "mean" in v:
                                 summary += f"\n  {k}: {v['mean']:.4f}"
-                            elif isinstance(v, (int, float)):
+                            elif isinstance(v, int | float):
                                 summary += f"\n  {k}: {v:.4f}"
 
                 if "per_procedure" in data:

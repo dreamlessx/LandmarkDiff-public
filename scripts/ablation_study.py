@@ -100,7 +100,7 @@ def compute_ablation_table(
         for exp in experiments.values():
             results = exp.get("results", exp)
             if isinstance(results, dict):
-                all_metrics.update(k for k, v in results.items() if isinstance(v, (int, float)))
+                all_metrics.update(k for k, v in results.items() if isinstance(v, int | float))
         metrics = sorted(all_metrics & set(METRIC_INFO.keys()))
         if not metrics:
             metrics = sorted(all_metrics)[:5]

@@ -87,9 +87,11 @@ We use pre-commit to catch lint and format issues before they reach CI:
 ```bash
 pip install pre-commit
 pre-commit install
+# Run on all files
+pre-commit run --all-files
 ```
 
-After this, `ruff check` and `ruff format --check` will run automatically on every commit.
+After this, `ruff check`, `ruff format --check`, and `mypy` will run automatically on every commit.
 
 ### Verify your setup
 

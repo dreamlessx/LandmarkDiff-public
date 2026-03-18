@@ -297,7 +297,7 @@ def _convert_tuples(obj: Any) -> Any:
     """Recursively convert tuples to lists for YAML serialization."""
     if isinstance(obj, dict):
         return {k: _convert_tuples(v) for k, v in obj.items()}
-    if isinstance(obj, (list, tuple)):
+    if isinstance(obj, list | tuple):
         return [_convert_tuples(item) for item in obj]
     return obj
 
