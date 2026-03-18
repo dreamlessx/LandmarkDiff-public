@@ -14,62 +14,62 @@ from landmarkdiff.tracing import (
 
 
 class TestNoOpSpan:
-    def test_set_attribute_noop(self):
+    def test_set_attribute_noop(self) -> None:
         span = _NoOpSpan()
         span.set_attribute("key", "val")  # should not raise
 
-    def test_set_status_noop(self):
+    def test_set_status_noop(self) -> None:
         span = _NoOpSpan()
         span.set_status("OK")
 
-    def test_record_exception_noop(self):
+    def test_record_exception_noop(self) -> None:
         span = _NoOpSpan()
         span.record_exception(ValueError("test"))
 
-    def test_end_noop(self):
+    def test_end_noop(self) -> None:
         span = _NoOpSpan()
         span.end()
 
-    def test_context_manager(self):
+    def test_context_manager(self) -> None:
         with _NoOpSpan() as span:
             span.set_attribute("inside", True)
 
 
 class TestNoOpTracer:
-    def test_start_span_returns_noop(self):
+    def test_start_span_returns_noop(self) -> None:
         tracer = _NoOpTracer()
         span = tracer.start_span("test")
         assert isinstance(span, _NoOpSpan)
 
-    def test_start_as_current_span_returns_noop(self):
+    def test_start_as_current_span_returns_noop(self) -> None:
         tracer = _NoOpTracer()
         span = tracer.start_as_current_span("test")
         assert isinstance(span, _NoOpSpan)
 
 
 class TestGetTracer:
-    def test_returns_tracer(self):
+    def test_returns_tracer(self) -> None:
         tracer = get_tracer()
         # Without otel installed, should get NoOpTracer
         assert hasattr(tracer, "start_span")
 
-    def test_custom_name(self):
+    def test_custom_name(self) -> None:
         tracer = get_tracer("custom")
         assert hasattr(tracer, "start_span")
 
 
 class TestTraceStage:
-    def test_basic_stage(self):
+    def test_basic_stage(self) -> None:
         tracer = _NoOpTracer()
         with trace_stage(tracer, "test_stage") as span:
             assert isinstance(span, _NoOpSpan)
 
-    def test_with_procedure(self):
+    def test_with_procedure(self) -> None:
         tracer = _NoOpTracer()
         with trace_stage(tracer, "extract", procedure="rhinoplasty"):
             pass  # should not raise
 
-    def test_with_all_attributes(self):
+    def test_with_all_attributes(self) -> None:
         tracer = _NoOpTracer()
         with trace_stage(
             tracer,
@@ -81,12 +81,12 @@ class TestTraceStage:
         ):
             pass
 
-    def test_exception_propagated(self):
+    def test_exception_propagated(self) -> None:
         tracer = _NoOpTracer()
         with pytest.raises(ValueError, match="test error"), trace_stage(tracer, "failing_stage"):
             raise ValueError("test error")
 
-    def test_span_receives_attributes(self):
+    def test_span_receives_attributes(self) -> None:
         """Verify attributes are set on the span."""
         recorded: dict[str, object] = {}
 
@@ -113,7 +113,7 @@ class TestTraceStage:
         assert recorded["landmarkdiff.intensity"] == 50.0
         assert "landmarkdiff.duration_ms" in recorded
 
-    def test_exception_recorded_on_span(self):
+    def test_exception_recorded_on_span(self) -> None:
         """Verify exceptions are recorded on the span."""
         exceptions: list[BaseException] = []
 
@@ -132,7 +132,7 @@ class TestTraceStage:
         assert len(exceptions) == 1
         assert str(exceptions[0]) == "boom"
 
-    def test_span_ended_after_success(self):
+    def test_span_ended_after_success(self) -> None:
         ended = []
 
         class _EndSpan(_NoOpSpan):
@@ -148,7 +148,7 @@ class TestTraceStage:
             pass
         assert len(ended) == 1
 
-    def test_span_ended_after_error(self):
+    def test_span_ended_after_error(self) -> None:
         ended = []
 
         class _EndSpan(_NoOpSpan):
@@ -166,15 +166,15 @@ class TestTraceStage:
 
 
 class TestPipelineSpanNames:
-    def test_contains_key_stages(self):
+    def test_contains_key_stages(self) -> None:
         assert "landmark_extraction" in PIPELINE_SPAN_NAMES
         assert "diffusion_inference" in PIPELINE_SPAN_NAMES
         assert "postprocessing" in PIPELINE_SPAN_NAMES
 
-    def test_count(self):
+    def test_count(self) -> None:
         assert len(PIPELINE_SPAN_NAMES) == 12
 
-    def test_all_strings(self):
+    def test_all_strings(self) -> None:
         for name in PIPELINE_SPAN_NAMES:
             assert isinstance(name, str)
             assert len(name) > 0

@@ -331,7 +331,7 @@ def main():
     all_metrics = set()
     for s in samples:
         for k, v in s.items():
-            if isinstance(v, (int, float)):
+            if isinstance(v, int | float):
                 all_metrics.add(k)
     metrics = sorted(all_metrics & {"ssim", "lpips", "identity_sim", "nme", "fid"})
     if not metrics:

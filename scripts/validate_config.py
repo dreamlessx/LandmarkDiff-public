@@ -264,7 +264,7 @@ def validate_config(
         for key, (lo, hi) in constraints.items():
             if key in section_data:
                 val = section_data[key]
-                if isinstance(val, (int, float)) and (val < lo or val > hi):
+                if isinstance(val, int | float) and (val < lo or val > hi):
                     result.errors.append(f"{section_name}.{key}={val} is out of range [{lo}, {hi}]")
 
     # 7. Choice validation
@@ -400,7 +400,7 @@ def _check_type(
     elif "bool" in type_str and not isinstance(value, bool):
         result.errors.append(f"{key}: expected bool, got {type(value).__name__} ({value})")
     elif "str" in type_str and "list" not in type_str and not isinstance(value, str):
-        if not isinstance(value, (int, float, bool)):  # numbers are ok-ish
+        if not isinstance(value, int | float | bool):  # numbers are ok-ish
             result.errors.append(f"{key}: expected str, got {type(value).__name__}")
 
 

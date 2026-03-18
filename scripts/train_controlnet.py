@@ -879,7 +879,7 @@ def train(
                             "loss/perceptual": perc_loss.item(),
                             "loss/curriculum_scale": (
                                 float(curriculum_scale)
-                                if isinstance(curriculum_scale, (int, float))
+                                if isinstance(curriculum_scale, int | float)
                                 else curriculum_scale.item()
                             ),
                         },

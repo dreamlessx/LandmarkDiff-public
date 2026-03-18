@@ -29,6 +29,13 @@ def _make_landmarks(n: int = 478, **overrides: tuple[float, float]) -> np.ndarra
 
     Produces a roughly symmetric face layout with specified overrides
     for named landmark indices.
+
+    Args:
+        n: Number of landmarks (default 478 for MediaPipe)
+        **overrides: Mapping from landmark index to (x, y) coordinates
+
+    Returns:
+        Array of shape (n, 2) with landmark coordinates
     """
     # Base: spread points in a face-like oval
     rng = np.random.RandomState(42)
@@ -37,12 +44,12 @@ def _make_landmarks(n: int = 478, **overrides: tuple[float, float]) -> np.ndarra
     # Place key anatomical points in a realistic layout (512x512 image space)
     defaults = {
         NOSE_TIP: (256, 320),
-        LEFT_NOSTRIL: (235, 340),
+        LEFT_NOSTRIL: (235.0, 340),
         RIGHT_NOSTRIL: (277, 340),
         LEFT_INNER_EYE: (220, 240),
         RIGHT_INNER_EYE: (292, 240),
-        LEFT_OUTER_EYE: (185, 235),
-        RIGHT_OUTER_EYE: (327, 235),
+        LEFT_OUTER_EYE: (185, 235.0),
+        RIGHT_OUTER_EYE: (327, 235.0),
         LEFT_CHEEK: (150, 310),
         RIGHT_CHEEK: (362, 310),
         FOREHEAD: (256, 120),
@@ -70,7 +77,7 @@ def _make_landmarks(n: int = 478, **overrides: tuple[float, float]) -> np.ndarra
 class TestNasalMorphometry:
     """Tests for NasalMorphometry computation."""
 
-    def test_basic_computation(self):
+    def test_basic_computation(self) -> None:
         landmarks = _make_landmarks()
         morph = NasalMorphometry()
         ratios = morph.compute(landmarks)
@@ -82,7 +89,7 @@ class TestNasalMorphometry:
         assert ratios.tip_midline_deviation >= 0
         assert ratios.nostril_vertical_asymmetry >= 0
 
-    def test_ideal_nose_ratios(self):
+    def test_ideal_nose_ratios(self) -> None:
         """A well-proportioned face should have ratios near ideals."""
         landmarks = _make_landmarks()
         morph = NasalMorphometry()
@@ -93,7 +100,7 @@ class TestNasalMorphometry:
         assert 0.1 < ratios.alar_intercanthal < 3.0
         assert 0.05 < ratios.alar_face_width < 0.5
 
-    def test_centered_nose_tip(self):
+    def test_centered_nose_tip(self) -> None:
         """Centered nose tip should have near-zero deviation."""
         landmarks = _make_landmarks()
         morph = NasalMorphometry()
@@ -102,12 +109,12 @@ class TestNasalMorphometry:
         # Nose tip at x=256, midline at (185+327)/2 = 256
         assert ratios.tip_midline_deviation < 0.01
 
-    def test_asymmetric_nostrils(self):
+    def test_asymmetric_nostrils(self) -> None:
         """Vertically offset nostrils increase asymmetry score."""
         symmetric = _make_landmarks()
         asymmetric = _make_landmarks()
         # Move left nostril down by 20px
-        asymmetric[LEFT_NOSTRIL] = (235, 360)
+        asymmetric[LEFT_NOSTRIL] = (235.0, 360.0)
 
         morph = NasalMorphometry()
         sym_ratios = morph.compute(symmetric)
@@ -115,11 +122,11 @@ class TestNasalMorphometry:
 
         assert asym_ratios.nostril_vertical_asymmetry > sym_ratios.nostril_vertical_asymmetry
 
-    def test_deviated_nose_tip(self):
+    def test_deviated_nose_tip(self) -> None:
         """Off-center nose tip increases deviation score."""
         centered = _make_landmarks()
         deviated = _make_landmarks()
-        deviated[NOSE_TIP] = (280, 320)  # shifted right
+        deviated[NOSE_TIP] = (280.0, 320.0)  # shifted right
 
         morph = NasalMorphometry()
         c_ratios = morph.compute(centered)
@@ -127,7 +134,7 @@ class TestNasalMorphometry:
 
         assert d_ratios.tip_midline_deviation > c_ratios.tip_midline_deviation
 
-    def test_to_dict(self):
+    def test_to_dict(self) -> None:
         landmarks = _make_landmarks()
         morph = NasalMorphometry()
         ratios = morph.compute(landmarks)
@@ -143,7 +150,7 @@ class TestNasalMorphometry:
         for v in d.values():
             assert isinstance(v, float)
 
-    def test_3d_landmarks(self):
+    def test_3d_landmarks(self) -> None:
         """Should work with (N, 3) landmarks too."""
         pts_2d = _make_landmarks()
         pts_3d = np.column_stack([pts_2d, np.zeros(len(pts_2d))])
@@ -158,7 +165,7 @@ class TestNasalMorphometry:
 class TestNasalRatiosImprovement:
     """Tests for improvement scoring."""
 
-    def test_improvement_toward_ideal(self):
+    def test_improvement_toward_ideal(self) -> None:
         before = NasalRatios(
             alar_intercanthal=0.8,
             alar_face_width=0.25,
@@ -178,7 +185,7 @@ class TestNasalRatiosImprovement:
         assert improvements["tip_midline_deviation"] is True
         assert improvements["nostril_vertical_asymmetry"] is True
 
-    def test_no_improvement(self):
+    def test_no_improvement(self) -> None:
         before = NasalRatios(
             alar_intercanthal=0.98,
             alar_face_width=0.20,
@@ -202,7 +209,7 @@ class TestNasalRatiosImprovement:
 class TestFacialSymmetry:
     """Tests for bilateral symmetry scoring."""
 
-    def test_perfect_symmetry(self):
+    def test_perfect_symmetry(self) -> None:
         """Perfectly symmetric face should score near zero."""
         pts = np.zeros((478, 2))
 
@@ -210,14 +217,14 @@ class TestFacialSymmetry:
         midline = 256.0
         for i in range(0, 478, 2):
             offset = (i + 1) * 0.5
-            y = 100 + i * 0.7
+            y = 100.0 + i * 0.7
             pts[i] = (midline - offset, y)
             if i + 1 < 478:
                 pts[i + 1] = (midline + offset, y)
 
         # Set eye corners for midline
-        pts[LEFT_OUTER_EYE] = (200, 235)
-        pts[RIGHT_OUTER_EYE] = (312, 235)
+        pts[LEFT_OUTER_EYE] = (200.0, 235.0)
+        pts[RIGHT_OUTER_EYE] = (312.0, 235.0)
 
         sym = FacialSymmetry()
         score = sym.compute(pts)
@@ -225,26 +232,26 @@ class TestFacialSymmetry:
         # Should be very low (near-perfect symmetry)
         assert score < 0.5
 
-    def test_asymmetric_face(self):
+    def test_asymmetric_face(self) -> None:
         """Deliberately asymmetric face should score higher than symmetric."""
         # Build a nearly-symmetric face
         pts_sym = np.zeros((478, 2))
         midline = 256.0
         for i in range(0, 478, 2):
             offset = (i + 1) * 0.5
-            y = 100 + i * 0.7
+            y = 100.0 + i * 0.7
             pts_sym[i] = (midline - offset, y)
             if i + 1 < 478:
                 pts_sym[i + 1] = (midline + offset, y)
-        pts_sym[LEFT_OUTER_EYE] = (200, 235)
-        pts_sym[RIGHT_OUTER_EYE] = (312, 235)
+        pts_sym[LEFT_OUTER_EYE] = (200.0, 235.0)
+        pts_sym[RIGHT_OUTER_EYE] = (312.0, 235.0)
 
         # Make asymmetric copy: shift left-side points (except eye corners)
         pts_asym = pts_sym.copy()
         keep_fixed = {LEFT_OUTER_EYE, RIGHT_OUTER_EYE}
         for i in range(len(pts_asym)):
             if i not in keep_fixed and pts_asym[i][0] < midline:
-                pts_asym[i][0] -= 50
+                pts_asym[i][0] -= 50.0
 
         sym = FacialSymmetry()
         sym_score = sym.compute(pts_sym)
@@ -252,12 +259,12 @@ class TestFacialSymmetry:
 
         assert asym_score > sym_score
 
-    def test_empty_sides(self):
+    def test_empty_sides(self) -> None:
         """All points on one side should return 0."""
         pts = np.zeros((478, 2))
-        pts[:, 0] = 100  # all on left
-        pts[LEFT_OUTER_EYE] = (100, 235)
-        pts[RIGHT_OUTER_EYE] = (100, 235)
+        pts[:, 0] = 100.0  # all on left
+        pts[LEFT_OUTER_EYE] = (100.0, 235.0)
+        pts[RIGHT_OUTER_EYE] = (100.0, 235.0)
 
         sym = FacialSymmetry()
         score = sym.compute(pts)

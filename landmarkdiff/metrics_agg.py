@@ -83,7 +83,7 @@ class MetricsAggregator:
         for rec in records:
             proc = rec.get("procedure", "all")
             metrics = {
-                k: v for k, v in rec.items() if k != "procedure" and isinstance(v, (int, float))
+                k: v for k, v in rec.items() if k != "procedure" and isinstance(v, int | float)
             }
             self.add(experiment, proc, metrics)
 
