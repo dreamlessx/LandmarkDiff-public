@@ -19,6 +19,8 @@ class LandmarkDiffPipeline:
         ip_adapter_scale: float = 0.6,
         clinical_flags: ClinicalFlags | None = None,
         displacement_model_path: str | None = None,
+        tps_backend: str = "numpy",
+        tps_onnx_path: str | None = None,
     )
 ```
 
@@ -37,6 +39,10 @@ Main inference pipeline. Supports four modes with different quality-speed-hardwa
 | `ip_adapter_scale` | `float` | `0.6` | IP-Adapter conditioning strength for `controlnet_ip` mode |
 | `clinical_flags` | `ClinicalFlags \| None` | `None` | Default clinical flags applied to all predictions |
 | `displacement_model_path` | `str \| None` | `None` | Path to a fitted `DisplacementModel` (`.npz`) for data-driven manipulation |
+| `tps_backend` | `str` | `"numpy"` | TPS warp backend: `"numpy"` (default) or `"onnx"` |
+| `tps_onnx_path` | `str \| None` | `None` | Path to exported TPS ONNX model, used when `tps_backend="onnx"` |
+
+When `tps_backend="onnx"`, the pipeline uses ONNX Runtime for the TPS warp stage and falls back to NumPy/OpenCV TPS if initialization or execution fails.
 
 **Inference Modes:**
 

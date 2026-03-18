@@ -25,6 +25,7 @@ from PIL import Image
 from landmarkdiff.landmarks import FaceLandmarks, extract_landmarks, render_landmark_image
 from landmarkdiff.manipulation import apply_procedure_preset
 from landmarkdiff.masking import generate_surgical_mask, mask_to_3channel
+from landmarkdiff.synthetic.tps_onnx_runtime import TPSONNXRuntime
 from landmarkdiff.synthetic.tps_warp import warp_image_tps
 
 if TYPE_CHECKING:
@@ -143,6 +144,7 @@ _PITCH_SCALE = 45
 _MIN_RESOLUTION = 128  # minimum dimension in pixels
 _BLUR_LAPLACIAN_THRESHOLD = 50.0  # below this variance, image is likely blurry
 _DARK_MEAN_THRESHOLD = 40  # mean brightness below this is poorly lit
+_TPS_BACKENDS = {"numpy", "onnx"}
 
 
 def check_image_quality(image: np.ndarray) -> list[str]:
@@ -275,12 +277,19 @@ class LandmarkDiffPipeline:
         ip_adapter_scale: float = 0.6,
         clinical_flags: ClinicalFlags | None = None,
         displacement_model_path: str | None = None,
+        tps_backend: str = "numpy",
+        tps_onnx_path: str | None = None,
     ):
         self.mode = mode
         self.device = device or get_device()
         self.ip_adapter_scale = ip_adapter_scale
         self.clinical_flags = clinical_flags
         self.controlnet_checkpoint = controlnet_checkpoint
+        self.tps_backend = tps_backend.lower()
+        self.tps_onnx_path = tps_onnx_path
+        if self.tps_backend not in _TPS_BACKENDS:
+            valid = ", ".join(sorted(_TPS_BACKENDS))
+            raise ValueError(f"Invalid tps_backend={tps_backend!r}. Expected one of: {valid}")
 
         # Load displacement model for data-driven manipulation
         self._displacement_model = None
@@ -309,6 +318,8 @@ class LandmarkDiffPipeline:
         self._pipe = None
         self._ip_adapter_loaded = False
         self._lcm_loaded = False
+        self._tps_onnx_runtime: TPSONNXRuntime | None = None
+        self._tps_onnx_disabled = False
 
     def load(self) -> None:
         if self.mode == "tps":
@@ -459,6 +470,51 @@ class LandmarkDiffPipeline:
     def is_loaded(self) -> bool:
         return self._pipe is not None or self.mode == "tps"
 
+    def _get_tps_onnx_runtime(self) -> TPSONNXRuntime | None:
+        if self._tps_onnx_disabled:
+            return None
+        if self._tps_onnx_runtime is not None:
+            return self._tps_onnx_runtime
+        if not self.tps_onnx_path:
+            logger.warning(
+                "tps_backend='onnx' requested but no tps_onnx_path provided; "
+                "falling back to NumPy TPS."
+            )
+            self._tps_onnx_disabled = True
+            return None
+
+        try:
+            self._tps_onnx_runtime = TPSONNXRuntime(self.tps_onnx_path)
+            logger.info("TPS ONNX runtime initialized from %s", self.tps_onnx_path)
+            return self._tps_onnx_runtime
+        except Exception as exc:
+            logger.warning(
+                "Failed to initialize TPS ONNX runtime (%s); falling back to NumPy TPS.",
+                exc,
+            )
+            self._tps_onnx_disabled = True
+            return None
+
+    def _warp_tps(
+        self,
+        image: np.ndarray,
+        src_landmarks: np.ndarray,
+        dst_landmarks: np.ndarray,
+    ) -> np.ndarray:
+        if self.tps_backend == "onnx":
+            runtime = self._get_tps_onnx_runtime()
+            if runtime is not None:
+                try:
+                    return runtime.warp(image, src_landmarks, dst_landmarks)
+                except Exception as exc:
+                    logger.warning(
+                        "TPS ONNX execution failed (%s); falling back to NumPy TPS.",
+                        exc,
+                    )
+                    self._tps_onnx_disabled = True
+
+        return warp_image_tps(image, src_landmarks, dst_landmarks)
+
     @torch.no_grad()
     def generate(
         self,
@@ -559,7 +615,7 @@ class LandmarkDiffPipeline:
         prompt = PROCEDURE_PROMPTS.get(procedure, "a photo of a person's face")
 
         # Step 1: TPS geometric warp (always computed -- the geometric baseline)
-        tps_warped = warp_image_tps(image_512, face.pixel_coords, manipulated.pixel_coords)
+        tps_warped = self._warp_tps(image_512, face.pixel_coords, manipulated.pixel_coords)
 
         if self.mode == "tps":
             raw_output = tps_warped
@@ -771,6 +827,8 @@ def run_inference(
     controlnet_checkpoint: str | None = None,
     displacement_model_path: str | None = None,
     deterministic: bool = False,
+    tps_backend: str = "numpy",
+    tps_onnx_path: str | None = None,
 ) -> None:
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -785,6 +843,8 @@ def run_inference(
         ip_adapter_scale=ip_adapter_scale,
         controlnet_checkpoint=controlnet_checkpoint,
         displacement_model_path=displacement_model_path,
+        tps_backend=tps_backend,
+        tps_onnx_path=tps_onnx_path,
     )
     pipe.load()
 
@@ -897,6 +957,17 @@ if __name__ == "__main__":
     )
     parser.add_argument("--ip-adapter-scale", type=float, default=0.6)
     parser.add_argument(
+        "--tps-backend",
+        default="numpy",
+        choices=["numpy", "onnx"],
+        help="TPS warp backend: NumPy/OpenCV default or ONNX Runtime.",
+    )
+    parser.add_argument(
+        "--tps-onnx-path",
+        default=None,
+        help="Path to TPS ONNX model (used only when --tps-backend=onnx).",
+    )
+    parser.add_argument(
         "--checkpoint", default=None, help="Path to fine-tuned ControlNet checkpoint"
     )
     parser.add_argument(
@@ -922,4 +993,6 @@ if __name__ == "__main__":
         args.checkpoint,
         args.displacement_model,
         args.deterministic,
+        args.tps_backend,
+        args.tps_onnx_path,
     )
