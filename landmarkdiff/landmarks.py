@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 # Lock for thread-safe model download in _extract_tasks_api
 _model_download_lock = threading.Lock()
+_TPS_LANDMARK_COUNT = 478
 
 # Region color map for visualization (BGR)
 REGION_COLORS: dict[str, tuple[int, int, int]] = {
@@ -357,6 +359,105 @@ class FaceLandmarks:
             int(min(self.image_width - 1, x_max + pad_x)),
             int(min(self.image_height - 1, y_max + pad_y)),
         )
+
+
+@dataclass(frozen=True)
+class TPSLandmarkResult:
+    """Stable, MediaPipe-agnostic landmark payload for TPS inference.
+
+    Conventions:
+    - ``coords``: float32 array with shape ``(478, 3)`` when detected.
+      Coordinates preserve MediaPipe order and normalized x/y convention.
+    - ``confidence``: scalar confidence in ``[0, 1]``.
+    - ``image_size``: ``(width, height)`` tuple.
+    - ``detected``: explicit extraction status.
+    - ``reason``: machine-readable reason when ``detected=False``.
+    """
+
+    coords: np.ndarray
+    confidence: float
+    image_size: tuple[int, int]
+    detected: bool
+    reason: str | None = None
+
+    def to_face_landmarks(self) -> FaceLandmarks | None:
+        """Convert to FaceLandmarks for legacy pipeline compatibility."""
+        if not self.detected:
+            return None
+        width, height = self.image_size
+        return FaceLandmarks(
+            landmarks=self.coords.copy(),
+            image_width=width,
+            image_height=height,
+            confidence=float(self.confidence),
+        )
+
+
+def _empty_tps_result(
+    image_size: tuple[int, int],
+    reason: str,
+) -> TPSLandmarkResult:
+    return TPSLandmarkResult(
+        coords=np.empty((0, 3), dtype=np.float32),
+        confidence=0.0,
+        image_size=image_size,
+        detected=False,
+        reason=reason,
+    )
+
+
+def extract_tps_landmarks(
+    image: np.ndarray,
+    min_detection_confidence: float = 0.5,
+    min_tracking_confidence: float = 0.5,
+    *,
+    extractor: Callable[..., FaceLandmarks | None] | None = None,
+) -> TPSLandmarkResult:
+    """Extract TPS landmarks with a stable runtime contract.
+
+    Args:
+        image: Input image as numpy array.
+        min_detection_confidence: Minimum face detection confidence.
+        min_tracking_confidence: Minimum landmark tracking confidence.
+        extractor: Optional extraction function for dependency injection in tests.
+            Defaults to :func:`extract_landmarks`.
+
+    Returns:
+        ``TPSLandmarkResult`` with explicit status and normalized payload.
+    """
+    if not isinstance(image, np.ndarray) or image.size == 0 or image.ndim not in (2, 3):
+        return _empty_tps_result((0, 0), "invalid_image")
+
+    h, w = image.shape[:2]
+    if h <= 0 or w <= 0:
+        return _empty_tps_result((0, 0), "invalid_image")
+
+    run_extractor = extractor or extract_landmarks
+    try:
+        try:
+            face = run_extractor(image, min_detection_confidence, min_tracking_confidence)
+        except TypeError:
+            # Compatibility path for legacy/mocked extractors that only accept image.
+            face = run_extractor(image)
+    except Exception:
+        logger.debug("TPS landmark extraction failed", exc_info=True)
+        return _empty_tps_result((w, h), "extractor_error")
+
+    if face is None:
+        return _empty_tps_result((w, h), "no_face_detected")
+
+    coords = np.asarray(face.landmarks, dtype=np.float32)
+    if coords.shape != (_TPS_LANDMARK_COUNT, 3):
+        return _empty_tps_result((w, h), "invalid_landmark_shape")
+    if not np.all(np.isfinite(coords)):
+        return _empty_tps_result((w, h), "invalid_landmark_values")
+
+    return TPSLandmarkResult(
+        coords=coords.copy(),
+        confidence=float(face.confidence),
+        image_size=(int(face.image_width), int(face.image_height)),
+        detected=True,
+    )
 
 
 def get_teeth_mask(
