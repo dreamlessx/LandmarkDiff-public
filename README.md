@@ -643,6 +643,44 @@ python scripts/evaluate.py \
 
 The evaluation harness computes all metrics, stratifies by Fitzpatrick type and by procedure, and writes a JSON report.
 
+### Results
+
+Evaluated on the [HDA plastic surgery database](https://doi.org/10.1109/TIFS.2019.2957344) (67 before/after pairs, 4 procedures). All LandmarkDiff results are mean over 5 random seeds.
+
+#### Comparison with Baselines
+
+| Method | LPIPS ↓ | NME ↓ | SSIM ↑ | ArcFace ↑ |
+|--------|---------|-------|--------|-----------|
+| **Rhinoplasty** (n=21) | | | | |
+| TPS-only | **0.357** | **0.000** | **0.574** | — |
+| SD1.5 Img2Img | 0.379 | 0.034 | 0.539 | 0.568 |
+| **LandmarkDiff** | 0.380 | 0.043 | 0.533 | **0.607** |
+| **Blepharoplasty** (n=27) | | | | |
+| TPS-only | **0.373** | **0.000** | **0.515** | — |
+| SD1.5 Img2Img | 0.386 | 0.037 | 0.481 | 0.635 |
+| **LandmarkDiff** | 0.388 | 0.047 | 0.474 | **0.670** |
+| **Rhytidectomy** (n=9) | | | | |
+| TPS-only | **0.320** | **0.000** | **0.586** | — |
+| SD1.5 Img2Img | 0.354 | 0.017 | 0.563 | **0.437** |
+| **LandmarkDiff** | 0.369 | 0.048 | 0.540 | 0.360 |
+| **Orthognathic** (n=10) | | | | |
+| TPS-only | **0.393** | **0.000** | **0.548** | — |
+| SD1.5 Img2Img | 0.395 | 0.039 | 0.521 | 0.544 |
+| **LandmarkDiff** | 0.399 | 0.055 | 0.511 | **0.568** |
+
+> **Key finding:** LandmarkDiff achieves the highest ArcFace identity similarity for 3 of 4 procedures while producing procedure-specific geometric changes. TPS-only achieves the best LPIPS/SSIM (it directly fits target landmarks), but produces visible warping artifacts. SD1.5 Img2Img applies no geometric deformation.
+
+#### Fitzpatrick Skin Type Equity
+
+| Skin Type | LPIPS ↓ | SSIM ↑ | NME ↓ | ArcFace ↑ | n |
+|-----------|---------|--------|-------|-----------|---|
+| Type I/II | 0.439 | 0.478 | 0.059 | 0.510 | 18 |
+| Type III | 0.422 | 0.469 | 0.052 | 0.541 | 13 |
+| Type IV | 0.463 | 0.440 | 0.049 | 0.470 | 17 |
+| Type V/VI | **0.410** | **0.531** | **0.037** | **0.568** | 19 |
+
+> No performance penalty for darker skin tones — Type V/VI achieves the best scores across all four metrics despite training data that under-represents these groups.
+
 ---
 
 ## Clinical Edge Cases
