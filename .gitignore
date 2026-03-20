@@ -83,3 +83,4 @@ data/synthetic_pairs/
 data/real_pairs/
 data/real_processed/
 data/demo_pairs/
+.hypothesis/

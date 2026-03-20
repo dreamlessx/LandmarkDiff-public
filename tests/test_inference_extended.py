@@ -8,7 +8,7 @@ from PIL import Image
 
 torch = pytest.importorskip("torch")
 
-from landmarkdiff.landmarks import FaceLandmarks  # noqa: E402
+from landmarkdiff.landmarks import FaceLandmarks, TPSLandmarkResult  # noqa: E402
 
 
 def _make_face(seed=42, width=512, height=512):
@@ -498,3 +498,100 @@ class TestLandmarkDiffPipeline:
         assert calls["fallback_calls"] == 2
         np.testing.assert_array_equal(result_1["output_tps"], fallback)
         np.testing.assert_array_equal(result_2["output_tps"], fallback)
+
+    def test_generate_uses_tps_landmark_wrapper(self, monkeypatch):
+        from landmarkdiff.inference import LandmarkDiffPipeline
+
+        image = np.full((128, 128, 3), 127, dtype=np.uint8)
+        face = _make_face(width=512, height=512)
+        calls = {"wrapper_calls": 0}
+
+        def fake_wrapper(
+            img,
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.5,
+            *,
+            extractor=None,
+        ):
+            calls["wrapper_calls"] += 1
+            assert img.shape == (512, 512, 3)
+            assert extractor is not None
+            extracted = extractor(img, min_detection_confidence, min_tracking_confidence)
+            assert extracted is face
+            return TPSLandmarkResult(
+                coords=face.landmarks.copy(),
+                confidence=face.confidence,
+                image_size=(face.image_width, face.image_height),
+                detected=True,
+            )
+
+        monkeypatch.setattr("landmarkdiff.inference.extract_landmarks", lambda *_args: face)
+        monkeypatch.setattr("landmarkdiff.inference.extract_tps_landmarks", fake_wrapper)
+        monkeypatch.setattr(
+            "landmarkdiff.inference.apply_procedure_preset",
+            lambda *args, **kwargs: face,
+        )
+        monkeypatch.setattr(
+            "landmarkdiff.inference.render_landmark_image",
+            lambda *args, **kwargs: np.zeros((512, 512, 3), dtype=np.uint8),
+        )
+        monkeypatch.setattr(
+            "landmarkdiff.inference.generate_surgical_mask",
+            lambda *args, **kwargs: np.ones((512, 512), dtype=np.float32),
+        )
+        monkeypatch.setattr(
+            "landmarkdiff.inference.mask_composite",
+            lambda warped, original, mask: warped,
+        )
+        monkeypatch.setattr(
+            "landmarkdiff.inference.warp_image_tps",
+            lambda *_args, **_kwargs: np.full((512, 512, 3), 202, dtype=np.uint8),
+        )
+
+        pipe = LandmarkDiffPipeline(mode="tps")
+        result = pipe.generate(image, procedure="rhinoplasty", postprocess=False)
+
+        assert calls["wrapper_calls"] == 1
+        assert result["landmarks_original"].landmarks.shape == (478, 3)
+        np.testing.assert_array_equal(result["landmarks_original"].landmarks, face.landmarks)
+        np.testing.assert_array_equal(result["output_tps"], np.full((512, 512, 3), 202, np.uint8))
+
+    def test_generate_no_face_detected_raises_controlled_error(self, monkeypatch):
+        from landmarkdiff.inference import LandmarkDiffPipeline
+
+        image = np.full((128, 128, 3), 127, dtype=np.uint8)
+
+        monkeypatch.setattr(
+            "landmarkdiff.inference.extract_tps_landmarks",
+            lambda *_args, **_kwargs: TPSLandmarkResult(
+                coords=np.empty((0, 3), dtype=np.float32),
+                confidence=0.0,
+                image_size=(512, 512),
+                detected=False,
+                reason="no_face_detected",
+            ),
+        )
+
+        pipe = LandmarkDiffPipeline(mode="tps")
+        with pytest.raises(ValueError, match=r"No face detected in image\."):
+            pipe.generate(image, procedure="rhinoplasty", postprocess=False)
+
+    def test_generate_landmark_extractor_error_is_controlled(self, monkeypatch):
+        from landmarkdiff.inference import LandmarkDiffPipeline
+
+        image = np.full((128, 128, 3), 127, dtype=np.uint8)
+
+        monkeypatch.setattr(
+            "landmarkdiff.inference.extract_tps_landmarks",
+            lambda *_args, **_kwargs: TPSLandmarkResult(
+                coords=np.empty((0, 3), dtype=np.float32),
+                confidence=0.0,
+                image_size=(512, 512),
+                detected=False,
+                reason="extractor_error",
+            ),
+        )
+
+        pipe = LandmarkDiffPipeline(mode="tps")
+        with pytest.raises(ValueError, match="Landmark extraction failed: extractor_error"):
+            pipe.generate(image, procedure="rhinoplasty", postprocess=False)

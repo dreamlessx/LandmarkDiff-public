@@ -22,7 +22,12 @@ import numpy as np
 import torch
 from PIL import Image
 
-from landmarkdiff.landmarks import FaceLandmarks, extract_landmarks, render_landmark_image
+from landmarkdiff.landmarks import (
+    FaceLandmarks,
+    extract_landmarks,
+    extract_tps_landmarks,
+    render_landmark_image,
+)
 from landmarkdiff.manipulation import apply_procedure_preset
 from landmarkdiff.masking import generate_surgical_mask, mask_to_3channel
 from landmarkdiff.synthetic.tps_onnx_runtime import TPSONNXRuntime
@@ -548,7 +553,17 @@ class LandmarkDiffPipeline:
         res = _SD15_RESOLUTION
         image_512 = cv2.resize(image, (res, res))
 
-        face = extract_landmarks(image_512)
+        tps_landmarks = extract_tps_landmarks(
+            image_512,
+            extractor=extract_landmarks,
+        )
+        if not tps_landmarks.detected:
+            if tps_landmarks.reason == "no_face_detected":
+                raise ValueError("No face detected in image.")
+            reason = tps_landmarks.reason or "unknown"
+            raise ValueError(f"Landmark extraction failed: {reason}")
+
+        face = tps_landmarks.to_face_landmarks()
         if face is None:
             raise ValueError("No face detected in image.")
 
