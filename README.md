@@ -51,7 +51,7 @@ The 2D pipeline ships now and works well. The end goal is full 3D: you hold up y
 
 LandmarkDiff extracts MediaPipe's 478-point face mesh from the input photo, applies procedure-specific Gaussian RBF deformations calibrated from anthropometric surgical data, renders the deformed mesh as a tessellation wireframe, and feeds that wireframe into a ControlNet-conditioned Stable Diffusion 1.5 backbone to synthesize the predicted face. The output is composited back onto the original image using Laplacian pyramid blending with feathered surgical masks, then refined through neural face restoration and identity verification.
 
-> **Paper:** "LandmarkDiff: Anatomically-Conditioned Latent Diffusion for Photorealistic Facial Surgery Outcome Prediction," targeting MICCAI 2026.
+> **Paper:** "LandmarkDiff: Anatomically-Conditioned Latent Diffusion for Photorealistic Facial Surgery Outcome Prediction," arXiv preprint, March 2026. Targeting MICCAI 2026.
 
 <p align="center">
   <img src="demos/demo_pipeline_0.png" alt="LandmarkDiff pipeline" width="90%">
@@ -352,7 +352,7 @@ Six-step refinement:
   <img src="demos/demo_pipeline_1.png" alt="Pipeline demo, rhinoplasty result" width="90%">
 </p>
 
-Each image shows five pipeline stages: **Input | Original Mesh | Manipulated Mesh | Surgical Mask | TPS-warped Result**. These are geometric-only (TPS mode, CPU) outputs; ControlNet photorealistic results will be added after training completes.
+Each image shows five pipeline stages: **Input | Landmarks | Conditioning | TPS Warp | Output**. The first demo uses a real rhinoplasty test sample showing the full ControlNet pipeline with composited output.
 
 <br>
 
@@ -1000,14 +1000,18 @@ make docker          # build Docker image
 make paper           # build MICCAI paper PDF
 make clean           # remove build artifacts
 ```
+
 ### Pre-commit Setup
 
-Install pre-commit hooks to run linting/formatting automatically before commits:
+Install pre-commit hooks to run linting and formatting automatically before commits:
+
 ```bash
-pip install pre-commit (for faster uv pip install pre-commit)
+pip install pre-commit
 pre-commit install
 ```
+
 Run pre-commit manually:
+
 ```bash
 pre-commit run --all-files
 ```
@@ -1031,15 +1035,15 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for the detailed roadmap with full milest
 - [x] Docker and Apptainer container support
 - [x] Hugging Face Spaces interactive demo ([live](https://huggingface.co/spaces/dreamlessx/LandmarkDiff))
 - [x] Data-driven displacement model fitted from real surgical pairs
-- [ ] ControlNet fine-tuning on 50K+ synthetic pairs (in progress)
-- [ ] Populate results tables in paper
+- [x] Quantitative evaluation on HDA dataset (67 pairs, 4 procedures)
+- [x] Fitzpatrick-stratified fairness results
+- [x] arXiv preprint
 
 ### Next (v0.3.0): Data-Driven Training
-- [ ] Anatomically constrained displacement sampling with per-procedure variance
 - [ ] ControlNet fine-tuning on 50K+ synthetic pairs (Phase A)
 - [ ] Combined loss training on clinical pairs (Phase B)
 - [ ] Additional procedure presets (otoplasty, genioplasty)
-- [ ] MICCAI 2026 workshop paper and arXiv preprint
+- [ ] Anatomically constrained displacement sampling with per-procedure variance
 
 ### v0.4.0: 3D Face Reconstruction
 - [ ] Phone video capture: rotate head, reconstruct full 3D face from frames
@@ -1060,8 +1064,8 @@ See [docs/ROADMAP.md](docs/ROADMAP.md) for the detailed roadmap with full milest
 - [ ] Cloud deployment with Triton inference server
 
 ### Publication Targets
-- MICCAI 2026 workshop paper (July 2026 submission)
-- RSNA 2026 abstract (May 2026)
+- arXiv preprint (March 2026)
+- MICCAI 2026 (submission July 2026)
 - Full conference paper (CVPR/NeurIPS 2027)
 
 <br>
