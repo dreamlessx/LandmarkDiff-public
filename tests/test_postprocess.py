@@ -426,3 +426,61 @@ class TestLaplacianBlendEdgeCases:
         mask = np.ones((64, 64), dtype=np.float32) * 0.5
         result = laplacian_pyramid_blend(source, target, mask, levels=1)
         assert result.shape == target.shape
+
+
+class TestPostprocessIssue414:
+    """Additional tests for issue #414 - postprocess blending functions coverage."""
+
+    def test_laplacian_blend_identity(self):
+        """Blending an image with itself should return the same image."""
+        rng = np.random.default_rng(42)
+        source = rng.integers(50, 200, (256, 256, 3), dtype=np.uint8)
+        target = source.copy()
+        mask = np.ones((256, 256), dtype=np.float32) * 0.5
+        result = laplacian_pyramid_blend(source, target, mask, levels=4)
+        # Blending same image should return nearly identical result
+        diff = np.abs(result.astype(float) - source.astype(float)).mean()
+        assert diff < 3.0  # small numerical error from pyramid ops
+
+    def test_laplacian_blend_shapes(self):
+        """Output shape matches input shape for various resolutions."""
+        rng = np.random.default_rng(42)
+        resolutions = [(64, 64), (128, 256), (512, 512), (1024, 768)]
+        for h, w in resolutions:
+            source = rng.integers(0, 255, (h, w, 3), dtype=np.uint8)
+            target = rng.integers(0, 255, (h, w, 3), dtype=np.uint8)
+            mask = np.zeros((h, w), dtype=np.float32)
+            cv2.circle(mask, (w // 2, h // 2), min(h, w) // 4, 1.0, -1)
+            result = laplacian_pyramid_blend(source, target, mask, levels=4)
+            assert result.shape == target.shape, f"Shape mismatch at {h}x{w}"
+            assert result.dtype == np.uint8
+
+    def test_feathered_mask_range(self):
+        """Output pixel values stay in [0, 255] range."""
+        rng = np.random.default_rng(42)
+        source = rng.integers(0, 255, (512, 512, 3), dtype=np.uint8)
+        target = rng.integers(0, 255, (512, 512, 3), dtype=np.uint8)
+        # Create feathered mask with gradient
+        mask = np.zeros((512, 512), dtype=np.float32)
+        cv2.circle(mask, (256, 256), 200, 1.0, -1)
+        mask = cv2.GaussianBlur(mask, (51, 51), 25)
+        result = laplacian_pyramid_blend(source, target, mask, levels=6)
+        assert result.min() >= 0, "Output has negative values"
+        assert result.max() <= 255, "Output exceeds 255"
+        assert result.dtype == np.uint8
+
+    def test_histogram_match_preserves_structure(self):
+        """SSIM between input and output should be high."""
+        rng = np.random.default_rng(42)
+        h, w = 128, 128
+        source = rng.integers(100, 200, (h, w, 3), dtype=np.uint8)
+        target = rng.integers(80, 180, (h, w, 3), dtype=np.uint8)
+        mask = np.zeros((h, w), dtype=np.float32)
+        cv2.circle(mask, (w // 2, h // 2), 40, 1.0, -1)
+        mask = cv2.GaussianBlur(mask, (21, 21), 5)
+        result = histogram_match_skin(source, target, mask)
+        # Compute simple structural similarity (pixel correlation)
+        source_flat = source.flatten().astype(float)
+        result_flat = result.flatten().astype(float)
+        correlation = np.corrcoef(source_flat, result_flat)[0, 1]
+        assert correlation > 0.85, f"Structure not preserved: correlation={correlation}"
