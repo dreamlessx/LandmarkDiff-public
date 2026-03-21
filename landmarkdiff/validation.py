@@ -322,3 +322,165 @@ class ValidationCallback:
         path = output_path or str(self.output_dir / "validation_curves.png")
         plt.savefig(path, dpi=150, bbox_inches="tight")
         plt.close()
+
+
+# ---------------------------------------------------------------------------
+# Landmark file format validation
+# ---------------------------------------------------------------------------
+
+import csv as _csv
+import json as _json
+import math as _math
+from dataclasses import dataclass as _dataclass, field as _field
+from typing import Optional as _Optional
+
+MEDIAPIPE_LANDMARK_COUNT = 478
+DLIB_LANDMARK_COUNT = 68
+VALID_LANDMARK_COUNTS = {MEDIAPIPE_LANDMARK_COUNT, DLIB_LANDMARK_COUNT}
+
+
+@_dataclass
+class LandmarkValidationResult:
+    """Structured result from validate_landmarks()."""
+    valid: bool
+    landmark_count: _Optional[int] = None
+    dimensions: _Optional[int] = None
+    errors: list = _field(default_factory=list)
+    warnings: list = _field(default_factory=list)
+
+    def __str__(self) -> str:
+        status = "VALID" if self.valid else "INVALID"
+        lines = [f"[{status}] Landmark file validation"]
+        if self.landmark_count is not None:
+            lines.append(f"  Count: {self.landmark_count}")
+        if self.dimensions is not None:
+            lines.append(f"  Dimensions: {self.dimensions}D")
+        for e in self.errors:
+            lines.append(f"  ERROR: {e}")
+        for w in self.warnings:
+            lines.append(f"  WARNING: {w}")
+        return "\n".join(lines)
+
+
+def validate_landmarks(
+    path,
+    expected_count: int = MEDIAPIPE_LANDMARK_COUNT,
+    min_confidence: float = 0.0,
+    pixel_coords: bool = False,
+    image_size: int = 512,
+) -> LandmarkValidationResult:
+    """Validate a landmark file (JSON or CSV) before processing."""
+    from pathlib import Path
+    path = Path(path)
+    errors, warnings = [], []
+
+    if not path.exists():
+        return LandmarkValidationResult(valid=False, errors=[f"File not found: {path}"])
+    if not path.is_file():
+        return LandmarkValidationResult(valid=False, errors=[f"Not a file: {path}"])
+
+    suffix = path.suffix.lower()
+    if suffix not in (".json", ".csv"):
+        return LandmarkValidationResult(valid=False, errors=[f"Unsupported format '{suffix}'. Expected .json or .csv"])
+
+    try:
+        if suffix == ".json":
+            coords, confidences = _parse_landmark_json(path)
+        else:
+            coords, confidences = _parse_landmark_csv(path)
+    except ValueError as exc:
+        return LandmarkValidationResult(valid=False, errors=[str(exc)])
+
+    landmark_count = len(coords)
+    dimensions = len(coords[0]) if coords else 0
+
+    if expected_count is not None and landmark_count != expected_count:
+        errors.append(f"Expected {expected_count} landmarks, got {landmark_count}.")
+    if dimensions not in (2, 3):
+        errors.append(f"Each landmark must have 2 or 3 coordinates, got {dimensions}.")
+
+    upper = float(image_size) if pixel_coords else 1.0
+    nan_idx, inf_idx, oob_idx = [], [], []
+    for i, lm in enumerate(coords):
+        for v in lm:
+            if _math.isnan(v):
+                nan_idx.append(i); break
+            if _math.isinf(v):
+                inf_idx.append(i); break
+        else:
+            if any(v < 0.0 or v > upper for v in lm):
+                oob_idx.append(i)
+
+    if nan_idx:
+        errors.append(f"{len(nan_idx)} landmark(s) contain NaN: indices {nan_idx[:5]}")
+    if inf_idx:
+        errors.append(f"{len(inf_idx)} landmark(s) contain Inf: indices {inf_idx[:5]}")
+    if oob_idx:
+        warnings.append(f"{len(oob_idx)} landmark(s) out of bounds: indices {oob_idx[:5]}")
+
+    if confidences and min_confidence > 0:
+        low = [i for i, c in enumerate(confidences) if c < min_confidence]
+        if low:
+            warnings.append(f"{len(low)} landmark(s) below confidence {min_confidence}")
+
+    return LandmarkValidationResult(
+        valid=len(errors) == 0,
+        landmark_count=landmark_count,
+        dimensions=dimensions,
+        errors=errors,
+        warnings=warnings,
+    )
+
+
+def _parse_landmark_json(path):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = _json.load(f)
+    except _json.JSONDecodeError as exc:
+        raise ValueError(f"Invalid JSON: {exc}") from exc
+    if isinstance(data, list):
+        coords, confidences = data, []
+    elif isinstance(data, dict):
+        if "landmarks" not in data:
+            raise ValueError("JSON must have a 'landmarks' key or be a bare list")
+        coords = data["landmarks"]
+        confidences = data.get("confidence", [])
+    else:
+        raise ValueError(f"Unexpected JSON structure: {type(data).__name__}")
+    parsed = []
+    for i, lm in enumerate(coords):
+        if not isinstance(lm, (list, tuple)) or len(lm) < 2:
+            raise ValueError(f"Landmark {i} must be a list of ≥2 numbers")
+        try:
+            parsed.append([float(v) for v in lm])
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"Landmark {i} non-numeric: {exc}") from exc
+    return parsed, [float(c) for c in confidences]
+
+
+def _parse_landmark_csv(path):
+    try:
+        with open(path, "r", encoding="utf-8", newline="") as f:
+            rows = list(_csv.reader(f))
+    except Exception as exc:
+        raise ValueError(f"Could not read CSV: {exc}") from exc
+    if not rows:
+        raise ValueError("CSV file is empty")
+    start = 0
+    try:
+        float(rows[0][0])
+    except (ValueError, IndexError):
+        start = 1
+    parsed = []
+    for i, row in enumerate(rows[start:], start=start):
+        if not row:
+            continue
+        if len(row) < 2:
+            raise ValueError(f"Row {i} has fewer than 2 columns")
+        try:
+            parsed.append([float(v) for v in row[:3]])
+        except ValueError as exc:
+            raise ValueError(f"Row {i} non-numeric: {exc}") from exc
+    if not parsed:
+        raise ValueError("CSV contains no data rows")
+    return parsed, []
