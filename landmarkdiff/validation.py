@@ -397,9 +397,7 @@ def validate_landmarks(
     if expected_count is not None and landmark_count != expected_count:
         errors.append(f"Expected {expected_count} landmarks, got {landmark_count}.")
     if dimensions not in (2, 3):
-        errors.append(
-            f"Each landmark must have 2 or 3 coordinates, got {dimensions}."
-        )
+        errors.append(f"Each landmark must have 2 or 3 coordinates, got {dimensions}.")
 
     upper = float(image_size) if pixel_coords else 1.0
     nan_idx, inf_idx, oob_idx = [], [], []
@@ -420,16 +418,12 @@ def validate_landmarks(
     if inf_idx:
         errors.append(f"{len(inf_idx)} landmark(s) contain Inf: indices {inf_idx[:5]}")
     if oob_idx:
-        warnings.append(
-            f"{len(oob_idx)} landmark(s) out of bounds: indices {oob_idx[:5]}"
-        )
+        warnings.append(f"{len(oob_idx)} landmark(s) out of bounds: indices {oob_idx[:5]}")
 
     if confidences and min_confidence > 0:
         low = [i for i, c in enumerate(confidences) if c < min_confidence]
         if low:
-            warnings.append(
-                f"{len(low)} landmark(s) below confidence {min_confidence}"
-            )
+            warnings.append(f"{len(low)} landmark(s) below confidence {min_confidence}")
 
     return LandmarkValidationResult(
         valid=len(errors) == 0,
