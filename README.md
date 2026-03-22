@@ -1106,7 +1106,7 @@ We track all contributions and contributors will be acknowledged in the MICCAI 2
 |---|---|
 | [@dreamlessx](https://github.com/dreamlessx) | Core architecture, training pipeline, paper |
 | [@Deepak8858](https://github.com/Deepak8858) | Brow lift procedure preset ([#35](https://github.com/dreamlessx/LandmarkDiff-public/pull/35)) |
-| [@P-r-e-m-i-u-m](https://github.com/P-r-e-m-i-u-m) | Mentoplasty procedure preset ([#36](https://github.com/dreamlessx/LandmarkDiff-public/pull/36)) |
+| [@P-r-e-m-i-u-m](https://github.com/P-r-e-m-i-u-m) | Mentoplasty procedure preset ([#36](https://github.com/dreamlessx/LandmarkDiff-public/pull/36)), landmark file validation ([#420](https://github.com/dreamlessx/LandmarkDiff-public/pull/420)) |
 | [@PredictiveManish](https://github.com/PredictiveManish) | OpenAPI spec ([#340](https://github.com/dreamlessx/LandmarkDiff-public/pull/340)), batch notebook ([#334](https://github.com/dreamlessx/LandmarkDiff-public/pull/334)), pre-commit + mypy ([#386](https://github.com/dreamlessx/LandmarkDiff-public/pull/386), [#405](https://github.com/dreamlessx/LandmarkDiff-public/pull/405)) |
 | [@lshariprasad](https://github.com/lshariprasad) | histogram_match_skin tests ([#263](https://github.com/dreamlessx/LandmarkDiff-public/pull/263)) |
 | [@dagangtj](https://github.com/dagangtj) | SafetyResult dataclass, file logging, API error messages ([#235](https://github.com/dreamlessx/LandmarkDiff-public/pull/235), [#236](https://github.com/dreamlessx/LandmarkDiff-public/pull/236), [#237](https://github.com/dreamlessx/LandmarkDiff-public/pull/237)) |
