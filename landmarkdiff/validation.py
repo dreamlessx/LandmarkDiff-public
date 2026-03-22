@@ -10,9 +10,12 @@ during training to monitor quality without disrupting the training loop.
 
 from __future__ import annotations
 
+import csv
 import json
 import logging
+import math
 import time
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -328,25 +331,20 @@ class ValidationCallback:
 # Landmark file format validation
 # ---------------------------------------------------------------------------
 
-import csv as _csv
-import json as _json
-import math as _math
-from dataclasses import dataclass as _dataclass, field as _field
-from typing import Optional as _Optional
-
 MEDIAPIPE_LANDMARK_COUNT = 478
 DLIB_LANDMARK_COUNT = 68
 VALID_LANDMARK_COUNTS = {MEDIAPIPE_LANDMARK_COUNT, DLIB_LANDMARK_COUNT}
 
 
-@_dataclass
+@dataclass
 class LandmarkValidationResult:
     """Structured result from validate_landmarks()."""
+
     valid: bool
-    landmark_count: _Optional[int] = None
-    dimensions: _Optional[int] = None
-    errors: list = _field(default_factory=list)
-    warnings: list = _field(default_factory=list)
+    landmark_count: int | None = None
+    dimensions: int | None = None
+    errors: list = field(default_factory=list)
+    warnings: list = field(default_factory=list)
 
     def __str__(self) -> str:
         status = "VALID" if self.valid else "INVALID"
@@ -370,7 +368,6 @@ def validate_landmarks(
     image_size: int = 512,
 ) -> LandmarkValidationResult:
     """Validate a landmark file (JSON or CSV) before processing."""
-    from pathlib import Path
     path = Path(path)
     errors, warnings = [], []
 
@@ -381,7 +378,10 @@ def validate_landmarks(
 
     suffix = path.suffix.lower()
     if suffix not in (".json", ".csv"):
-        return LandmarkValidationResult(valid=False, errors=[f"Unsupported format '{suffix}'. Expected .json or .csv"])
+        return LandmarkValidationResult(
+            valid=False,
+            errors=[f"Unsupported format '{suffix}'. Expected .json or .csv"],
+        )
 
     try:
         if suffix == ".json":
@@ -397,16 +397,20 @@ def validate_landmarks(
     if expected_count is not None and landmark_count != expected_count:
         errors.append(f"Expected {expected_count} landmarks, got {landmark_count}.")
     if dimensions not in (2, 3):
-        errors.append(f"Each landmark must have 2 or 3 coordinates, got {dimensions}.")
+        errors.append(
+            f"Each landmark must have 2 or 3 coordinates, got {dimensions}."
+        )
 
     upper = float(image_size) if pixel_coords else 1.0
     nan_idx, inf_idx, oob_idx = [], [], []
     for i, lm in enumerate(coords):
         for v in lm:
-            if _math.isnan(v):
-                nan_idx.append(i); break
-            if _math.isinf(v):
-                inf_idx.append(i); break
+            if math.isnan(v):
+                nan_idx.append(i)
+                break
+            if math.isinf(v):
+                inf_idx.append(i)
+                break
         else:
             if any(v < 0.0 or v > upper for v in lm):
                 oob_idx.append(i)
@@ -416,12 +420,16 @@ def validate_landmarks(
     if inf_idx:
         errors.append(f"{len(inf_idx)} landmark(s) contain Inf: indices {inf_idx[:5]}")
     if oob_idx:
-        warnings.append(f"{len(oob_idx)} landmark(s) out of bounds: indices {oob_idx[:5]}")
+        warnings.append(
+            f"{len(oob_idx)} landmark(s) out of bounds: indices {oob_idx[:5]}"
+        )
 
     if confidences and min_confidence > 0:
         low = [i for i, c in enumerate(confidences) if c < min_confidence]
         if low:
-            warnings.append(f"{len(low)} landmark(s) below confidence {min_confidence}")
+            warnings.append(
+                f"{len(low)} landmark(s) below confidence {min_confidence}"
+            )
 
     return LandmarkValidationResult(
         valid=len(errors) == 0,
@@ -434,9 +442,9 @@ def validate_landmarks(
 
 def _parse_landmark_json(path):
     try:
-        with open(path, "r", encoding="utf-8") as f:
-            data = _json.load(f)
-    except _json.JSONDecodeError as exc:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except json.JSONDecodeError as exc:
         raise ValueError(f"Invalid JSON: {exc}") from exc
     if isinstance(data, list):
         coords, confidences = data, []
@@ -450,7 +458,7 @@ def _parse_landmark_json(path):
     parsed = []
     for i, lm in enumerate(coords):
         if not isinstance(lm, (list, tuple)) or len(lm) < 2:
-            raise ValueError(f"Landmark {i} must be a list of ≥2 numbers")
+            raise ValueError(f"Landmark {i} must be a list of 2+ numbers")
         try:
             parsed.append([float(v) for v in lm])
         except (TypeError, ValueError) as exc:
@@ -460,8 +468,8 @@ def _parse_landmark_json(path):
 
 def _parse_landmark_csv(path):
     try:
-        with open(path, "r", encoding="utf-8", newline="") as f:
-            rows = list(_csv.reader(f))
+        with open(path, encoding="utf-8", newline="") as f:
+            rows = list(csv.reader(f))
     except Exception as exc:
         raise ValueError(f"Could not read CSV: {exc}") from exc
     if not rows:
