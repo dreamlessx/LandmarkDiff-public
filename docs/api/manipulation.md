@@ -58,6 +58,44 @@ A single deformation control point. Each handle moves its target landmark by `di
 
 ## Functions
 
+### `build_rbf_prewarp_handles`
+
+```python
+def build_rbf_prewarp_handles(
+    face: FaceLandmarks,
+    procedure: str,
+    intensity: float = 50.0,
+    clinical_flags: ClinicalFlags | None = None,
+    regional_intensity: RegionalIntensity | None = None,
+) -> list[DeformationHandle]
+```
+
+Builds the explicit NumPy RBF pre-warp handles for a procedure before any landmark deformation is applied.
+
+This function isolates policy (procedure/intensity/clinical flags) from execution so the deformation stage can be audited and tested independently.
+It is intentionally confidence-agnostic.
+
+---
+
+### `apply_rbf_prewarp_stage`
+
+```python
+def apply_rbf_prewarp_stage(
+    face: FaceLandmarks,
+    procedure: str,
+    intensity: float = 50.0,
+    clinical_flags: ClinicalFlags | None = None,
+    regional_intensity: RegionalIntensity | None = None,
+) -> FaceLandmarks
+```
+
+Runs the modular NumPy RBF deformation stage used before TPS warping.
+
+Equivalent to the legacy inline RBF path previously inside `apply_procedure_preset`, now extracted as a reusable stage.
+Unlike `build_rbf_prewarp_handles(...)`, this stage applies landmark-confidence weighting before deformation.
+
+---
+
 ### `gaussian_rbf_deform`
 
 ```python
@@ -117,7 +155,7 @@ The `intensity` parameter uses a 0-100 scale. Internally, it is divided by 100 (
 | `face` | `FaceLandmarks` | (required) | Input face landmarks |
 | `procedure` | `str` | (required) | One of `"rhinoplasty"`, `"blepharoplasty"`, `"rhytidectomy"`, `"orthognathic"`, `"brow_lift"`, `"mentoplasty"` |
 | `intensity` | `float` | `50.0` | Deformation strength on a 0 to 100 scale. Mild ~ 33, moderate ~ 66, aggressive ~ 100. |
-| `image_size` | `int` | `512` | Reference image size for displacement scaling. Displacements are calibrated at 512x512. |
+| `image_size` | `int` | `512` | Legacy compatibility argument. The modular NumPy RBF path scales from `face.image_width`/`face.image_height` (geometric mean) and does not use this value directly. |
 | `clinical_flags` | `ClinicalFlags \| None` | `None` | Clinical condition flags (see [clinical](clinical.md)). Enables condition-specific handling: Ehlers-Danlos widens radii by 1.5x, Bell's palsy removes handles on the paralyzed side. |
 | `displacement_model_path` | `str \| None` | `None` | Path to a fitted `DisplacementModel` (`.npz`). When provided, uses data-driven displacements from real surgery pairs instead of hand-tuned RBF vectors. |
 | `noise_scale` | `float` | `0.0` | Random variation added to data-driven displacements (0 = deterministic). Only used when `displacement_model_path` is set. |

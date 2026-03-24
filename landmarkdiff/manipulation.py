@@ -630,6 +630,108 @@ def apply_combined_procedures(
     )
 
 
+def build_rbf_prewarp_handles(
+    face: FaceLandmarks,
+    procedure: str,
+    intensity: float = 50.0,
+    clinical_flags: ClinicalFlags | None = None,
+    regional_intensity: RegionalIntensity | None = None,
+) -> list[DeformationHandle]:
+    """Build confidence-agnostic RBF handles for the TPS pre-warp stage.
+
+    This function isolates procedure/intensity/clinical policy from the
+    deformation application step so the pre-warp stage can be tested and
+    reused independently of the full pipeline.
+    """
+    if procedure not in PROCEDURE_LANDMARKS:
+        raise ValueError(f"Unknown procedure: {procedure}. Choose from {list(PROCEDURE_LANDMARKS)}")
+
+    scale = intensity / 100.0
+    indices = PROCEDURE_LANDMARKS[procedure]
+    radius = PROCEDURE_RADIUS[procedure]
+
+    # Ehlers-Danlos: wider influence radii for hypermobile tissue.
+    if clinical_flags and clinical_flags.ehlers_danlos:
+        radius *= 1.5
+
+    # Radii are calibrated at 512x512. Scale by geometric mean so
+    # non-square inputs are handled symmetrically.
+    geo_mean = math.sqrt(face.image_width * face.image_height)
+    pixel_scale = geo_mean / 512.0
+    handles = _get_procedure_handles(
+        procedure, indices, scale, radius * pixel_scale, regional_intensity
+    )
+
+    # Bell's palsy: remove handles on the affected side.
+    if clinical_flags and clinical_flags.bells_palsy:
+        from landmarkdiff.clinical import get_bells_palsy_side_indices
+
+        affected = get_bells_palsy_side_indices(clinical_flags.bells_palsy_side)
+        affected_indices = set()
+        for region_indices in affected.values():
+            affected_indices.update(region_indices)
+        handles = [h for h in handles if h.landmark_index not in affected_indices]
+
+    return handles
+
+
+def _apply_rbf_handles_to_face(
+    face: FaceLandmarks,
+    handles: list[DeformationHandle],
+) -> FaceLandmarks:
+    """Apply a prepared list of handles to a face in pixel space."""
+    pixel_landmarks = face.landmarks.copy()
+    pixel_landmarks[:, 0] *= face.image_width
+    pixel_landmarks[:, 1] *= face.image_height
+
+    # Confidence-weight each handle by its anchor reliability.
+    conf = face.landmark_confidence
+    scaled_handles = []
+    for handle in handles:
+        c = float(conf[handle.landmark_index])
+        if c < 1.0:
+            scaled_handles.append(
+                DeformationHandle(
+                    landmark_index=handle.landmark_index,
+                    displacement=handle.displacement * c,
+                    influence_radius=handle.influence_radius,
+                )
+            )
+        else:
+            scaled_handles.append(handle)
+
+    pixel_landmarks = gaussian_rbf_deform_batch(pixel_landmarks, scaled_handles)
+
+    result = pixel_landmarks.copy()
+    result[:, 0] /= face.image_width
+    result[:, 1] /= face.image_height
+
+    return FaceLandmarks(
+        landmarks=result,
+        image_width=face.image_width,
+        image_height=face.image_height,
+        confidence=face.confidence,
+    )
+
+
+def apply_rbf_prewarp_stage(
+    face: FaceLandmarks,
+    procedure: str,
+    intensity: float = 50.0,
+    clinical_flags: ClinicalFlags | None = None,
+    regional_intensity: RegionalIntensity | None = None,
+) -> FaceLandmarks:
+    """Run the NumPy RBF deformation stage used before TPS image warping."""
+    handles = build_rbf_prewarp_handles(
+        face=face,
+        procedure=procedure,
+        intensity=intensity,
+        clinical_flags=clinical_flags,
+        regional_intensity=regional_intensity,
+    )
+    return _apply_rbf_handles_to_face(face, handles)
+
+
 def apply_procedure_preset(
     face: FaceLandmarks,
     procedure: str,
@@ -646,7 +748,9 @@ def apply_procedure_preset(
         face: Input face landmarks.
         procedure: Procedure name (rhinoplasty, blepharoplasty, etc.).
         intensity: Relative intensity 0-100 (mild=33, moderate=66, aggressive=100).
-        image_size: Reference image size for displacement scaling.
+        image_size: Legacy compatibility argument. The modular NumPy RBF path
+            scales by ``face.image_width``/``face.image_height`` (geometric
+            mean) and does not consume this value directly.
         clinical_flags: Optional clinical condition flags.
         displacement_model_path: Path to a fitted DisplacementModel (.npz).
             When provided, uses data-driven displacements from real surgery pairs
@@ -658,9 +762,6 @@ def apply_procedure_preset(
     """
     if procedure not in PROCEDURE_LANDMARKS:
         raise ValueError(f"Unknown procedure: {procedure}. Choose from {list(PROCEDURE_LANDMARKS)}")
-
-    landmarks = face.landmarks.copy()
-    scale = intensity / 100.0
 
     # Data-driven displacement mode (fall back to RBF if procedure not in model)
     # Map UI intensity (0-100) to displacement model intensity (0-2):
@@ -682,67 +783,12 @@ def apply_procedure_preset(
             )
             # Fall through to RBF-based preset below
 
-    indices = PROCEDURE_LANDMARKS[procedure]
-    radius = PROCEDURE_RADIUS[procedure]
-
-    # Ehlers-Danlos: wider influence radii for hypermobile tissue
-    if clinical_flags and clinical_flags.ehlers_danlos:
-        radius *= 1.5
-
-    # Scale radius based on geometric mean of actual image dimensions.
-    # Radii are calibrated for 512x512; using geometric mean handles
-    # non-square inputs without asymmetric deformation.
-    geo_mean = math.sqrt(face.image_width * face.image_height)
-    pixel_scale = geo_mean / 512.0
-    handles = _get_procedure_handles(
-        procedure, indices, scale, radius * pixel_scale, regional_intensity
-    )
-
-    # Bell's palsy: remove handles on the affected (paralyzed) side
-    if clinical_flags and clinical_flags.bells_palsy:
-        from landmarkdiff.clinical import get_bells_palsy_side_indices
-
-        affected = get_bells_palsy_side_indices(clinical_flags.bells_palsy_side)
-        affected_indices = set()
-        for region_indices in affected.values():
-            affected_indices.update(region_indices)
-        handles = [h for h in handles if h.landmark_index not in affected_indices]
-
-    # Convert to pixel space for deformation
-    pixel_landmarks = landmarks.copy()
-    pixel_landmarks[:, 0] *= face.image_width
-    pixel_landmarks[:, 1] *= face.image_height
-
-    # Scale each handle's displacement by the confidence of its anchor
-    # landmark. Low-confidence landmarks (e.g., near face boundary on
-    # profile views) are deformed less aggressively.
-    conf = face.landmark_confidence
-    scaled_handles = []
-    for handle in handles:
-        c = float(conf[handle.landmark_index])
-        if c < 1.0:
-            scaled_handles.append(
-                DeformationHandle(
-                    landmark_index=handle.landmark_index,
-                    displacement=handle.displacement * c,
-                    influence_radius=handle.influence_radius,
-                )
-            )
-        else:
-            scaled_handles.append(handle)
-
-    pixel_landmarks = gaussian_rbf_deform_batch(pixel_landmarks, scaled_handles)
-
-    # Convert back to normalized
-    result = pixel_landmarks.copy()
-    result[:, 0] /= face.image_width
-    result[:, 1] /= face.image_height
-
-    return FaceLandmarks(
-        landmarks=result,
-        image_width=face.image_width,
-        image_height=face.image_height,
-        confidence=face.confidence,
+    return apply_rbf_prewarp_stage(
+        face=face,
+        procedure=procedure,
+        intensity=intensity,
+        clinical_flags=clinical_flags,
+        regional_intensity=regional_intensity,
     )
 
 
