@@ -7,6 +7,7 @@ heatmaps for comparing original and predicted face images.
 from __future__ import annotations
 
 import logging
+from typing import cast
 
 import cv2
 import numpy as np
@@ -47,7 +48,7 @@ def create_slider_composite(
     if line_width > 0 and 0 < split_x < w:
         cv2.line(result, (split_x, 0), (split_x, h - 1), line_color, line_width)
 
-    return result
+    return cast(np.ndarray, result)
 
 
 def create_side_by_side(
@@ -101,7 +102,7 @@ def create_side_by_side(
                 cv2.LINE_AA,
             )
 
-    return canvas
+    return cast(np.ndarray, canvas)
 
 
 def create_difference_heatmap(
@@ -127,7 +128,7 @@ def create_difference_heatmap(
     diff = cv2.absdiff(original, pred)
     gray_diff = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
     amplified = np.clip(gray_diff.astype(np.float32) * amplify, 0, 255).astype(np.uint8)
-    return cv2.applyColorMap(amplified, colormap)
+    return cast(np.ndarray, cv2.applyColorMap(amplified, colormap))
 
 
 def create_checkerboard_blend(
@@ -166,4 +167,4 @@ def create_checkerboard_blend(
 
     mask_3ch = np.stack([mask] * 3, axis=-1)
     result = original.astype(np.float32) * mask_3ch + pred.astype(np.float32) * (1.0 - mask_3ch)
-    return np.clip(result, 0, 255).astype(np.uint8)
+    return cast(np.ndarray, np.clip(result, 0, 255).astype(np.uint8))

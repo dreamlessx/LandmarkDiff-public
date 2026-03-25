@@ -22,7 +22,7 @@ import asyncio
 import base64
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import cv2
 import numpy as np
@@ -91,7 +91,7 @@ class AsyncLandmarkDiffClient:
         if resp.status >= 400:
             text = await resp.text()
             raise LandmarkDiffAPIError(f"Server returned {resp.status}: {text[:200]}")
-        return await resp.json()
+        return cast(dict[str, Any], await resp.json())
 
     # ------------------------------------------------------------------
     # API methods
@@ -124,7 +124,7 @@ class AsyncLandmarkDiffClient:
         try:
             async with session.get(f"{self.base_url}/procedures") as resp:
                 data = await self._handle_response(resp)
-                return data.get("procedures", [])
+                return cast(list[str], data.get("procedures", []))
         except LandmarkDiffAPIError:
             raise
         except Exception as e:

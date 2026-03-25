@@ -8,6 +8,7 @@ the average intercanthal distance (ICD) as a reference scale.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import cast
 
 import cv2
 import numpy as np
@@ -214,4 +215,4 @@ def visualize_planning(
             cv2.LINE_AA,
         )
 
-    return canvas
+    return cast(np.ndarray, canvas)

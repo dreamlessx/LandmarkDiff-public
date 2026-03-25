@@ -28,6 +28,7 @@ repos:
         additional_dependencies: [types-Pillow, types-PyYAML, types-requests]
         exclude: '\.ipynb$'
         args: [
+          --explicit-package-bases,
           --ignore-missing-imports,
           --config-file=pyproject.toml,
           --exclude, 'scripts/benchmark_inference\.py',

@@ -192,16 +192,19 @@ ignore = [
 
 [tool.mypy]
 python_version = "3.10"
-warn_return_any = false
+warn_return_any = true
 warn_unused_configs = true
-disallow_untyped_defs = false
-check_untyped_defs = false
+disallow_untyped_defs = true
+check_untyped_defs = true
 explicit_package_bases = true
 ignore_missing_imports = true
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
 exclude = [
-    "scripts/batch_inference.py",
-    "scripts/benchmark_inference.py",
     "examples/*.ipynb",
+    "tests/*.py",
+    "examples/",
 ]
 
 [[tool.mypy.overrides]]
@@ -245,4 +248,12 @@ ignore_errors = true
 
 [[tool.mypy.overrides]]
 module = ["scripts.*"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["examples.*"]
 ignore_errors = true
