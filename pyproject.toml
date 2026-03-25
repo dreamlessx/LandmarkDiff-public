@@ -204,6 +204,7 @@ warn_unused_ignores = true
 exclude = [
     "examples/*.ipynb",
     "tests/*.py",
+    "examples/",
 ]
 
 [[tool.mypy.overrides]]
@@ -251,4 +252,8 @@ ignore_errors = true
 
 [[tool.mypy.overrides]]
 module = ["tests.*"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["examples.*"]
 ignore_errors = true
